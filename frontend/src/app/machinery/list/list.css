@@ -1,0 +1,9 @@
+.container { padding:24px; max-width:1200px; margin:0 auto; }
+.filters { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+.card { cursor:pointer; transition:transform .2s; }
+.card:hover { transform:translateY(-4px); }
+.card img { height:180px; object-fit:cover; }
+.price { font-size:18px; font-weight:bold; color:#1976d2; }
+.location { color:#666; font-size:13px; }
+.pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px; }

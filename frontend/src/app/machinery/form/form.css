@@ -1,0 +1,3 @@
+.container { padding:24px; max-width:900px; margin:0 auto; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.full { display:block; margin:16px 0; }

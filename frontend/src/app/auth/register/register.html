@@ -1,0 +1,26 @@
+<div class="auth-container">
+  <mat-card>
+    <mat-card-header><mat-card-title>Crear Cuenta</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <form (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="data.nombre" name="nombre" required></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="data.apellido" name="apellido" required></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="data.email" name="email" required></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Contraseña</mat-label><input matInput type="password" [(ngModel)]="data.password" name="password" required></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="data.telefono" name="telefono"></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Tipo</mat-label>
+          <mat-select [(ngModel)]="data.tipo_usuario" name="tipo_usuario">
+            <mat-option value="arrendatario">Arrendatario</mat-option>
+            <mat-option value="propietario">Propietario</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <p class="error" *ngIf="error">{{ error }}</p>
+        <button mat-raised-button color="primary" type="submit" [disabled]="loading" class="full-width">
+          {{ loading ? 'Registrando...' : 'Registrarse' }}
+        </button>
+      </form>
+      <p class="link">¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a></p>
+    </mat-card-content>
+  </mat-card>
+</div>

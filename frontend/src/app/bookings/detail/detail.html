@@ -1,0 +1,13 @@
+<div class="container" *ngIf="!loading; else loadingTmpl">
+  <h1>Detalle de Reserva</h1>
+  <mat-card>
+    <mat-card-content>
+      <p><strong>ID:</strong> {{ booking.id }}</p>
+      <p><strong>Fechas:</strong> {{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</p>
+      <p><strong>Total:</strong> ${{ booking.precio_total }}</p>
+      <p><strong>Estado:</strong> {{ booking.estado }}</p>
+    </mat-card-content>
+    <mat-card-actions><button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">Pagar</button></mat-card-actions>
+  </mat-card>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

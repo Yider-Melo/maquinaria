@@ -1,0 +1,314 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - MACHINERY_SERVICE_URL=http://machinery-service:3002
+      - SEARCH_SERVICE_URL=http://search-service:3003
+      - BOOKING_SERVICE_URL=http://booking-service:3004
+      - PAYMENT_SERVICE_URL=http://payment-service:3005
+      - RATING_SERVICE_URL=http://rating-service:3006
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3007
+      - JWT_SECRET=${JWT_SECRET:-rentamaq-secret-key-dev}
+    depends_on:
+      - auth-service
+      - machinery-service
+      - search-service
+      - booking-service
+      - payment-service
+      - rating-service
+      - notification-service
+    networks:
+      - rentamaq-network
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DB_HOST=auth-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_auth
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - JWT_SECRET=${JWT_SECRET:-rentamaq-secret-key-dev}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_auth
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+      - ./scripts/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    networks:
+      - rentamaq-network
+
+  machinery-service:
+    build: ./services/machinery-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=machinery-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_machinery
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      machinery-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  machinery-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_machinery
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - machinery-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  search-service:
+    build: ./services/search-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DB_HOST=search-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_search
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      search-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  search-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_search
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - search-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  booking-service:
+    build: ./services/booking-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DB_HOST=booking-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_booking
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - MACHINERY_SERVICE_URL=http://machinery-service:3002
+    depends_on:
+      booking-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  booking-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_booking
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - booking-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  payment-service:
+    build: ./services/payment-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DB_HOST=payment-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_payment
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN:-}
+    depends_on:
+      payment-db:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  payment-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_payment
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - payment-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  rating-service:
+    build: ./services/rating-service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - DB_HOST=rating-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_rating
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      rating-db:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  rating-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_rating
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - rating-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  notification-service:
+    build: ./services/notification-service
+    ports:
+      - "3007:3007"
+    environment:
+      - PORT=3007
+      - DB_HOST=notification-db
+      - DB_PORT=5432
+      - DB_NAME=rentamaq_notification
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rentamaq-network
+
+  notification-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=rentamaq_notification
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      - notification-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rentamaq-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-admin}
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - rentamaq-network
+
+volumes:
+  auth-data:
+  machinery-data:
+  search-data:
+  booking-data:
+  payment-data:
+  rating-data:
+  notification-data:
+  rabbitmq-data:
+
+networks:
+  rentamaq-network:
+    driver: bridge

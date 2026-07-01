@@ -1,0 +1,22 @@
+<mat-toolbar color="primary">
+  <span class="brand" routerLink="/">Rentamaq</span>
+  <span class="spacer"></span>
+  <ng-container *ngIf="auth.isLoggedIn()">
+    <a mat-button routerLink="/machinery">Maquinaria</a>
+    <a mat-button routerLink="/bookings">Reservas</a>
+    <a mat-button routerLink="/payments">Pagos</a>
+    <a mat-button routerLink="/notifications">
+      Notificaciones
+      <span *ngIf="unreadCount > 0" class="badge">{{ unreadCount }}</span>
+    </a>
+    <button mat-button [matMenuTriggerFor]="menu">{{ auth.getUser()?.nombre }}</button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item routerLink="/machinery/new">Publicar Maquinaria</button>
+      <button mat-menu-item (click)="logout()">Cerrar Sesión</button>
+    </mat-menu>
+  </ng-container>
+  <ng-container *ngIf="!auth.isLoggedIn()">
+    <a mat-button routerLink="/auth/login">Ingresar</a>
+    <a mat-button routerLink="/auth/register">Registrarse</a>
+  </ng-container>
+</mat-toolbar>

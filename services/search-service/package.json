@@ -1,0 +1,22 @@
+{
+  "name": "rentamaq-search-service",
+  "version": "1.0.0",
+  "description": "Servicio de búsqueda",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "node --test src/**/*.test.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.11.3",
+    "shared": "file:../../shared"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

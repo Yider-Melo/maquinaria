@@ -1,0 +1,3 @@
+.container { padding:24px; max-width:800px; margin:0 auto; }
+.card { margin:12px 0; cursor:pointer; }
+.unread { border-left:4px solid #1976d2; }

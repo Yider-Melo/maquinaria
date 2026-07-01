@@ -1,0 +1,13 @@
+<div class="container">
+  <h1>Mis Calificaciones</h1>
+  <ng-container *ngIf="!loading; else loadingTmpl">
+    <mat-card *ngFor="let r of ratings" class="card">
+      <mat-card-content>
+        <p><strong>Puntuación:</strong> {{ r.puntuacion }}/5</p>
+        <p>{{ r.comentario }}</p>
+      </mat-card-content>
+    </mat-card>
+    <p *ngIf="ratings.length===0">Sin calificaciones.</p>
+  </ng-container>
+  <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
+</div>

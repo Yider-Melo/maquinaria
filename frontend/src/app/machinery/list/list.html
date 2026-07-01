@@ -1,0 +1,29 @@
+<div class="container">
+  <h1>Maquinaria Disponible</h1>
+  <div class="filters">
+    <mat-form-field appearance="fill"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
+    <mat-form-field appearance="fill"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>
+    <mat-form-field appearance="fill"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="filters.ciudad" (keyup.enter)="search()"></mat-form-field>
+    <button mat-raised-button color="primary" (click)="search()">Buscar</button>
+  </div>
+  <ng-container *ngIf="!loading; else loadingTmpl">
+    <div class="grid" *ngIf="items.length > 0">
+      <mat-card *ngFor="let item of items" class="card" [routerLink]="['/machinery', item.id]">
+        <img mat-card-image [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}">
+        <mat-card-content>
+          <h3>{{ item.titulo }}</h3>
+          <p>{{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
+          <p class="price">${{ item.precio_por_dia }} / día</p>
+          <p class="location">{{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <p *ngIf="items.length === 0">No se encontraron resultados.</p>
+    <div class="pagination" *ngIf="total > size">
+      <button mat-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+      <span>Página {{ page }}</span>
+      <button mat-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+    </div>
+  </ng-container>
+  <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
+</div>

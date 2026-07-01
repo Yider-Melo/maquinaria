@@ -1,0 +1,13 @@
+<div class="container">
+  <h1>Mis Pagos</h1>
+  <ng-container *ngIf="!loading; else loadingTmpl">
+    <mat-card *ngFor="let p of payments" class="card">
+      <mat-card-header><mat-card-title>#{{ p.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ p.referencia_pasarela }}</mat-card-subtitle></mat-card-header>
+      <mat-card-content>
+        <p><strong>Monto:</strong> ${{ p.monto }} | <strong>Estado:</strong> {{ p.estado }} | <strong>Método:</strong> {{ p.metodo_pago || 'N/A' }}</p>
+      </mat-card-content>
+    </mat-card>
+    <p *ngIf="payments.length===0">Sin pagos registrados.</p>
+  </ng-container>
+  <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
+</div>

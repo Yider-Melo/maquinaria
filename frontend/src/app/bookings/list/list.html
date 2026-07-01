@@ -1,0 +1,30 @@
+<div class="container">
+  <h1>Mis Reservas</h1>
+  <mat-tab-group>
+    <mat-tab label="Como Arrendatario">
+      <ng-container *ngIf="!loading; else loadingTmpl">
+        <mat-card *ngFor="let b of asArrendatario" class="card">
+          <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>
+          <mat-card-content><p><strong>Estado:</strong> {{ b.estado }} | <strong>Total:</strong> ${{ b.precio_total }}</p></mat-card-content>
+          <mat-card-actions><button mat-button color="warn" (click)="cancelBooking(b.id)" *ngIf="b.estado!=='cancelada'&&b.estado!=='completada'">Cancelar</button></mat-card-actions>
+        </mat-card>
+        <p *ngIf="asArrendatario.length===0">Sin reservas como arrendatario.</p>
+      </ng-container>
+    </mat-tab>
+    <mat-tab label="Como Propietario">
+      <ng-container *ngIf="!loading; else loadingTmpl">
+        <mat-card *ngFor="let b of asPropietario" class="card">
+          <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>
+          <mat-card-content><p><strong>Estado:</strong> {{ b.estado }} | <strong>Total:</strong> ${{ b.precio_total }}</p></mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="confirmBooking(b.id)" *ngIf="b.estado==='pendiente'">Confirmar</button>
+            <button mat-button color="warn" (click)="rejectBooking(b.id)" *ngIf="b.estado==='pendiente'">Rechazar</button>
+            <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'">Completar</button>
+          </mat-card-actions>
+        </mat-card>
+        <p *ngIf="asPropietario.length===0">Sin reservas como propietario.</p>
+      </ng-container>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

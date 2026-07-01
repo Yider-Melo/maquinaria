@@ -1,0 +1,5 @@
+.auth-container { display:flex; justify-content:center; align-items:center; min-height:60vh; }
+mat-card { width:450px; padding:20px; }
+.full-width { width:100%; margin-bottom:16px; }
+.error { color:#f44336; font-size:14px; }
+.link { text-align:center; margin-top:16px; }

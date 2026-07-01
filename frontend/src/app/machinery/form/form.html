@@ -1,0 +1,33 @@
+<div class="container">
+  <h1>{{ isEdit ? 'Editar' : 'Publicar' }} Maquinaria</h1>
+  <form (ngSubmit)="onSubmit()">
+    <div class="grid2">
+      <mat-form-field appearance="fill"><mat-label>Título *</mat-label><input matInput [(ngModel)]="data.titulo" name="titulo" required></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Tipo *</mat-label><input matInput [(ngModel)]="data.tipo" name="tipo" required placeholder="excavadora"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Marca</mat-label><input matInput [(ngModel)]="data.marca" name="marca"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Modelo</mat-label><input matInput [(ngModel)]="data.modelo" name="modelo"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Año</mat-label><input matInput type="number" [(ngModel)]="data.anio" name="anio"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Capacidad</mat-label><input matInput [(ngModel)]="data.capacidad" name="capacidad"></mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="data.estado" name="estado">
+          <mat-option value="nuevo">Nuevo</mat-option>
+          <mat-option value="excelente">Excelente</mat-option>
+          <mat-option value="bueno">Bueno</mat-option>
+          <mat-option value="regular">Regular</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Precio/día *</mat-label><input matInput type="number" [(ngModel)]="data.precio_por_dia" name="precio_por_dia" required></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Precio/hora</mat-label><input matInput type="number" [(ngModel)]="data.precio_por_hora" name="precio_por_hora"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Dirección</mat-label><input matInput [(ngModel)]="data.direccion" name="direccion"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="data.ciudad" name="ciudad"></mat-form-field>
+      <mat-form-field appearance="fill"><mat-label>Departamento</mat-label><input matInput [(ngModel)]="data.departamento" name="departamento"></mat-form-field>
+    </div>
+    <mat-form-field appearance="fill" class="full"><mat-label>Descripción</mat-label><textarea matInput [(ngModel)]="data.descripcion" name="descripcion" rows="4"></textarea></mat-form-field>
+
+    <h3>Ubicación en el mapa</h3>
+    <app-machinery-map [lat]="data.ubicacion_lat" [lng]="data.ubicacion_lng" (locationChange)="onLocationChange($event)"></app-machinery-map>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="loading">{{ loading ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Publicar') }}</button>
+  </form>
+</div>
