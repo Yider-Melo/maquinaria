@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -27,7 +29,9 @@ services:
       - rentamaq-network
 
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     ports:
       - "3001:3001"
     environment:
@@ -52,7 +56,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - auth-data:/var/lib/postgresql/data
-      - ./scripts/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql
+      - ./scripts/init/auth.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -64,7 +68,9 @@ services:
       - rentamaq-network
 
   machinery-service:
-    build: ./services/machinery-service
+    build:
+      context: .
+      dockerfile: services/machinery-service/Dockerfile
     ports:
       - "3002:3002"
     environment:
@@ -91,6 +97,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - machinery-data:/var/lib/postgresql/data
+      - ./scripts/init/machinery.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -100,7 +107,9 @@ services:
       - rentamaq-network
 
   search-service:
-    build: ./services/search-service
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
     ports:
       - "3003:3003"
     environment:
@@ -127,6 +136,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - search-data:/var/lib/postgresql/data
+      - ./scripts/init/search.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -136,7 +146,9 @@ services:
       - rentamaq-network
 
   booking-service:
-    build: ./services/booking-service
+    build:
+      context: .
+      dockerfile: services/booking-service/Dockerfile
     ports:
       - "3004:3004"
     environment:
@@ -164,6 +176,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - booking-data:/var/lib/postgresql/data
+      - ./scripts/init/booking.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -173,7 +186,9 @@ services:
       - rentamaq-network
 
   payment-service:
-    build: ./services/payment-service
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
     ports:
       - "3005:3005"
     environment:
@@ -199,6 +214,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - payment-data:/var/lib/postgresql/data
+      - ./scripts/init/payment.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -208,7 +224,9 @@ services:
       - rentamaq-network
 
   rating-service:
-    build: ./services/rating-service
+    build:
+      context: .
+      dockerfile: services/rating-service/Dockerfile
     ports:
       - "3006:3006"
     environment:
@@ -233,6 +251,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - rating-data:/var/lib/postgresql/data
+      - ./scripts/init/rating.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -242,7 +261,9 @@ services:
       - rentamaq-network
 
   notification-service:
-    build: ./services/notification-service
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
     ports:
       - "3007:3007"
     environment:
@@ -273,6 +294,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
     volumes:
       - notification-data:/var/lib/postgresql/data
+      - ./scripts/init/notification.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

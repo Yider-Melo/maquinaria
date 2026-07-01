@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { Auth } from './auth';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
@@ -14,7 +15,7 @@ export class SocketService {
   // Establece la conexión WebSocket autenticada con el backend.
   connect(): void {
     if (this.socket?.connected) return;
-    this.socket = io('http://localhost:3000', {
+    this.socket = io(environment.socketUrl, {
       auth: { token: this.auth.getToken() }
     });
   }

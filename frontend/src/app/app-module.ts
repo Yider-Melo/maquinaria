@@ -19,7 +19,7 @@ export class GlobalErrorHandler implements ErrorHandler {
     constructor(private router: Router) {}
     handleError(error: any) {
         console.error('Error global:', error);
-        if (error.status === 401) {
+        if (error?.status === 401) {
             localStorage.removeItem('rentamaq_token');
             localStorage.removeItem('rentamaq_user');
             this.router.navigate(['/auth/login']);

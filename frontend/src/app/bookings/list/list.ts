@@ -1,7 +1,9 @@
 // Componente que lista las reservas del usuario, tanto las que hizo
 // como arrendatario como las que recibió como propietario. Permite
 // cancelar, confirmar, rechazar o completar reservas según el estado.
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
+import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -12,9 +14,8 @@ import { Auth } from '../../core/services/auth';
 export class BookingsList implements OnInit {
   asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
 
-  constructor(private api: Api, public auth: Auth) {}
+  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar) {}
 
-  // Carga las reservas del usuario como arrendatario y como propietario.
   ngOnInit(): void {
     this.api.get<any>('/bookings/my-bookings').subscribe(res => {
       this.asArrendatario = res.data?.data || []; this.loading = false;
@@ -24,14 +25,37 @@ export class BookingsList implements OnInit {
     });
   }
 
-  // Solicita confirmación y cancela una reserva.
-  cancelBooking(id: string): void {
-    if (confirm('¿Cancelar?')) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.ngOnInit());
+  private confirmAction(msg: string): import('rxjs').Observable<boolean> {
+    const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: msg } });
+    return dialogRef.afterClosed();
   }
-  // Confirma una reserva (propietario).
+
+  cancelBooking(id: string): void {
+    this.confirmAction('¿Cancelar esta reserva?').subscribe(confirmed => {
+      if (confirmed) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.ngOnInit());
+    });
+  }
   confirmBooking(id: string): void { this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.ngOnInit()); }
-  // Rechaza una reserva (propietario).
-  rejectBooking(id: string): void { this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.ngOnInit()); }
-  // Marca una reserva como completada.
+  rejectBooking(id: string): void {
+    this.confirmAction('¿Rechazar esta reserva?').subscribe(confirmed => {
+      if (confirmed) this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.ngOnInit());
+    });
+  }
   completeBooking(id: string): void { this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.ngOnInit()); }
+}
+
+@Component({
+  selector: 'app-confirm-action-dialog',
+  template: `
+    <h2 mat-dialog-title>Confirmar</h2>
+    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancelar</button>
+      <button mat-raised-button color="primary" [mat-dialog-close]="true">Aceptar</button>
+    </mat-dialog-actions>
+  `,
+  standalone: false
+})
+export class ConfirmActionDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

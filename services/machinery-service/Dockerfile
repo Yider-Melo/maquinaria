@@ -1,8 +1,8 @@
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json ./
-RUN npm install --production
-COPY src/ ./src/
-COPY ../shared/ ./shared/
+COPY shared/ ./shared/
+COPY services/machinery-service/package.json ./services/machinery-service/
+RUN cd services/machinery-service && npm install --production
+COPY services/machinery-service/src/ ./services/machinery-service/src/
 EXPOSE 3002
-CMD ["node", "src/index.js"]
+CMD ["node", "services/machinery-service/src/index.js"]

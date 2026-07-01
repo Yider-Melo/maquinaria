@@ -6,8 +6,14 @@
       <p><strong>Fechas:</strong> {{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</p>
       <p><strong>Total:</strong> ${{ booking.precio_total }}</p>
       <p><strong>Estado:</strong> {{ booking.estado }}</p>
+      <p *ngIf="booking.propietario_nombre"><strong>Propietario:</strong> {{ booking.propietario_nombre }}</p>
+      <p *ngIf="booking.arrendatario_nombre"><strong>Arrendatario:</strong> {{ booking.arrendatario_nombre }}</p>
+      <p *ngIf="booking.maquinaria_titulo"><strong>Maquinaria:</strong> {{ booking.maquinaria_titulo }}</p>
     </mat-card-content>
-    <mat-card-actions><button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">Pagar</button></mat-card-actions>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">Pagar</button>
+      <button mat-raised-button color="accent" [routerLink]="['/machinery', booking.maquinaria_id]" *ngIf="booking.maquinaria_id">Ver Maquinaria</button>
+    </mat-card-actions>
   </mat-card>
 </div>
 <ng-template #loadingTmpl><app-loading></app-loading></ng-template>

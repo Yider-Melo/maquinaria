@@ -6,4 +6,5 @@
 .card img { height:180px; object-fit:cover; }
 .price { font-size:18px; font-weight:bold; color:#1976d2; }
 .location { color:#666; font-size:13px; }
+.rating { color:#f57f17; font-size:13px; margin-top:4px; }
 .pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px; }

@@ -1,0 +1,21 @@
+<h2 mat-dialog-title>Calificar</h2>
+<mat-dialog-content>
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Puntuación</mat-label>
+    <mat-select [(ngModel)]="puntuacion">
+      <mat-option [value]="1">1 - Muy malo</mat-option>
+      <mat-option [value]="2">2 - Malo</mat-option>
+      <mat-option [value]="3">3 - Regular</mat-option>
+      <mat-option [value]="4">4 - Bueno</mat-option>
+      <mat-option [value]="5">5 - Excelente</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="fill" class="full-width">
+    <mat-label>Comentario</mat-label>
+    <textarea matInput [(ngModel)]="comentario" rows="4" placeholder="Tu opinión..."></textarea>
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="submit()">Enviar</button>
+</mat-dialog-actions>

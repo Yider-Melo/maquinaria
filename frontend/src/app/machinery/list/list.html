@@ -4,6 +4,8 @@
     <mat-form-field appearance="fill"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
     <mat-form-field appearance="fill"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>
     <mat-form-field appearance="fill"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="filters.ciudad" (keyup.enter)="search()"></mat-form-field>
+    <mat-form-field appearance="fill"><mat-label>Precio min</mat-label><input matInput type="number" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0"></mat-form-field>
+    <mat-form-field appearance="fill"><mat-label>Precio max</mat-label><input matInput type="number" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="999999"></mat-form-field>
     <button mat-raised-button color="primary" (click)="search()">Buscar</button>
   </div>
   <ng-container *ngIf="!loading; else loadingTmpl">
@@ -15,6 +17,7 @@
           <p>{{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
           <p class="price">${{ item.precio_por_dia }} / día</p>
           <p class="location">{{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</p>
+          <p *ngIf="item.puntuacion_promedio" class="rating">★ {{ item.puntuacion_promedio | number:'1.1-1' }} ({{ item.total_resenas }})</p>
         </mat-card-content>
       </mat-card>
     </div>

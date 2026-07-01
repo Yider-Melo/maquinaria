@@ -1,13 +1,31 @@
 <div class="container">
   <h1>Mis Calificaciones</h1>
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let r of ratings" class="card">
-      <mat-card-content>
-        <p><strong>Puntuación:</strong> {{ r.puntuacion }}/5</p>
-        <p>{{ r.comentario }}</p>
-      </mat-card-content>
-    </mat-card>
-    <p *ngIf="ratings.length===0">Sin calificaciones.</p>
+
+    <mat-tab-group>
+      <mat-tab label="Recibidas">
+        <mat-card *ngFor="let r of ratings" class="card">
+          <mat-card-content>
+            <p><strong>Puntuación:</strong> {{ r.puntuacion }}/5</p>
+            <p>{{ r.comentario }}</p>
+          </mat-card-content>
+        </mat-card>
+        <p *ngIf="ratings.length===0">Sin calificaciones recibidas.</p>
+      </mat-tab>
+      <mat-tab label="Pendientes por calificar">
+        <mat-card *ngFor="let b of completedBookings" class="card">
+          <mat-card-content>
+            <p><strong>Reserva:</strong> #{{ b.id?.substring(0,8) }} | <strong>Total:</strong> ${{ b.precio_total }}</p>
+            <p>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</p>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="openRatingDialog(b)">Calificar</button>
+          </mat-card-actions>
+        </mat-card>
+        <p *ngIf="completedBookings.length===0">No hay reservas completadas pendientes de calificar.</p>
+      </mat-tab>
+    </mat-tab-group>
+
   </ng-container>
   <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
 </div>

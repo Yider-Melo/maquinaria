@@ -4,7 +4,7 @@
   "private": true,
   "description": "Plataforma Web para Gestión y Alquiler de Maquinaria Pesada - Arquitectura de Microservicios",
   "scripts": {
-    "install:all": "cd api-gateway && npm install && cd ../shared && npm init -y && cd ../services/auth-service && npm install && cd ../machinery-service && npm install && cd ../search-service && npm install && cd ../booking-service && npm install && cd ../payment-service && npm install && cd ../rating-service && npm install && cd ../notification-service && npm install",
+    "install:all": "cd shared && npm install && cd ../api-gateway && npm install && cd ../services/auth-service && npm install && cd ../machinery-service && npm install && cd ../search-service && npm install && cd ../booking-service && npm install && cd ../payment-service && npm install && cd ../rating-service && npm install && cd ../notification-service && npm install",
     "start:dev": "docker-compose up",
     "start:auth": "cd services/auth-service && npm run dev",
     "start:machinery": "cd services/machinery-service && npm run dev",

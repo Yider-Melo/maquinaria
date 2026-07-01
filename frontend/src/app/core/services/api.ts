@@ -4,8 +4,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
-// Interfaz genérica para la respuesta estándar del API.
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -13,7 +13,7 @@ export interface ApiResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class Api {
-  private baseUrl = 'http://localhost:3000';
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

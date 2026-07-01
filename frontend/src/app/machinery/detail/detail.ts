@@ -3,6 +3,8 @@
 // o gestionar las imágenes asociadas.
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -15,10 +17,10 @@ export class MachineryDetail implements OnInit {
 
   constructor(
     private route: ActivatedRoute, public router: Router,
-    private api: Api, public auth: Auth
+    private api: Api, public auth: Auth,
+    private dialog: MatDialog, private snackBar: MatSnackBar
   ) {}
 
-  // Al iniciar, obtiene el ID de la ruta y carga los datos de la maquinaria.
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.api.get<any>(`/machinery/${id}`).subscribe(res => {
@@ -26,16 +28,15 @@ export class MachineryDetail implements OnInit {
     });
   }
 
-  // Verifica si el usuario autenticado es el propietario de la maquinaria.
   isOwner(): boolean { return this.auth.getUser()?.id === this.item?.propietario_id; }
 
-  // Elimina la maquinaria tras confirmación y redirige al listado.
   deleteItem(): void {
-    if (confirm('¿Eliminar esta maquinaria?'))
-      this.api.delete(`/machinery/${this.item.id}`).subscribe(() => this.router.navigate(['/machinery']));
+    const dialogRef = this.dialog.open(ConfirmDialog);
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) this.api.delete(`/machinery/${this.item.id}`).subscribe(() => this.router.navigate(['/machinery']));
+    });
   }
 
-  // Lee un archivo de imagen seleccionado, lo convierte a base64 y lo sube al servidor.
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file || !this.item) return;
@@ -49,15 +50,30 @@ export class MachineryDetail implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  // Elimina una imagen por su ID del servidor y la quita del arreglo local.
   removeImage(imageId: string): void {
     this.api.delete(`/machinery/${this.item.id}/images/${imageId}`).subscribe(() => {
       this.images = this.images.filter(i => i.id !== imageId);
     });
   }
 
-  // Solicita confirmación antes de eliminar una imagen.
   deleteImage(imageId: string): void {
-    if (confirm('¿Eliminar esta imagen?')) this.removeImage(imageId);
+    const dialogRef = this.dialog.open(ConfirmDialog);
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) this.removeImage(imageId);
+    });
   }
 }
+
+@Component({
+  selector: 'app-confirm-dialog',
+  template: `
+    <h2 mat-dialog-title>Confirmar</h2>
+    <mat-dialog-content>¿Estás seguro de realizar esta acción?</mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancelar</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="true">Aceptar</button>
+    </mat-dialog-actions>
+  `,
+  standalone: false
+})
+export class ConfirmDialog {}

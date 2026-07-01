@@ -6,7 +6,8 @@
         <mat-form-field appearance="fill" class="full-width"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="data.nombre" name="nombre" required></mat-form-field>
         <mat-form-field appearance="fill" class="full-width"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="data.apellido" name="apellido" required></mat-form-field>
         <mat-form-field appearance="fill" class="full-width"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="data.email" name="email" required></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Contraseña</mat-label><input matInput type="password" [(ngModel)]="data.password" name="password" required></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Contraseña *</mat-label><input matInput type="password" [(ngModel)]="data.password" name="password" required minlength="6"></mat-form-field>
+        <mat-form-field appearance="fill" class="full-width"><mat-label>Confirmar Contraseña *</mat-label><input matInput type="password" [(ngModel)]="data.confirmPassword" name="confirmPassword" required></mat-form-field>
         <mat-form-field appearance="fill" class="full-width"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="data.telefono" name="telefono"></mat-form-field>
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Tipo</mat-label>

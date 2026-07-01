@@ -3,6 +3,7 @@
 // Se conecta al WebSocket al iniciar para recibir notificaciones en tiempo real.
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Auth } from '../../core/services/auth';
 import { SocketService } from '../../core/services/socket';
 import { Api } from '../../core/services/api';
@@ -20,7 +21,8 @@ export class Header implements OnInit, OnDestroy {
     public auth: Auth,
     private router: Router,
     private socket: SocketService,
-    private api: Api
+    private api: Api,
+    private snackBar: MatSnackBar
   ) {}
 
   // Al iniciar, si el usuario está autenticado, carga el conteo de
@@ -33,8 +35,12 @@ export class Header implements OnInit, OnDestroy {
       });
       this.socket.connect();
       this.subs.push(
-        this.socket.onNotification().subscribe(() => {
+        this.socket.onNotification().subscribe((data: any) => {
           this.unreadCount++;
+          this.snackBar.open(data?.mensaje || 'Nueva notificación', 'Ver', {
+            duration: 4000,
+            direction: 'ltr'
+          }).onAction().subscribe(() => this.router.navigate(['/notifications']));
         })
       );
     }

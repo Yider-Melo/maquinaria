@@ -1,21 +1,45 @@
-// Componente que muestra las valoraciones recibidas por el usuario
-// autenticado. Consulta el API usando el ID del usuario actual.
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
+import { RatingForm } from '../form/rating-form';
 
 @Component({
   selector: 'app-ratings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
   standalone: false
 })
 export class RatingsList implements OnInit {
-  ratings: any[] = []; loading = true;
+  ratings: any[] = []; completedBookings: any[] = []; loading = true;
 
-  constructor(private api: Api, private auth: Auth) {}
+  constructor(private api: Api, private auth: Auth, private dialog: MatDialog) {}
 
-  // Carga las valoraciones del usuario autenticado.
   ngOnInit(): void {
     const userId = this.auth.getUser()?.id;
-    if (userId) this.api.get<any>(`/ratings/user/${userId}`).subscribe(res => { this.ratings = res.data || []; this.loading = false; });
+    if (userId) {
+      this.api.get<any>(`/ratings/user/${userId}`).subscribe(res => { this.ratings = res.data || []; });
+      this.api.get<any>('/bookings/my-bookings').subscribe(res => {
+        this.completedBookings = (res.data?.data || []).filter((b: any) => b.estado === 'completada');
+        this.loading = false;
+      });
+    } else {
+      this.loading = false;
+    }
+  }
+
+  openRatingDialog(booking: any): void {
+    const dialogRef = this.dialog.open(RatingForm, {
+      data: {
+        reserva_id: booking.id,
+        calificado_id: booking.propietario_id,
+        maquinaria_id: booking.maquinaria_id
+      }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.api.post('/ratings', result).subscribe(() => {
+          this.ngOnInit();
+        });
+      }
+    });
   }
 }

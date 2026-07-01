@@ -1,8 +1,8 @@
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json ./
-RUN npm install --production
-COPY src/ ./src/
-COPY ../shared/ ./shared/
+COPY shared/ ./shared/
+COPY services/rating-service/package.json ./services/rating-service/
+RUN cd services/rating-service && npm install --production
+COPY services/rating-service/src/ ./services/rating-service/src/
 EXPOSE 3006
-CMD ["node", "src/index.js"]
+CMD ["node", "services/rating-service/src/index.js"]
