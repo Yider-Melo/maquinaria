@@ -1,7 +1,7 @@
 <div class="container">
   <h1>Mis Reservas</h1>
-  <mat-tab-group>
-    <mat-tab label="Como Arrendatario">
+  <mat-tab-group [selectedIndex]="tabIndex">
+    <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
       <ng-container *ngIf="!loading; else loadingTmpl">
         <mat-card *ngFor="let b of asArrendatario" class="card" [routerLink]="['/bookings', b.id]">
           <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>
@@ -11,7 +11,7 @@
         <p *ngIf="asArrendatario.length===0">Sin reservas como arrendatario.</p>
       </ng-container>
     </mat-tab>
-    <mat-tab label="Como Propietario">
+    <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
       <ng-container *ngIf="!loading; else loadingTmpl">
         <mat-card *ngFor="let b of asPropietario" class="card" [routerLink]="['/bookings', b.id]">
           <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>

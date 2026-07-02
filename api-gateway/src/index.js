@@ -19,7 +19,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
 
 app.use(cors());
 app.use(morgan('dev'));
-app.use(express.json({ limit: '50mb' }));
+// No usar express.json() globalmente porque http-proxy-middleware
+// necesita el body crudo (stream) para reenviarlo a los microservicios.
+// Solo se aplica a rutas específicas que no pasan por proxy.
 
 // Endpoint de salud para el balanceador / healthcheck
 app.get('/health', (_req, res) => {
@@ -28,7 +30,7 @@ app.get('/health', (_req, res) => {
 
 // Endpoint interno para que el notification-service envie notificaciones
 // en tiempo real via WebSocket al usuario correspondiente
-app.post('/_ws/notify', (req, res) => {
+app.post('/_ws/notify', express.json({ limit: '50mb' }), (req, res) => {
     const { userId, titulo, mensaje } = req.body;
     if (userId) {
         io.to(`user:${userId}`).emit('notification', { titulo, mensaje });

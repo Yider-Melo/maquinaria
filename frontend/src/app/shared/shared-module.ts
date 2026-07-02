@@ -17,6 +17,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Header } from './header/header';
 import { Footer } from './footer/footer';
@@ -24,12 +25,12 @@ import { Loading } from './loading/loading';
 
 @NgModule({
   declarations: [Header, Footer, Loading],
-  imports: [CommonModule, RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatMenuModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule],
   exports: [
     CommonModule, RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatMenuModule, MatTabsModule, MatIconModule,
-    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule,
+    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule,
     Header, Footer, Loading
   ]
 })

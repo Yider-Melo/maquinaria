@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const machineryController = require('../controllers/machineryController');
-const { validate, validateToken, schemas, success, errorHandler } = require('shared');
+const { validate, validateToken, requireRole, schemas, success, errorHandler } = require('shared');
 
 // Crear una nueva maquinaria (solo propietarios autenticados)
 router.post('/', validateToken, validate(schemas.maquinaria), async (req, res, next) => {
@@ -19,6 +19,24 @@ router.get('/owner', validateToken, async (req, res, next) => {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
         const result = await machineryController.getByOwner(req.user.id, page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
+// Admin: obtener estadisticas de maquinaria (solo admin)
+router.get('/stats', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const stats = await machineryController.adminMachineryStats();
+        success(res, stats);
+    } catch (err) { next(err); }
+});
+
+// Admin: listar toda la maquinaria (solo admin)
+router.get('/all', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await machineryController.adminAllMachinery(page, size);
         success(res, result);
     } catch (err) { next(err); }
 });

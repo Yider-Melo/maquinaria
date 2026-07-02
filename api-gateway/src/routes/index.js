@@ -49,11 +49,33 @@ router.use('/ratings', validateToken, proxyWithTarget(RATING_SERVICE, { '^/ratin
 router.use('/notifications', validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { '^/notifications': '' }));
 
 // Admin (requiere autenticacion + rol admin)
-const adminProxy = createProxyMiddleware({
+// Cada ruta /admin/<servicio>/* se redirige al servicio correspondiente
+// http-proxy-middleware recibe la ruta relativa (sin el prefijo del router.use)
+// pathRewrite transforma esa ruta relativa a lo que espera el servicio destino
+router.use('/admin/payments', validateToken, requireRole('admin'), createProxyMiddleware({
+    target: PAYMENT_SERVICE,
+    changeOrigin: true,
+    pathRewrite: (path) => '/admin' + path
+}));
+router.use('/admin/users', validateToken, requireRole('admin'), createProxyMiddleware({
+    target: AUTH_SERVICE,
+    changeOrigin: true,
+    pathRewrite: (path) => '/users' + path
+}));
+router.use('/admin/bookings', validateToken, requireRole('admin'), createProxyMiddleware({
+    target: BOOKING_SERVICE,
+    changeOrigin: true,
+    pathRewrite: (path) => path
+}));
+router.use('/admin/machinery', validateToken, requireRole('admin'), createProxyMiddleware({
     target: MACHINERY_SERVICE,
     changeOrigin: true,
-    pathRewrite: { '^/admin': '/admin' }
-});
-router.use('/admin', validateToken, requireRole('admin'), adminProxy);
+    pathRewrite: (path) => path
+}));
+router.use('/admin/ratings', validateToken, requireRole('admin'), createProxyMiddleware({
+    target: RATING_SERVICE,
+    changeOrigin: true,
+    pathRewrite: (path) => path
+}));
 
 module.exports = router;

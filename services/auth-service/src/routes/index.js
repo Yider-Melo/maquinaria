@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { validate, validateToken, schemas, success, errorHandler } = require('shared');
+const { validate, validateToken, requireRole, schemas, success, errorHandler } = require('shared');
 
 // Registro de nuevo usuario
 router.post('/register', validate(schemas.register), async (req, res, next) => {
@@ -89,6 +89,22 @@ router.post('/reset-password', async (req, res, next) => {
 router.post('/validate-token', async (req, res) => {
     const decoded = await authController.validateToken(req.body.token);
     success(res, { valid: !!decoded, user: decoded });
+});
+
+router.get('/users', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await authController.adminListUsers(page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
+router.get('/users/stats', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const stats = await authController.adminUserStats();
+        success(res, stats);
+    } catch (err) { next(err); }
 });
 
 router.use(errorHandler);

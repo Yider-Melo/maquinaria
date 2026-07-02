@@ -5,14 +5,15 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
+  { path: '', loadChildren: () => import('./dashboard/dashboard-module').then(m => m.DashboardModule) },
+  { path: 'admin', loadChildren: () => import('./admin/admin-module').then(m => m.AdminModule) },
   { path: 'auth', loadChildren: () => import('./auth/auth-module').then(m => m.AuthModule) },
   { path: 'machinery', loadChildren: () => import('./machinery/machinery-module').then(m => m.MachineryModule) },
   { path: 'bookings', loadChildren: () => import('./bookings/bookings-module').then(m => m.BookingsModule) },
   { path: 'payments', loadChildren: () => import('./payments/payments-module').then(m => m.PaymentsModule) },
   { path: 'ratings', loadChildren: () => import('./ratings/ratings-module').then(m => m.RatingsModule) },
   { path: 'notifications', loadChildren: () => import('./notifications/notifications-module').then(m => m.NotificationsModule) },
-  { path: '', redirectTo: '/machinery', pathMatch: 'full' },
-  { path: '**', redirectTo: '/machinery' }
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({ imports: [RouterModule.forRoot(routes)], exports: [RouterModule] })

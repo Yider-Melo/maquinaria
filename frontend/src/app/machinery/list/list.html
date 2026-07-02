@@ -1,5 +1,10 @@
 <div class="container">
-  <h1>Maquinaria Disponible</h1>
+  <div class="list-header">
+    <h1>Maquinaria Disponible</h1>
+    <button mat-raised-button color="primary" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <mat-icon>add</mat-icon> Publicar Maquinaria
+    </button>
+  </div>
   <div class="filters">
     <mat-form-field appearance="fill"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
     <mat-form-field appearance="fill"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>

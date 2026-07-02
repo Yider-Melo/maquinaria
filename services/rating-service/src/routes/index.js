@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const ratingController = require('../controllers/ratingController');
-const { validateToken, success, errorHandler } = require('shared');
+const { validateToken, requireRole, success, errorHandler } = require('shared');
 
 // Crear una nueva calificacion
 router.post('/', validateToken, async (req, res, next) => {
@@ -27,6 +27,14 @@ router.get('/user/:userId/average', async (req, res, next) => {
     try {
         const average = await ratingController.getAverage(req.params.userId);
         success(res, average);
+    } catch (err) { next(err); }
+});
+
+// Admin: estadisticas de calificaciones (solo admin)
+router.get('/stats', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const stats = await ratingController.adminRatingStats();
+        success(res, stats);
     } catch (err) { next(err); }
 });
 

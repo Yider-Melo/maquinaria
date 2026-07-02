@@ -1,5 +1,3 @@
-// Guardia de ruta que protege las páginas que requieren autenticación.
-// Si el usuario no ha iniciado sesión, redirige al login.
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { Auth } from '../services/auth';
@@ -9,7 +7,7 @@ export class AuthGuard implements CanActivate {
   constructor(private auth: Auth, private router: Router) {}
   canActivate(): boolean {
     if (this.auth.isLoggedIn()) return true;
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/machinery']);
     return false;
   }
 }

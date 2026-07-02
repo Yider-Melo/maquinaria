@@ -22,7 +22,7 @@ export class GlobalErrorHandler implements ErrorHandler {
         if (error?.status === 401) {
             localStorage.removeItem('rentamaq_token');
             localStorage.removeItem('rentamaq_user');
-            this.router.navigate(['/auth/login']);
+            this.router.navigate(['/machinery']);
         }
     }
 }

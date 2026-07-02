@@ -1,19 +1,41 @@
 <mat-toolbar color="primary">
-  <span class="brand" routerLink="/">Rentamaq</span>
+  <span class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'">Rentamaq</span>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
     <a mat-button routerLink="/machinery">Maquinaria</a>
     <a mat-button routerLink="/bookings">Reservas</a>
     <a mat-button routerLink="/payments">Pagos</a>
     <a mat-button routerLink="/ratings">Calificaciones</a>
+    <a mat-button routerLink="/admin" *ngIf="auth.esTipo('admin')">
+      <mat-icon class="menu-icon">admin_panel_settings</mat-icon>
+      Admin
+    </a>
     <a mat-button routerLink="/notifications">
       Notificaciones
       <span *ngIf="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </a>
-    <button mat-button [matMenuTriggerFor]="menu">{{ auth.getUser()?.nombre }}</button>
+    <button mat-button [matMenuTriggerFor]="menu">
+      <mat-icon class="menu-icon">account_circle</mat-icon>
+      {{ auth.getUser()?.nombre }}
+    </button>
     <mat-menu #menu="matMenu">
-      <button mat-menu-item routerLink="/machinery/new">Publicar Maquinaria</button>
-      <button mat-menu-item (click)="logout()">Cerrar Sesión</button>
+      <button mat-menu-item disabled>
+        <mat-icon>badge</mat-icon>
+        {{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/admin" *ngIf="auth.esTipo('admin')">
+        <mat-icon>admin_panel_settings</mat-icon>
+        Panel Admin
+      </button>
+      <button mat-menu-item routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+        <mat-icon>add_circle</mat-icon>
+        Publicar Maquinaria
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        Cerrar Sesión
+      </button>
     </mat-menu>
   </ng-container>
   <ng-container *ngIf="!auth.isLoggedIn()">

@@ -1,3 +1,4 @@
 .brand { font-weight:bold; cursor:pointer; margin-right:24px; }
 .spacer { flex:1 1 auto; }
 .badge { background:#f44336; color:white; border-radius:50%; padding:2px 8px; font-size:12px; margin-left:4px; }
+.menu-icon { vertical-align:middle; margin-right:4px; }

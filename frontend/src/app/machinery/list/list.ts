@@ -1,8 +1,6 @@
-// Componente que muestra el listado de maquinaria disponible con
-// filtros de búsqueda (texto, tipo, ciudad, rango de precio) y
-// paginación. Es la página de inicio predeterminada de la aplicación.
 import { Component, OnInit } from '@angular/core';
 import { Api } from '../../core/services/api';
+import { Auth } from '../../core/services/auth';
 
 @Component({
   standalone: false,
@@ -12,7 +10,7 @@ export class MachineryList implements OnInit {
   items: any[] = []; loading = true; total = 0; page = 1; size = 20;
   filters: any = { q: '', tipo: '', ciudad: '', minPrice: null, maxPrice: null };
 
-  constructor(private api: Api) {}
+  constructor(private api: Api, public auth: Auth) {}
 
   ngOnInit(): void { this.load(); }
 

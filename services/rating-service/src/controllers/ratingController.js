@@ -137,6 +137,24 @@ async function report(id, userId, motivo) {
     return result.rows[0];
 }
 
+async function adminRatingStats() {
+    const result = await pool.query(
+        `SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN reportado = true THEN 1 END) as reportadas,
+            COUNT(CASE WHEN activo = false THEN 1 END) as eliminadas,
+            COALESCE(AVG(puntuacion), 0) as puntuacion_promedio
+         FROM calificacion`
+    );
+    const reportadas = await pool.query(
+        `SELECT *
+         FROM calificacion
+         WHERE reportado = true AND activo = true
+         ORDER BY creado_en DESC`
+    );
+    return { resumen: result.rows[0], reportadas: reportadas.rows };
+}
+
 module.exports = {
     create,
     getByUser,
@@ -144,5 +162,6 @@ module.exports = {
     getAverage,
     update,
     remove,
-    report
+    report,
+    adminRatingStats
 };

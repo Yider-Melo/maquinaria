@@ -1,0 +1,50 @@
+<div class="page">
+  <h1>Reportes</h1>
+
+  <div class="report-grid">
+    <mat-card class="report-card" routerLink="/admin/accounting">
+      <mat-icon class="report-icon">account_balance</mat-icon>
+      <div>
+        <h3>Reporte Financiero</h3>
+        <p>Ingresos, retenciones, reembolsos y transacciones</p>
+      </div>
+      <mat-icon class="arrow">chevron_right</mat-icon>
+    </mat-card>
+
+    <mat-card class="report-card" routerLink="/admin/performance">
+      <mat-icon class="report-icon">bar_chart</mat-icon>
+      <div>
+        <h3>Rendimiento de Maquinaria</h3>
+        <p>Distribución por tipo, precios, disponibilidad</p>
+      </div>
+      <mat-icon class="arrow">chevron_right</mat-icon>
+    </mat-card>
+
+    <mat-card class="report-card" routerLink="/admin/performance">
+      <mat-icon class="report-icon">assignment</mat-icon>
+      <div>
+        <h3>Estadísticas de Reservas</h3>
+        <p>Volumen, estados, ingresos generados</p>
+      </div>
+      <mat-icon class="arrow">chevron_right</mat-icon>
+    </mat-card>
+
+    <mat-card class="report-card">
+      <mat-icon class="report-icon">group</mat-icon>
+      <div>
+        <h3>Usuarios</h3>
+        <p>{{ stats?.total || 0 }} usuarios registrados: {{ stats?.propietarios || 0 }} propietarios, {{ stats?.arrendatarios || 0 }} arrendatarios</p>
+        <p *ngIf="stats?.inactivos" class="warn">{{ stats.inactivos }} inactivos, {{ stats.no_verificados }} no verificados</p>
+      </div>
+    </mat-card>
+
+    <mat-card class="report-card" routerLink="/admin/performance">
+      <mat-icon class="report-icon">star</mat-icon>
+      <div>
+        <h3>Calificaciones Reportadas</h3>
+        <p>{{ ratingReportadas || 0 }} calificaciones marcadas como inapropiadas</p>
+      </div>
+      <mat-icon class="arrow">chevron_right</mat-icon>
+    </mat-card>
+  </div>
+</div>

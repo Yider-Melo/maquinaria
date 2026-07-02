@@ -1,0 +1,11 @@
+.page { padding:24px; max-width:900px; margin:0 auto; }
+.page h1 { margin-bottom:24px; }
+.report-grid { display:flex; flex-direction:column; gap:12px; }
+.report-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:pointer; transition:transform .2s; }
+.report-card:hover { transform:translateX(4px); }
+.report-icon { font-size:36px; width:36px; height:36px; color:#1976d2; }
+.report-card div { flex:1; }
+.report-card h3 { margin:0 0 4px; font-size:16px; }
+.report-card p { margin:0; color:#666; font-size:13px; }
+.report-card .warn { color:#e65100; margin-top:4px; }
+.arrow { color:#ccc; }

@@ -215,6 +215,33 @@ async function validateToken(token) {
     }
 }
 
+async function adminListUsers(page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query('SELECT COUNT(*) FROM usuarios');
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT id, email, nombre, apellido, telefono, tipo_usuario, foto_url,
+                email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en
+         FROM usuarios ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
+        [size, offset]
+    );
+    return { data: result.rows, total, page, size };
+}
+
+async function adminUserStats() {
+    const result = await pool.query(
+        `SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN tipo_usuario = 'propietario' THEN 1 END) as propietarios,
+            COUNT(CASE WHEN tipo_usuario = 'arrendatario' THEN 1 END) as arrendatarios,
+            COUNT(CASE WHEN tipo_usuario = 'admin' THEN 1 END) as admins,
+            COUNT(CASE WHEN activo = false THEN 1 END) as inactivos,
+            COUNT(CASE WHEN email_verificado = false THEN 1 END) as no_verificados
+         FROM usuarios`
+    );
+    return result.rows[0];
+}
+
 module.exports = {
     register,
     login,
@@ -224,5 +251,7 @@ module.exports = {
     verify2FA,
     forgotPassword,
     resetPassword,
-    validateToken
+    validateToken,
+    adminListUsers,
+    adminUserStats
 };

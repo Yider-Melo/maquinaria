@@ -1,0 +1,69 @@
+<div class="dashboard">
+  <div class="welcome">
+    <h1>Bienvenido, {{ auth.getUser()?.nombre }}!</h1>
+    <p class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
+      {{ auth.esTipo('propietario') ? '👷 Propietario' : auth.esTipo('admin') ? '⚙️ Administrador' : '🔧 Arrendatario' }}
+    </p>
+  </div>
+
+  <ng-container *ngIf="!loading; else loadingTmpl">
+    <div class="stats-grid">
+      <mat-card class="stat-card" routerLink="/machinery">
+        <mat-icon class="stat-icon">construction</mat-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalMaquinaria }}</span>
+          <span class="stat-label">Máquinas Disponibles</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+        <mat-icon class="stat-icon">assignment</mat-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.misListados }}</span>
+          <span class="stat-label">Solicitudes de Reserva</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+        <mat-icon class="stat-icon">calendar_today</mat-icon>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.misReservas }}</span>
+          <span class="stat-label">Mis Reservas</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" routerLink="/notifications">
+        <mat-icon class="stat-icon">notifications</mat-icon>
+        <div class="stat-info">
+          <span class="stat-value" [class.has-unread]="stats.noLeidas > 0">{{ stats.noLeidas }}</span>
+          <span class="stat-label">Notificaciones</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="quick-actions">
+      <h2>Acciones Rápidas</h2>
+      <div class="actions-grid">
+        <button mat-raised-button color="primary" routerLink="/machinery">
+          <mat-icon>search</mat-icon> Buscar Maquinaria
+        </button>
+        <button mat-raised-button color="accent" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+          <mat-icon>add_circle</mat-icon> Publicar Maquinaria
+        </button>
+        <button mat-raised-button color="primary" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+          <mat-icon>book_online</mat-icon> Mis Reservas
+        </button>
+        <button mat-raised-button color="accent" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+          <mat-icon>list_alt</mat-icon> Gestionar Solicitudes
+        </button>
+        <button mat-raised-button color="primary" routerLink="/payments">
+          <mat-icon>payments</mat-icon> Ver Pagos
+        </button>
+        <button mat-raised-button color="accent" routerLink="/ratings">
+          <mat-icon>star</mat-icon> Calificaciones
+        </button>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
+</div>

@@ -53,4 +53,8 @@ export class Auth {
   }
   // Indica si hay una sesión activa (existe token).
   isLoggedIn(): boolean { return !!this.getToken(); }
+  // Devuelve el tipo de usuario o null.
+  get tipoUsuario(): string | null { return this.getUser()?.tipo_usuario || null; }
+  // Verifica si el usuario es de un tipo específico.
+  esTipo(tipo: string): boolean { return this.tipoUsuario === tipo; }
 }

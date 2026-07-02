@@ -201,6 +201,36 @@ async function getAvailability(machineryId, startDate, endDate) {
     return result.rows;
 }
 
+async function adminMachineryStats() {
+    const result = await pool.query(
+        `SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN activo = true THEN 1 END) as activas,
+            COUNT(CASE WHEN activo = false THEN 1 END) as inactivas,
+            COUNT(DISTINCT propietario_id) as propietarios_con_maquinaria,
+            COUNT(DISTINCT tipo) as tipos_distintos,
+            COALESCE(AVG(precio_por_dia), 0) as precio_promedio_dia,
+            COALESCE(MIN(precio_por_dia), 0) as precio_minimo,
+            COALESCE(MAX(precio_por_dia), 0) as precio_maximo
+         FROM maquinaria`
+    );
+    const tipoResult = await pool.query(
+        `SELECT tipo, COUNT(*) as cantidad FROM maquinaria WHERE activo = true GROUP BY tipo ORDER BY cantidad DESC`
+    );
+    return { resumen: result.rows[0], por_tipo: tipoResult.rows };
+}
+
+async function adminAllMachinery(page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria');
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT * FROM maquinaria ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
+        [size, offset]
+    );
+    return { data: result.rows, total, page, size };
+}
+
 module.exports = {
     create,
     getById,
@@ -211,5 +241,7 @@ module.exports = {
     deleteImage,
     getImages,
     updateAvailability,
-    getAvailability
+    getAvailability,
+    adminMachineryStats,
+    adminAllMachinery
 };

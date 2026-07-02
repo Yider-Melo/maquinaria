@@ -13,10 +13,13 @@ import { Auth } from '../../core/services/auth';
 })
 export class BookingsList implements OnInit {
   asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
+  tabIndex = 0;
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
+    if (this.auth.esTipo('propietario')) this.tabIndex = 0;
+    else if (this.auth.esTipo('arrendatario')) this.tabIndex = 0;
     this.api.get<any>('/bookings/my-bookings').subscribe(res => {
       this.asArrendatario = res.data?.data || []; this.loading = false;
     });

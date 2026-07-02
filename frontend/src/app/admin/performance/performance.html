@@ -1,0 +1,141 @@
+<div class="page" *ngIf="!loading; else loadingTmpl">
+  <h1>Rendimiento</h1>
+
+  <mat-tab-group>
+    <mat-tab label="Maquinaria">
+      <div class="tab-content">
+        <div class="summary-grid">
+          <mat-card class="summary-card">
+            <mat-icon>check_circle</mat-icon>
+            <span class="summary-value">{{ machineryStats?.resumen?.activas || 0 }}</span>
+            <span class="summary-label">Activas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>cancel</mat-icon>
+            <span class="summary-value">{{ machineryStats?.resumen?.inactivas || 0 }}</span>
+            <span class="summary-label">Inactivas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>group</mat-icon>
+            <span class="summary-value">{{ machineryStats?.resumen?.propietarios_con_maquinaria || 0 }}</span>
+            <span class="summary-label">Propietarios</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>category</mat-icon>
+            <span class="summary-value">{{ machineryStats?.resumen?.tipos_distintos || 0 }}</span>
+            <span class="summary-label">Tipos</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>attach_money</mat-icon>
+            <span class="summary-value">${{ (machineryStats?.resumen?.precio_promedio_dia || 0) | number:'1.0-0' }}</span>
+            <span class="summary-label">Precio Prom./día</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>local_offer</mat-icon>
+            <span class="summary-value">${{ (machineryStats?.resumen?.precio_minimo || 0) | number:'1.0-0' }} - ${{ (machineryStats?.resumen?.precio_maximo || 0) | number:'1.0-0' }}</span>
+            <span class="summary-label">Rango de Precios</span>
+          </mat-card>
+        </div>
+
+        <h2>Distribución por Tipo</h2>
+        <mat-card>
+          <mat-card-content>
+            <div class="bar-chart" *ngIf="machineryStats?.por_tipo?.length">
+              <div class="bar-item" *ngFor="let t of machineryStats.por_tipo">
+                <span class="bar-label">{{ t.tipo }}</span>
+                <div class="bar-track"><div class="bar-fill" [style.width.%]="barPercent(t.cantidad, machineryStats?.resumen?.activas)"></div></div>
+                <span class="bar-value">{{ t.cantidad }}</span>
+              </div>
+            </div>
+            <p *ngIf="!machineryStats?.por_tipo?.length" class="empty">Sin datos</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Reservas">
+      <div class="tab-content">
+        <div class="summary-grid">
+          <mat-card class="summary-card">
+            <mat-icon>pending_actions</mat-icon>
+            <span class="summary-value">{{ bookingStats?.pendientes || 0 }}</span>
+            <span class="summary-label">Pendientes</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>check_circle</mat-icon>
+            <span class="summary-value">{{ bookingStats?.confirmadas || 0 }}</span>
+            <span class="summary-label">Confirmadas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>play_circle</mat-icon>
+            <span class="summary-value">{{ bookingStats?.en_curso || 0 }}</span>
+            <span class="summary-label">En Curso</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>done_all</mat-icon>
+            <span class="summary-value">{{ bookingStats?.completadas || 0 }}</span>
+            <span class="summary-label">Completadas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>highlight_off</mat-icon>
+            <span class="summary-value">{{ (bookingStats?.canceladas || 0) + (bookingStats?.rechazadas || 0) }}</span>
+            <span class="summary-label">Canceladas/Rechazadas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>trending_up</mat-icon>
+            <span class="summary-value">${{ (bookingStats?.ingresos_totales || 0) | number }}</span>
+            <span class="summary-label">Ingresos por Reservas</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>receipt_long</mat-icon>
+            <span class="summary-value">${{ (bookingStats?.promedio_por_reserva || 0) | number:'1.0-0' }}</span>
+            <span class="summary-label">Promedio por Reserva</span>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Calificaciones">
+      <div class="tab-content">
+        <div class="summary-grid">
+          <mat-card class="summary-card">
+            <mat-icon>star</mat-icon>
+            <span class="summary-value">{{ ratingStats?.resumen?.total || 0 }}</span>
+            <span class="summary-label">Total Calificaciones</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>star_half</mat-icon>
+            <span class="summary-value">{{ (ratingStats?.resumen?.puntuacion_promedio || 0) | number:'1.1-1' }}</span>
+            <span class="summary-label">Puntuación Promedio</span>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-icon>report</mat-icon>
+            <span class="summary-value">{{ ratingStats?.resumen?.reportadas || 0 }}</span>
+            <span class="summary-label">Reportadas</span>
+          </mat-card>
+        </div>
+
+        <h2>Calificaciones Reportadas</h2>
+        <mat-card>
+          <mat-card-content>
+            <table class="admin-table" *ngIf="ratingStats?.reportadas?.length">
+              <thead><tr><th>ID</th><th>Puntuación</th><th>Comentario</th><th>Calificador</th><th>Motivo Reporte</th><th>Fecha</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let r of ratingStats.reportadas">
+                  <td>{{ r.id?.substring(0, 8) }}...</td>
+                  <td>{{ r.puntuacion }} / 5</td>
+                  <td>{{ r.comentario || 'Sin comentario' }}</td>
+                  <td>{{ r.calificador_email || r.calificador_id?.substring(0, 8) }}</td>
+                  <td>{{ r.motivo_reporte || 'N/A' }}</td>
+                  <td>{{ r.creado_en | date:'short' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p *ngIf="!ratingStats?.reportadas?.length" class="empty">Sin calificaciones reportadas</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

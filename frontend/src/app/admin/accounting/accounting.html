@@ -1,0 +1,57 @@
+<div class="page" *ngIf="!loading; else loadingTmpl">
+  <h1>Contabilidad</h1>
+
+  <div class="summary-grid">
+    <mat-card class="summary-card">
+      <mat-icon>account_balance</mat-icon>
+      <span class="summary-value">${{ (dashboard?.resumen?.total_liberado || 0) | number }}</span>
+      <span class="summary-label">Total Facturado</span>
+    </mat-card>
+    <mat-card class="summary-card">
+      <mat-icon>lock</mat-icon>
+      <span class="summary-value">${{ (dashboard?.resumen?.total_retenido || 0) | number }}</span>
+      <span class="summary-label">En Garantía</span>
+    </mat-card>
+    <mat-card class="summary-card">
+      <mat-icon>undo</mat-icon>
+      <span class="summary-value">${{ (dashboard?.resumen?.total_reembolsado || 0) | number }}</span>
+      <span class="summary-label">Reembolsado</span>
+    </mat-card>
+    <mat-card class="summary-card">
+      <mat-icon>receipt</mat-icon>
+      <span class="summary-value">{{ dashboard?.resumen?.total_transacciones || 0 }}</span>
+      <span class="summary-label">Transacciones Totales</span>
+    </mat-card>
+    <mat-card class="summary-card error">
+      <mat-icon>error_outline</mat-icon>
+      <span class="summary-value">{{ dashboard?.resumen?.total_fallidos || 0 }}</span>
+      <span class="summary-label">Fallidas</span>
+    </mat-card>
+    <mat-card class="summary-card">
+      <mat-icon>trending_up</mat-icon>
+      <span class="summary-value">${{ ((dashboard?.resumen?.total_liberado || 0) - (dashboard?.resumen?.total_reembolsado || 0)) | number }}</span>
+      <span class="summary-label">Ganancia Neta</span>
+    </mat-card>
+  </div>
+
+  <h2>Últimos Pagos</h2>
+  <mat-card>
+    <mat-card-content>
+      <table class="admin-table" *ngIf="dashboard?.ultimos_pagos?.length">
+        <thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Método</th><th>Fecha</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of dashboard.ultimos_pagos">
+            <td>{{ p.id?.substring(0, 8) }}...</td>
+            <td>{{ p.reserva_id?.substring(0, 8) }}...</td>
+            <td>${{ p.monto | number }}</td>
+            <td><span class="status-badge" [class]="p.estado">{{ p.estado }}</span></td>
+            <td>{{ p.metodo_pago || 'N/A' }}</td>
+            <td>{{ p.creado_en | date:'short' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!dashboard?.ultimos_pagos?.length" class="empty">Sin pagos registrados</p>
+    </mat-card-content>
+  </mat-card>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

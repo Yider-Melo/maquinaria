@@ -27,7 +27,7 @@
       <p class="location">{{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>
       <p class="desc">{{ item.descripcion }}</p>
       <div class="actions" *ngIf="auth.isLoggedIn()">
-        <button *ngIf="!isOwner()" mat-raised-button color="primary" [routerLink]="['/bookings']" [queryParams]="{machineryId:item.id}">Reservar</button>
+        <button *ngIf="!isOwner() && auth.esTipo('arrendatario')" mat-raised-button color="primary" [routerLink]="['/bookings']" [queryParams]="{machineryId:item.id}">Reservar</button>
         <button *ngIf="isOwner()" mat-raised-button color="accent" [routerLink]="['/machinery', item.id, 'edit']">Editar</button>
         <button *ngIf="isOwner()" mat-raised-button color="warn" (click)="deleteItem()">Eliminar</button>
       </div>

@@ -269,6 +269,31 @@ async function complete(id, userId) {
     return booking;
 }
 
+async function adminBookingStats() {
+    const result = await pool.query(
+        `SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pendientes,
+            COUNT(CASE WHEN estado = 'confirmada' THEN 1 END) as confirmadas,
+            COUNT(CASE WHEN estado = 'en_curso' THEN 1 END) as en_curso,
+            COUNT(CASE WHEN estado = 'completada' THEN 1 END) as completadas,
+            COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) as canceladas,
+            COUNT(CASE WHEN estado = 'rechazada' THEN 1 END) as rechazadas,
+            COALESCE(SUM(precio_total), 0) as ingresos_totales,
+            COALESCE(AVG(precio_total), 0) as promedio_por_reserva
+         FROM reserva`
+    );
+    return result.rows[0];
+}
+
+async function adminRecentBookings(limit = 10) {
+    const result = await pool.query(
+        `SELECT * FROM reserva ORDER BY creado_en DESC LIMIT $1`,
+        [limit]
+    );
+    return result.rows;
+}
+
 module.exports = {
     create,
     checkAvailability,
@@ -278,5 +303,7 @@ module.exports = {
     confirm,
     reject,
     cancel,
-    complete
+    complete,
+    adminBookingStats,
+    adminRecentBookings
 };
