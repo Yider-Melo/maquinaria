@@ -1,18 +1,22 @@
 <div class="container" *ngIf="!loading; else loadingTmpl">
-  <h1>Detalle de Reserva</h1>
-  <mat-card>
+  <div class="page-header"><h1>Detalle de Reserva</h1></div>
+  <mat-card class="detail-card">
     <mat-card-content>
-      <p><strong>ID:</strong> {{ booking.id }}</p>
-      <p><strong>Fechas:</strong> {{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</p>
-      <p><strong>Total:</strong> ${{ booking.precio_total }}</p>
-      <p><strong>Estado:</strong> {{ booking.estado }}</p>
-      <p *ngIf="booking.propietario_nombre"><strong>Propietario:</strong> {{ booking.propietario_nombre }}</p>
-      <p *ngIf="booking.arrendatario_nombre"><strong>Arrendatario:</strong> {{ booking.arrendatario_nombre }}</p>
-      <p *ngIf="booking.maquinaria_titulo"><strong>Maquinaria:</strong> {{ booking.maquinaria_titulo }}</p>
+      <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">#{{ booking.id?.substring(0,12) }}...</span></div>
+      <div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="status-badge" [class]="booking.estado">{{ booking.estado }}</span></span></div>
+      <div class="detail-row"><span class="detail-label">Fechas</span><span class="detail-value">{{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</span></div>
+      <div class="detail-row"><span class="detail-label">Total</span><span class="detail-value" style="font-size:20px;font-weight:700;color:#1976d2;">${{ booking.precio_total | number }}</span></div>
+      <div class="detail-row" *ngIf="booking.propietario_nombre"><span class="detail-label">Propietario</span><span class="detail-value">{{ booking.propietario_nombre }}</span></div>
+      <div class="detail-row" *ngIf="booking.arrendatario_nombre"><span class="detail-label">Arrendatario</span><span class="detail-value">{{ booking.arrendatario_nombre }}</span></div>
+      <div class="detail-row" *ngIf="booking.maquinaria_titulo"><span class="detail-label">Maquinaria</span><span class="detail-value">{{ booking.maquinaria_titulo }}</span></div>
     </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">Pagar</button>
-      <button mat-raised-button color="accent" [routerLink]="['/machinery', booking.maquinaria_id]" *ngIf="booking.maquinaria_id">Ver Maquinaria</button>
+    <mat-card-actions class="detail-actions">
+      <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">
+        <mat-icon>payment</mat-icon> Pagar
+      </button>
+      <button mat-stroked-button color="accent" [routerLink]="['/machinery', booking.maquinaria_id]" *ngIf="booking.maquinaria_id">
+        <mat-icon>visibility</mat-icon> Ver Maquinaria
+      </button>
     </mat-card-actions>
   </mat-card>
 </div>

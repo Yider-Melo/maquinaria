@@ -1,12 +1,19 @@
-.container { padding:24px; max-width:1200px; margin:0 auto; }
-.list-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
-.list-header h1 { margin:0; }
-.filters { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
-.card { cursor:pointer; transition:transform .2s; }
-.card:hover { transform:translateY(-4px); }
-.card img { height:180px; object-fit:cover; }
-.price { font-size:18px; font-weight:bold; color:#1976d2; }
-.location { color:#666; font-size:13px; }
-.rating { color:#f57f17; font-size:13px; margin-top:4px; }
-.pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px; }
+.container { padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
+.list-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+.list-header h1 { margin: 0; font-size: 28px; font-weight: 500; color: #1a1a2e; }
+.filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 28px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.filters mat-form-field { margin-bottom: 0; }
+.filters button { height: 48px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 24px; }
+.card { cursor: pointer; transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s; border-radius: 12px !important; overflow: hidden; }
+.card:hover { transform: translateY(-6px); box-shadow: 0 12px 35px rgba(0,0,0,0.12) !important; }
+.card-img { height: 190px; object-fit: cover; background: #f0f0f0; }
+.card-content { padding: 16px !important; }
+.card-content h3 { font-size: 18px; font-weight: 600; color: #1a1a2e; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-subtitle { color: #888; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+.price { font-size: 20px; font-weight: 700; color: #1976d2; margin: 8px 0 4px; }
+.price small { font-size: 13px; font-weight: 400; color: #888; }
+.location { color: #999; font-size: 13px; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.rating { color: #f57f17; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
+.pagination span { color: #888; font-size: 14px; }

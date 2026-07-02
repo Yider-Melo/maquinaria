@@ -1,9 +1,9 @@
 <div class="dashboard">
   <div class="welcome">
     <h1>Bienvenido, {{ auth.getUser()?.nombre }}!</h1>
-    <p class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
+    <span class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
       {{ auth.esTipo('propietario') ? '👷 Propietario' : auth.esTipo('admin') ? '⚙️ Administrador' : '🔧 Arrendatario' }}
-    </p>
+    </span>
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
@@ -15,27 +15,24 @@
           <span class="stat-label">Máquinas Disponibles</span>
         </div>
       </mat-card>
-
       <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">assignment</mat-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ stats.misListados }}</span>
+          <span class="stat-value">{{ stats.misListados || 0 }}</span>
           <span class="stat-label">Solicitudes de Reserva</span>
         </div>
       </mat-card>
-
       <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">calendar_today</mat-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ stats.misReservas }}</span>
+          <span class="stat-value">{{ stats.misReservas || 0 }}</span>
           <span class="stat-label">Mis Reservas</span>
         </div>
       </mat-card>
-
       <mat-card class="stat-card" routerLink="/notifications">
-        <mat-icon class="stat-icon">notifications</mat-icon>
+        <mat-icon class="stat-icon" [class.warn]="stats.noLeidas > 0">notifications</mat-icon>
         <div class="stat-info">
-          <span class="stat-value" [class.has-unread]="stats.noLeidas > 0">{{ stats.noLeidas }}</span>
+          <span class="stat-value" [class.has-unread]="stats.noLeidas > 0">{{ stats.noLeidas || 0 }}</span>
           <span class="stat-label">Notificaciones</span>
         </div>
       </mat-card>

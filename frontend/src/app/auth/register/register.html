@@ -1,27 +1,79 @@
-<div class="auth-container">
-  <mat-card>
-    <mat-card-header><mat-card-title>Crear Cuenta</mat-card-title></mat-card-header>
-    <mat-card-content>
+<div class="auth-wrapper">
+  <mat-card class="auth-card">
+    <div class="auth-card-header">
+      <mat-icon class="auth-icon">person_add</mat-icon>
+      <h1>Crear Cuenta</h1>
+      <p>Únete a RentaMaq</p>
+    </div>
+    <div class="auth-card-body">
       <form (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="data.nombre" name="nombre" required></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="data.apellido" name="apellido" required></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Email</mat-label><input matInput type="email" [(ngModel)]="data.email" name="email" required></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Contraseña *</mat-label><input matInput type="password" [(ngModel)]="data.password" name="password" required minlength="6"></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Confirmar Contraseña *</mat-label><input matInput type="password" [(ngModel)]="data.confirmPassword" name="confirmPassword" required></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="data.telefono" name="telefono"></mat-form-field>
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Tipo</mat-label>
-          <mat-select [(ngModel)]="data.tipo_usuario" name="tipo_usuario">
-            <mat-option value="arrendatario">Arrendatario</mat-option>
-            <mat-option value="propietario">Propietario</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <p class="error" *ngIf="error">{{ error }}</p>
-        <button mat-raised-button color="primary" type="submit" [disabled]="loading" class="full-width">
-          {{ loading ? 'Registrando...' : 'Registrarse' }}
+        <div class="form-row">
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Nombre</mat-label>
+              <input matInput [(ngModel)]="data.nombre" name="nombre" required placeholder="Juan">
+              <mat-icon matPrefix>person</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Apellido</mat-label>
+              <input matInput [(ngModel)]="data.apellido" name="apellido" required placeholder="Pérez">
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="form-field">
+          <mat-form-field appearance="outline" style="width:100%;">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" [(ngModel)]="data.email" name="email" required placeholder="tu@email.com">
+            <mat-icon matPrefix>email</mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Contraseña</mat-label>
+              <input matInput type="password" [(ngModel)]="data.password" name="password" required minlength="6" placeholder="••••••••">
+              <mat-icon matPrefix>lock</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Confirmar</mat-label>
+              <input matInput type="password" [(ngModel)]="data.confirmPassword" name="confirmPassword" required placeholder="••••••••">
+              <mat-icon matPrefix>lock</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Teléfono</mat-label>
+              <input matInput [(ngModel)]="data.telefono" name="telefono" placeholder="300 123 4567">
+              <mat-icon matPrefix>phone</mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="form-field">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>Tipo de Usuario</mat-label>
+              <mat-select [(ngModel)]="data.tipo_usuario" name="tipo_usuario">
+                <mat-option value="arrendatario">🔧 Arrendatario</mat-option>
+                <mat-option value="propietario">👷 Propietario</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>badge</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="error-box" *ngIf="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <button mat-raised-button type="submit" [disabled]="loading" class="submit-btn">
+          <mat-icon *ngIf="loading" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
+          {{ loading ? 'Registrando...' : 'Crear Cuenta' }}
         </button>
       </form>
-      <p class="link">¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a></p>
-    </mat-card-content>
+      <p class="auth-footer">¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a></p>
+    </div>
   </mat-card>
 </div>

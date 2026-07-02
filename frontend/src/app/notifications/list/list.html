@@ -1,12 +1,25 @@
 <div class="container">
-  <h1>Notificaciones</h1>
-  <button mat-button color="primary" (click)="markAllAsRead()" *ngIf="notifications.length">Marcar todas leídas</button>
+  <div class="page-header">
+    <h1>Notificaciones</h1>
+    <button mat-stroked-button color="primary" class="mark-btn" (click)="markAllAsRead()" *ngIf="notifications.length">
+      <mat-icon>done_all</mat-icon> Marcar todas leídas
+    </button>
+  </div>
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let n of notifications" class="card" [class.unread]="!n.leida" (click)="markAsRead(n.id)">
-      <mat-card-header><mat-card-title>{{ n.titulo }}</mat-card-title><mat-card-subtitle>{{ n.creado_en | date:'medium' }}</mat-card-subtitle></mat-card-header>
+    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" (click)="markAsRead(n.id)">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon *ngIf="!n.leida" style="font-size:18px;width:18px;height:18px;color:#1976d2;vertical-align:middle;margin-right:6px;">circle</mat-icon>
+          {{ n.titulo }}
+        </mat-card-title>
+        <mat-card-subtitle class="notif-time">{{ n.creado_en | date:'medium' }}</mat-card-subtitle>
+      </mat-card-header>
       <mat-card-content><p>{{ n.mensaje }}</p></mat-card-content>
     </mat-card>
-    <p *ngIf="notifications.length===0">Sin notificaciones.</p>
+    <div class="empty-state" *ngIf="notifications.length===0">
+      <mat-icon>notifications_none</mat-icon>
+      <p>No tienes notificaciones</p>
+    </div>
   </ng-container>
   <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
 </div>

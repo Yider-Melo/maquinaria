@@ -7,18 +7,20 @@ import { Auth } from '../../core/services/auth';
   selector: 'app-machinery-list', templateUrl: './list.html', styleUrls: ['./list.css']
 })
 export class MachineryList implements OnInit {
-  items: any[] = []; loading = true; total = 0; page = 1; size = 20;
+  items: any[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20;
   filters: any = { q: '', tipo: '', ciudad: '', minPrice: null, maxPrice: null };
 
   constructor(private api: Api, public auth: Auth) {}
 
   ngOnInit(): void { this.load(); }
 
-  // Carga los resultados desde el backend aplicando filtros y paginación.
   load(): void {
     this.loading = true;
     this.api.get<any>('/search', { ...this.filters, page: this.page, size: this.size }).subscribe(res => {
-      this.items = res.data?.data || []; this.total = res.data?.pagination?.total || 0; this.loading = false;
+      this.items = res.data?.data || [];
+      this.total = res.data?.pagination?.total || 0;
+      this.totalPages = res.data?.pagination?.totalPages || 0;
+      this.loading = false;
     });
   }
 

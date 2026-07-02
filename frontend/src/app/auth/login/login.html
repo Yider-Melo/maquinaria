@@ -1,22 +1,36 @@
-<div class="auth-container">
-  <mat-card>
-    <mat-card-header><mat-card-title>Iniciar Sesión</mat-card-title></mat-card-header>
-    <mat-card-content>
+<div class="auth-wrapper">
+  <mat-card class="auth-card">
+    <div class="auth-card-header">
+      <mat-icon class="auth-icon">lock_outline</mat-icon>
+      <h1>Iniciar Sesión</h1>
+      <p>Accede a tu cuenta de RentaMaq</p>
+    </div>
+    <div class="auth-card-body">
       <form (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" [(ngModel)]="email" name="email" required>
-        </mat-form-field>
-        <mat-form-field appearance="fill" class="full-width">
-          <mat-label>Contraseña</mat-label>
-          <input matInput type="password" [(ngModel)]="password" name="password" required>
-        </mat-form-field>
-        <p class="error" *ngIf="error">{{ error }}</p>
-        <button mat-raised-button color="primary" type="submit" [disabled]="loading" class="full-width">
+        <div class="form-field">
+          <mat-form-field appearance="outline" style="width:100%;">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" [(ngModel)]="email" name="email" required placeholder="tu@email.com">
+            <mat-icon matPrefix>email</mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="form-field">
+          <mat-form-field appearance="outline" style="width:100%;">
+            <mat-label>Contraseña</mat-label>
+            <input matInput type="password" [(ngModel)]="password" name="password" required placeholder="••••••••">
+            <mat-icon matPrefix>lock</mat-icon>
+          </mat-form-field>
+        </div>
+        <div class="error-box" *ngIf="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <button mat-raised-button type="submit" [disabled]="loading" class="submit-btn">
+          <mat-icon *ngIf="loading" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
           {{ loading ? 'Ingresando...' : 'Ingresar' }}
         </button>
       </form>
-      <p class="link">¿No tienes cuenta? <a routerLink="/auth/register">Regístrate</a></p>
-    </mat-card-content>
+      <p class="auth-footer">¿No tienes cuenta? <a routerLink="/auth/register">Regístrate</a></p>
+    </div>
   </mat-card>
 </div>

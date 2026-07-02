@@ -1,28 +1,60 @@
 <div class="container">
-  <h1>Mis Reservas</h1>
-  <mat-tab-group [selectedIndex]="tabIndex">
+  <div class="page-header"><h1>Mis Reservas</h1></div>
+  <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
       <ng-container *ngIf="!loading; else loadingTmpl">
-        <mat-card *ngFor="let b of asArrendatario" class="card" [routerLink]="['/bookings', b.id]">
-          <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>
-          <mat-card-content><p><strong>Estado:</strong> {{ b.estado }} | <strong>Total:</strong> ${{ b.precio_total }}</p></mat-card-content>
-          <mat-card-actions (click)="$event.stopPropagation()"><button mat-button color="warn" (click)="cancelBooking(b.id)" *ngIf="b.estado!=='cancelada'&&b.estado!=='completada'">Cancelar</button></mat-card-actions>
+        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [routerLink]="['/bookings', b.id]">
+          <mat-card-header>
+            <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
+            <mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="booking-status">
+              <span class="status-badge" [class]="b.estado">{{ b.estado }}</span>
+              <strong>Total:</strong> ${{ b.precio_total | number }}
+            </div>
+          </mat-card-content>
+          <mat-card-actions (click)="$event.stopPropagation()">
+            <button mat-button color="warn" (click)="cancelBooking(b.id)" *ngIf="b.estado!=='cancelada'&&b.estado!=='completada'">
+              <mat-icon>cancel</mat-icon> Cancelar
+            </button>
+          </mat-card-actions>
         </mat-card>
-        <p *ngIf="asArrendatario.length===0">Sin reservas como arrendatario.</p>
+        <div class="empty-state" *ngIf="asArrendatario.length===0">
+          <mat-icon>book_online</mat-icon>
+          <p>Sin reservas como arrendatario</p>
+        </div>
       </ng-container>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
       <ng-container *ngIf="!loading; else loadingTmpl">
-        <mat-card *ngFor="let b of asPropietario" class="card" [routerLink]="['/bookings', b.id]">
-          <mat-card-header><mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title><mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle></mat-card-header>
-          <mat-card-content><p><strong>Estado:</strong> {{ b.estado }} | <strong>Total:</strong> ${{ b.precio_total }}</p></mat-card-content>
+        <mat-card *ngFor="let b of asPropietario" class="booking-card" [routerLink]="['/bookings', b.id]">
+          <mat-card-header>
+            <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
+            <mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="booking-status">
+              <span class="status-badge" [class]="b.estado">{{ b.estado }}</span>
+              <strong>Total:</strong> ${{ b.precio_total | number }}
+            </div>
+          </mat-card-content>
           <mat-card-actions (click)="$event.stopPropagation()">
-            <button mat-button color="primary" (click)="confirmBooking(b.id)" *ngIf="b.estado==='pendiente'">Confirmar</button>
-            <button mat-button color="warn" (click)="rejectBooking(b.id)" *ngIf="b.estado==='pendiente'">Rechazar</button>
-            <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'">Completar</button>
+            <button mat-button color="primary" (click)="confirmBooking(b.id)" *ngIf="b.estado==='pendiente'">
+              <mat-icon>check_circle</mat-icon> Confirmar
+            </button>
+            <button mat-button color="warn" (click)="rejectBooking(b.id)" *ngIf="b.estado==='pendiente'">
+              <mat-icon>block</mat-icon> Rechazar
+            </button>
+            <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'">
+              <mat-icon>done_all</mat-icon> Completar
+            </button>
           </mat-card-actions>
         </mat-card>
-        <p *ngIf="asPropietario.length===0">Sin reservas como propietario.</p>
+        <div class="empty-state" *ngIf="asPropietario.length===0">
+          <mat-icon>list_alt</mat-icon>
+          <p>Sin reservas como propietario</p>
+        </div>
       </ng-container>
     </mat-tab>
   </mat-tab-group>

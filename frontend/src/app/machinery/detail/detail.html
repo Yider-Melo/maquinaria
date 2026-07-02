@@ -1,12 +1,14 @@
 <div class="container" *ngIf="!loading; else loadingTmpl">
-  <button mat-button (click)="router.navigate(['/machinery'])">← Volver</button>
+  <button mat-stroked-button class="back-btn" (click)="router.navigate(['/machinery'])">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </button>
   <div class="detail-grid">
     <div class="images-section">
       <div class="main-image">
         <img [src]="images[0]?.url || 'favicon.ico'" alt="{{ item.titulo }}">
       </div>
-      <div class="thumbnails" *ngIf="images.length > 0">
-        <div *ngFor="let img of images" class="thumb">
+      <div class="thumbnails" *ngIf="images.length > 1">
+        <div *ngFor="let img of images.slice(1)" class="thumb">
           <img [src]="img.url">
           <button *ngIf="isOwner()" mat-icon-button class="remove-img" (click)="deleteImage(img.id)"><mat-icon>close</mat-icon></button>
         </div>
@@ -20,16 +22,25 @@
     </div>
     <div class="info">
       <h1>{{ item.titulo }}</h1>
-      <p class="type">{{ item.tipo }} | {{ item.marca }} {{ item.modelo }} ({{ item.anio }})</p>
-      <p>Estado: {{ item.estado }}</p>
-      <p class="price">${{ item.precio_por_dia }} / día</p>
-      <p *ngIf="item.precio_por_hora">${{ item.precio_por_hora }} / hora</p>
-      <p class="location">{{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>
+      <p class="type"><mat-icon style="font-size:18px;width:18px;height:18px;">category</mat-icon> {{ item.tipo }} | {{ item.marca }} {{ item.modelo }} ({{ item.anio }})</p>
+      <div class="detail-meta">
+        <div class="meta-item"><mat-icon>handyman</mat-icon><span>Estado: <strong>{{ item.estado }}</strong></span></div>
+        <div class="meta-item" *ngIf="item.capacidad"><mat-icon>speed</mat-icon><span>Capacidad: <strong>{{ item.capacidad }}</strong></span></div>
+        <div class="meta-item" *ngIf="item.precio_por_hora"><mat-icon>schedule</mat-icon><span>${{ item.precio_por_hora }} <strong>/hora</strong></span></div>
+      </div>
+      <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
+      <p class="location"><mat-icon>location_on</mat-icon> {{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>
       <p class="desc">{{ item.descripcion }}</p>
       <div class="actions" *ngIf="auth.isLoggedIn()">
-        <button *ngIf="!isOwner() && auth.esTipo('arrendatario')" mat-raised-button color="primary" [routerLink]="['/bookings']" [queryParams]="{machineryId:item.id}">Reservar</button>
-        <button *ngIf="isOwner()" mat-raised-button color="accent" [routerLink]="['/machinery', item.id, 'edit']">Editar</button>
-        <button *ngIf="isOwner()" mat-raised-button color="warn" (click)="deleteItem()">Eliminar</button>
+        <button *ngIf="!isOwner() && auth.esTipo('arrendatario')" mat-raised-button color="primary" [routerLink]="['/bookings']" [queryParams]="{machineryId:item.id}">
+          <mat-icon>book_online</mat-icon> Reservar
+        </button>
+        <button *ngIf="isOwner()" mat-raised-button color="accent" [routerLink]="['/machinery', item.id, 'edit']">
+          <mat-icon>edit</mat-icon> Editar
+        </button>
+        <button *ngIf="isOwner()" mat-raised-button color="warn" (click)="deleteItem()">
+          <mat-icon>delete</mat-icon> Eliminar
+        </button>
       </div>
     </div>
   </div>

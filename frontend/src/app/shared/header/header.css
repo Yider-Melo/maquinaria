@@ -1,4 +1,42 @@
-.brand { font-weight:bold; cursor:pointer; margin-right:24px; }
-.spacer { flex:1 1 auto; }
-.badge { background:#f44336; color:white; border-radius:50%; padding:2px 8px; font-size:12px; margin-left:4px; }
-.menu-icon { vertical-align:middle; margin-right:4px; }
+.header-toolbar {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+  padding: 0 24px;
+  height: 64px;
+}
+.brand {
+  font-weight: 700; cursor: pointer; margin-right: 32px;
+  font-size: 22px; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.brand .brand-icon { font-size: 28px; width: 28px; height: 28px; }
+.spacer { flex: 1 1 auto; }
+.nav-link {
+  margin: 0 2px; border-radius: 8px !important;
+  font-size: 14px; font-weight: 500;
+  transition: background .2s;
+}
+.nav-link:hover { background: rgba(255,255,255,0.1); }
+.nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; }
+.badge {
+  background: #f44336; color: white; border-radius: 50%;
+  padding: 1px 7px; font-size: 11px; font-weight: 700;
+  margin-left: 6px; vertical-align: super;
+}
+.user-btn {
+  border-radius: 20px !important;
+  background: rgba(255,255,255,0.08);
+  margin-left: 8px; padding: 4px 16px !important;
+  font-weight: 500;
+}
+.user-btn:hover { background: rgba(255,255,255,0.15); }
+.user-btn mat-icon { margin-right: 4px; }
+.auth-link { border-radius: 8px !important; font-weight: 500; }
+.auth-link:hover { background: rgba(255,255,255,0.1); }
+@media (max-width: 768px) {
+  .header-toolbar { padding: 0 12px; }
+  .brand { font-size: 18px; margin-right: 16px; }
+  .nav-link span { display: none; }
+}

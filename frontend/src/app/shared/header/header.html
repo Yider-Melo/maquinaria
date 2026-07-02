@@ -1,27 +1,28 @@
-<mat-toolbar color="primary">
-  <span class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'">Rentamaq</span>
+<mat-toolbar class="header-toolbar">
+  <span class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'">
+    <mat-icon class="brand-icon">precision_manufacturing</mat-icon>
+    RentaMaq
+  </span>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
-    <a mat-button routerLink="/machinery">Maquinaria</a>
-    <a mat-button routerLink="/bookings">Reservas</a>
-    <a mat-button routerLink="/payments">Pagos</a>
-    <a mat-button routerLink="/ratings">Calificaciones</a>
-    <a mat-button routerLink="/admin" *ngIf="auth.esTipo('admin')">
-      <mat-icon class="menu-icon">admin_panel_settings</mat-icon>
-      Admin
-    </a>
-    <a mat-button routerLink="/notifications">
-      Notificaciones
+    <a mat-button class="nav-link" routerLink="/machinery"><mat-icon>search</mat-icon> <span>Maquinaria</span></a>
+    <a mat-button class="nav-link" routerLink="/bookings"><mat-icon>book_online</mat-icon> <span>Reservas</span></a>
+    <a mat-button class="nav-link" routerLink="/payments"><mat-icon>payments</mat-icon> <span>Pagos</span></a>
+    <a mat-button class="nav-link" routerLink="/ratings"><mat-icon>star</mat-icon> <span>Calificaciones</span></a>
+    <a mat-button class="nav-link" routerLink="/notifications">
+      <mat-icon>notifications</mat-icon> <span>Notificaciones</span>
       <span *ngIf="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </a>
-    <button mat-button [matMenuTriggerFor]="menu">
-      <mat-icon class="menu-icon">account_circle</mat-icon>
-      {{ auth.getUser()?.nombre }}
+    <a mat-button class="nav-link" routerLink="/admin" *ngIf="auth.esTipo('admin')">
+      <mat-icon>admin_panel_settings</mat-icon> <span>Admin</span>
+    </a>
+    <button mat-button class="user-btn" [matMenuTriggerFor]="menu">
+      <mat-icon>account_circle</mat-icon> {{ auth.getUser()?.nombre }}
     </button>
     <mat-menu #menu="matMenu">
-      <button mat-menu-item disabled>
+      <button mat-menu-item disabled style="opacity:.7; cursor:default;">
         <mat-icon>badge</mat-icon>
-        {{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}
+        {{ auth.getUser()?.tipo_usuario === 'propietario' ? '👷 Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? '⚙️ Admin' : '🔧 Arrendatario' }}
       </button>
       <mat-divider></mat-divider>
       <button mat-menu-item routerLink="/admin" *ngIf="auth.esTipo('admin')">
@@ -39,7 +40,7 @@
     </mat-menu>
   </ng-container>
   <ng-container *ngIf="!auth.isLoggedIn()">
-    <a mat-button routerLink="/auth/login">Ingresar</a>
-    <a mat-button routerLink="/auth/register">Registrarse</a>
+    <a mat-button class="auth-link" routerLink="/auth/login">Ingresar</a>
+    <a mat-button class="auth-link" routerLink="/auth/register">Registrarse</a>
   </ng-container>
 </mat-toolbar>

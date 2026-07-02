@@ -6,31 +6,34 @@
     </button>
   </div>
   <div class="filters">
-    <mat-form-field appearance="fill"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
-    <mat-form-field appearance="fill"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>
-    <mat-form-field appearance="fill"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="filters.ciudad" (keyup.enter)="search()"></mat-form-field>
-    <mat-form-field appearance="fill"><mat-label>Precio min</mat-label><input matInput type="number" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0"></mat-form-field>
-    <mat-form-field appearance="fill"><mat-label>Precio max</mat-label><input matInput type="number" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="999999"></mat-form-field>
+    <mat-form-field appearance="outline" style="min-width:180px;"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
+    <mat-form-field appearance="outline" style="min-width:140px;"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>
+    <mat-form-field appearance="outline" style="min-width:140px;"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="filters.ciudad" (keyup.enter)="search()"></mat-form-field>
+    <mat-form-field appearance="outline" style="min-width:120px;"><mat-label>Precio min</mat-label><input matInput type="number" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0"></mat-form-field>
+    <mat-form-field appearance="outline" style="min-width:120px;"><mat-label>Precio max</mat-label><input matInput type="number" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="999999"></mat-form-field>
     <button mat-raised-button color="primary" (click)="search()">Buscar</button>
   </div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
       <mat-card *ngFor="let item of items" class="card" [routerLink]="['/machinery', item.id]">
-        <img mat-card-image [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}">
-        <mat-card-content>
+        <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}">
+        <mat-card-content class="card-content">
           <h3>{{ item.titulo }}</h3>
-          <p>{{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
-          <p class="price">${{ item.precio_por_dia }} / día</p>
-          <p class="location">{{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</p>
+          <p class="card-subtitle"><mat-icon style="font-size:16px;width:16px;height:16px;">category</mat-icon> {{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
+          <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
+          <p class="location"><mat-icon style="font-size:16px;width:16px;height:16px;">location_on</mat-icon> {{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</p>
           <p *ngIf="item.puntuacion_promedio" class="rating">★ {{ item.puntuacion_promedio | number:'1.1-1' }} ({{ item.total_resenas }})</p>
         </mat-card-content>
       </mat-card>
     </div>
-    <p *ngIf="items.length === 0">No se encontraron resultados.</p>
+    <div class="empty-state" *ngIf="items.length === 0">
+      <mat-icon>search_off</mat-icon>
+      <p>No se encontraron resultados</p>
+    </div>
     <div class="pagination" *ngIf="total > size">
-      <button mat-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
-      <span>Página {{ page }}</span>
-      <button mat-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+      <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+      <span>Página {{ page }} de {{ totalPages }}</span>
+      <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
     </div>
   </ng-container>
   <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
