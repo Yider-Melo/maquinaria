@@ -7,7 +7,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const routes = require('./routes');
 const { eventBus } = require('shared');
-const { createNotificationDirect } = require('./controllers/notificationController');
+const { createNotificationDirect } = require('./services/notificationService');
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000';
 

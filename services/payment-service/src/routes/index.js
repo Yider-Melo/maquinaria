@@ -3,13 +3,13 @@
 // liberacion de fondos, reembolsos y dashboard administrativo.
 const express = require('express');
 const router = express.Router();
-const paymentController = require('../controllers/paymentController');
+const paymentService = require('../services/paymentService');
 const { validateToken, requireRole, success, errorHandler } = require('shared');
 
 // Dashboard administrativo con resumen de transacciones (solo admin)
 router.get('/admin/dashboard', validateToken, requireRole('admin'), async (req, res, next) => {
     try {
-        const dashboard = await paymentController.getDashboard();
+        const dashboard = await paymentService.getDashboard();
         success(res, dashboard);
     } catch (err) { next(err); }
 });
@@ -17,7 +17,7 @@ router.get('/admin/dashboard', validateToken, requireRole('admin'), async (req, 
 // Iniciar proceso de pago para una reserva confirmada
 router.post('/checkout', validateToken, async (req, res, next) => {
     try {
-        const checkout = await paymentController.createCheckout(req.body.reserva_id, req.user.id, req.body.metodo_pago);
+        const checkout = await paymentService.createCheckout(req.body.reserva_id, req.user.id, req.body.metodo_pago);
         success(res, checkout);
     } catch (err) { next(err); }
 });
@@ -25,7 +25,7 @@ router.post('/checkout', validateToken, async (req, res, next) => {
 // Webhook para recibir notificaciones de la pasarela de pagos
 router.post('/webhook', async (req, res) => {
     try {
-        const result = await paymentController.handleWebhook(req.body);
+        const result = await paymentService.handleWebhook(req.body);
         success(res, result);
     } catch (err) {
         console.error('Error procesando webhook:', err);
@@ -36,7 +36,7 @@ router.post('/webhook', async (req, res) => {
 // Obtener pagos asociados a una reserva
 router.get('/booking/:bookingId', validateToken, async (req, res, next) => {
     try {
-        const payments = await paymentController.getPaymentsByBooking(req.params.bookingId, req.user.id);
+        const payments = await paymentService.getPaymentsByBooking(req.params.bookingId, req.user.id);
         success(res, payments);
     } catch (err) { next(err); }
 });
@@ -44,7 +44,7 @@ router.get('/booking/:bookingId', validateToken, async (req, res, next) => {
 // Obtener detalle de un pago por ID
 router.get('/:id', validateToken, async (req, res, next) => {
     try {
-        const payment = await paymentController.getPaymentById(req.params.id, req.user.id);
+        const payment = await paymentService.getPaymentById(req.params.id, req.user.id);
         success(res, payment);
     } catch (err) { next(err); }
 });
@@ -52,7 +52,7 @@ router.get('/:id', validateToken, async (req, res, next) => {
 // Liberar fondos retenidos al propietario
 router.post('/:id/release', validateToken, async (req, res, next) => {
     try {
-        const result = await paymentController.releaseFunds(req.params.id);
+        const result = await paymentService.releaseFunds(req.params.id);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -60,7 +60,7 @@ router.post('/:id/release', validateToken, async (req, res, next) => {
 // Reembolsar un pago retenido
 router.post('/:id/refund', validateToken, async (req, res, next) => {
     try {
-        const result = await paymentController.refund(req.params.id);
+        const result = await paymentService.refund(req.params.id);
         success(res, result);
     } catch (err) { next(err); }
 });

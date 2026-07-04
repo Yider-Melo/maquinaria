@@ -2,13 +2,13 @@
 // Define endpoints de busqueda, sugerencias, cercania e indexacion manual.
 const express = require('express');
 const router = express.Router();
-const searchController = require('../controllers/searchController');
+const searchService = require('../services/searchService');
 const { validateToken, success, errorHandler } = require('shared');
 
 // Busqueda principal con filtros (texto, tipo, precio, ubicacion, etc.)
 router.get('/', async (req, res, next) => {
     try {
-        const result = await searchController.search(req.query);
+        const result = await searchService.search(req.query);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
 // Sugerencias de autocompletado para el campo de busqueda
 router.get('/suggestions', async (req, res, next) => {
     try {
-        const suggestions = await searchController.getSuggestions(req.query.q || '');
+        const suggestions = await searchService.getSuggestions(req.query.q || '');
         success(res, suggestions);
     } catch (err) { next(err); }
 });
@@ -27,7 +27,7 @@ router.get('/nearby', async (req, res, next) => {
         const lat = parseFloat(req.query.lat);
         const lng = parseFloat(req.query.lng);
         const radius = parseInt(req.query.radius) || 50;
-        const result = await searchController.getNearby(lat, lng, radius);
+        const result = await searchService.getNearby(lat, lng, radius);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -35,7 +35,7 @@ router.get('/nearby', async (req, res, next) => {
 // Indexar (insertar/actualizar) maquinaria manualmente en el indice
 router.post('/index', validateToken, async (req, res, next) => {
     try {
-        await searchController.indexMachinery(req.body);
+        await searchService.indexMachinery(req.body);
         success(res, { message: 'Indexado correctamente' });
     } catch (err) { next(err); }
 });
@@ -43,7 +43,7 @@ router.post('/index', validateToken, async (req, res, next) => {
 // Eliminar maquinaria del indice (soft-delete)
 router.delete('/index/:id', validateToken, async (req, res, next) => {
     try {
-        await searchController.removeFromIndex(req.params.id);
+        await searchService.removeFromIndex(req.params.id);
         success(res, { message: 'Eliminado del índice' });
     } catch (err) { next(err); }
 });

@@ -2,13 +2,13 @@
 // Define los endpoints CRUD para maquinaria, imagenes y disponibilidad.
 const express = require('express');
 const router = express.Router();
-const machineryController = require('../controllers/machineryController');
+const machineryService = require('../services/machineryService');
 const { validate, validateToken, requireRole, schemas, success, errorHandler } = require('shared');
 
 // Crear una nueva maquinaria (solo propietarios autenticados)
 router.post('/', validateToken, validate(schemas.maquinaria), async (req, res, next) => {
     try {
-        const machinery = await machineryController.create(req.body, req.user.id);
+        const machinery = await machineryService.create(req.body, req.user.id);
         success(res, machinery, 201);
     } catch (err) { next(err); }
 });
@@ -18,7 +18,7 @@ router.get('/owner', validateToken, async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await machineryController.getByOwner(req.user.id, page, size);
+        const result = await machineryService.getByOwner(req.user.id, page, size);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -26,7 +26,7 @@ router.get('/owner', validateToken, async (req, res, next) => {
 // Admin: obtener estadisticas de maquinaria (solo admin)
 router.get('/stats', validateToken, requireRole('admin'), async (req, res, next) => {
     try {
-        const stats = await machineryController.adminMachineryStats();
+        const stats = await machineryService.adminMachineryStats();
         success(res, stats);
     } catch (err) { next(err); }
 });
@@ -36,7 +36,7 @@ router.get('/all', validateToken, requireRole('admin'), async (req, res, next) =
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await machineryController.adminAllMachinery(page, size);
+        const result = await machineryService.adminAllMachinery(page, size);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -44,8 +44,8 @@ router.get('/all', validateToken, requireRole('admin'), async (req, res, next) =
 // Obtener maquinaria por ID, incluyendo sus imagenes
 router.get('/:id', async (req, res, next) => {
     try {
-        const machinery = await machineryController.getById(req.params.id);
-        const images = await machineryController.getImages(req.params.id);
+        const machinery = await machineryService.getById(req.params.id);
+        const images = await machineryService.getImages(req.params.id);
         success(res, { ...machinery, imagenes: images });
     } catch (err) { next(err); }
 });
@@ -53,7 +53,7 @@ router.get('/:id', async (req, res, next) => {
 // Actualizar datos de una maquinaria (solo su propietario)
 router.put('/:id', validateToken, async (req, res, next) => {
     try {
-        const machinery = await machineryController.update(req.params.id, req.body, req.user.id);
+        const machinery = await machineryService.update(req.params.id, req.body, req.user.id);
         success(res, machinery);
     } catch (err) { next(err); }
 });
@@ -61,7 +61,7 @@ router.put('/:id', validateToken, async (req, res, next) => {
 // Eliminar (soft-delete) una maquinaria (solo su propietario)
 router.delete('/:id', validateToken, async (req, res, next) => {
     try {
-        const result = await machineryController.remove(req.params.id, req.user.id);
+        const result = await machineryService.remove(req.params.id, req.user.id);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -69,7 +69,7 @@ router.delete('/:id', validateToken, async (req, res, next) => {
 // Agregar imagen a una maquinaria
 router.post('/:id/images', validateToken, async (req, res, next) => {
     try {
-        const image = await machineryController.addImage(req.params.id, req.body.url, req.user.id);
+        const image = await machineryService.addImage(req.params.id, req.body.url, req.user.id);
         success(res, image, 201);
     } catch (err) { next(err); }
 });
@@ -77,7 +77,7 @@ router.post('/:id/images', validateToken, async (req, res, next) => {
 // Obtener todas las imagenes de una maquinaria
 router.get('/:id/images', async (req, res, next) => {
     try {
-        const images = await machineryController.getImages(req.params.id);
+        const images = await machineryService.getImages(req.params.id);
         success(res, images);
     } catch (err) { next(err); }
 });
@@ -85,7 +85,7 @@ router.get('/:id/images', async (req, res, next) => {
 // Eliminar una imagen especifica de una maquinaria
 router.delete('/:id/images/:imageId', validateToken, async (req, res, next) => {
     try {
-        const result = await machineryController.deleteImage(req.params.id, req.params.imageId, req.user.id);
+        const result = await machineryService.deleteImage(req.params.id, req.params.imageId, req.user.id);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -93,7 +93,7 @@ router.delete('/:id/images/:imageId', validateToken, async (req, res, next) => {
 // Actualizar disponibilidad por fechas de una maquinaria
 router.put('/:id/availability', validateToken, async (req, res, next) => {
     try {
-        const result = await machineryController.updateAvailability(req.params.id, req.body.fechas, req.user.id);
+        const result = await machineryService.updateAvailability(req.params.id, req.body.fechas, req.user.id);
         success(res, result);
     } catch (err) { next(err); }
 });
@@ -101,7 +101,7 @@ router.put('/:id/availability', validateToken, async (req, res, next) => {
 // Consultar disponibilidad de una maquinaria en un rango de fechas
 router.get('/:id/availability', async (req, res, next) => {
     try {
-        const availability = await machineryController.getAvailability(
+        const availability = await machineryService.getAvailability(
             req.params.id, req.query.start, req.query.end
         );
         success(res, availability);

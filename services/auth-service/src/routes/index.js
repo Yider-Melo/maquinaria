@@ -2,13 +2,13 @@
 // Define los endpoints publicos y protegidos para gestion de usuarios.
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
+const authService = require('../services/authService');
 const { validate, validateToken, requireRole, schemas, success, errorHandler } = require('shared');
 
 // Registro de nuevo usuario
 router.post('/register', validate(schemas.register), async (req, res, next) => {
     try {
-        const result = await authController.register(req.body);
+        const result = await authService.register(req.body);
         success(res, result, 201);
     } catch (err) {
         next(err);
@@ -18,7 +18,7 @@ router.post('/register', validate(schemas.register), async (req, res, next) => {
 // Inicio de sesion, devuelve token JWT
 router.post('/login', validate(schemas.login), async (req, res, next) => {
     try {
-        const result = await authController.login(req.body);
+        const result = await authService.login(req.body);
         success(res, result);
     } catch (err) {
         next(err);
@@ -28,7 +28,7 @@ router.post('/login', validate(schemas.login), async (req, res, next) => {
 // Obtener perfil del usuario autenticado
 router.get('/profile', validateToken, async (req, res, next) => {
     try {
-        const profile = await authController.getProfile(req.user.id);
+        const profile = await authService.getProfile(req.user.id);
         success(res, profile);
     } catch (err) {
         next(err);
@@ -38,7 +38,7 @@ router.get('/profile', validateToken, async (req, res, next) => {
 // Actualizar perfil del usuario autenticado
 router.put('/profile', validateToken, async (req, res, next) => {
     try {
-        const profile = await authController.updateProfile(req.user.id, req.body);
+        const profile = await authService.updateProfile(req.user.id, req.body);
         success(res, profile);
     } catch (err) {
         next(err);
@@ -48,7 +48,7 @@ router.put('/profile', validateToken, async (req, res, next) => {
 // Configurar autenticacion de dos factores (2FA)
 router.post('/2fa/setup', validateToken, async (req, res, next) => {
     try {
-        const result = await authController.setup2FA(req.user.id);
+        const result = await authService.setup2FA(req.user.id);
         success(res, result);
     } catch (err) {
         next(err);
@@ -58,7 +58,7 @@ router.post('/2fa/setup', validateToken, async (req, res, next) => {
 // Verificar codigo 2FA
 router.post('/2fa/verify', validateToken, async (req, res, next) => {
     try {
-        await authController.verify2FA(req.user.id, req.body.token);
+        await authService.verify2FA(req.user.id, req.body.token);
         success(res, { message: '2FA verificado correctamente' });
     } catch (err) {
         next(err);
@@ -68,7 +68,7 @@ router.post('/2fa/verify', validateToken, async (req, res, next) => {
 // Solicitar restablecimiento de contrasena
 router.post('/forgot-password', async (req, res, next) => {
     try {
-        const result = await authController.forgotPassword(req.body.email);
+        const result = await authService.forgotPassword(req.body.email);
         success(res, result);
     } catch (err) {
         next(err);
@@ -78,7 +78,7 @@ router.post('/forgot-password', async (req, res, next) => {
 // Restablecer contrasena con token recibido por email
 router.post('/reset-password', async (req, res, next) => {
     try {
-        await authController.resetPassword(req.body.token, req.body.password);
+        await authService.resetPassword(req.body.token, req.body.password);
         success(res, { message: 'Contraseña actualizada' });
     } catch (err) {
         next(err);
@@ -87,7 +87,7 @@ router.post('/reset-password', async (req, res, next) => {
 
 // Validar si un token JWT sigue siendo valido
 router.post('/validate-token', async (req, res) => {
-    const decoded = await authController.validateToken(req.body.token);
+    const decoded = await authService.validateToken(req.body.token);
     success(res, { valid: !!decoded, user: decoded });
 });
 
@@ -95,14 +95,14 @@ router.get('/users', validateToken, requireRole('admin'), async (req, res, next)
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await authController.adminListUsers(page, size);
+        const result = await authService.adminListUsers(page, size);
         success(res, result);
     } catch (err) { next(err); }
 });
 
 router.get('/users/stats', validateToken, requireRole('admin'), async (req, res, next) => {
     try {
-        const stats = await authController.adminUserStats();
+        const stats = await authService.adminUserStats();
         success(res, stats);
     } catch (err) { next(err); }
 });

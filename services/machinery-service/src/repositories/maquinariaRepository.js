@@ -1,0 +1,147 @@
+const pool = require('../db');
+
+async function insert({ id, propietarioId, data }) {
+    const result = await pool.query(
+        `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         RETURNING *`,
+        [id, propietarioId, data.titulo, data.descripcion, data.tipo, data.marca, data.modelo,
+         data.anio, data.capacidad, data.estado, data.precio_por_dia, data.precio_por_hora,
+         data.ubicacion_lat, data.ubicacion_lng, data.direccion, data.ciudad, data.departamento]
+    );
+    return result.rows[0];
+}
+
+async function findActiveById(id) {
+    const result = await pool.query(
+        'SELECT * FROM maquinaria WHERE id = $1 AND activo = true',
+        [id]
+    );
+    return result.rows[0] || null;
+}
+
+async function findByOwner(ownerId, page, size) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        'SELECT COUNT(*) FROM maquinaria WHERE propietario_id = $1 AND activo = true',
+        [ownerId]
+    );
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT * FROM maquinaria WHERE propietario_id = $1 AND activo = true
+         ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        [ownerId, size, offset]
+    );
+    return { data: result.rows, total };
+}
+
+async function update(id, fields, values) {
+    fields.push('actualizado_en = CURRENT_TIMESTAMP');
+    values.push(id);
+    const idx = values.length;
+    await pool.query(
+        `UPDATE maquinaria SET ${fields.join(', ')} WHERE id = $${idx}`,
+        values
+    );
+}
+
+async function softDelete(id) {
+    await pool.query(
+        'UPDATE maquinaria SET activo = false, actualizado_en = CURRENT_TIMESTAMP WHERE id = $1',
+        [id]
+    );
+}
+
+async function countImages(machineryId) {
+    const result = await pool.query(
+        'SELECT COUNT(*) FROM imagen_maquinaria WHERE maquinaria_id = $1',
+        [machineryId]
+    );
+    return parseInt(result.rows[0].count);
+}
+
+async function insertImage({ id, machineryId, url, orden, esPortada }) {
+    await pool.query(
+        'INSERT INTO imagen_maquinaria (id, maquinaria_id, url, orden, es_portada) VALUES ($1, $2, $3, $4, $5)',
+        [id, machineryId, url, orden, esPortada]
+    );
+}
+
+async function findImageByIdAndMachinery(imageId, machineryId) {
+    const result = await pool.query(
+        'SELECT id FROM imagen_maquinaria WHERE id = $1 AND maquinaria_id = $2',
+        [imageId, machineryId]
+    );
+    return result.rows[0] || null;
+}
+
+async function deleteImage(imageId, machineryId) {
+    await pool.query(
+        'DELETE FROM imagen_maquinaria WHERE id = $1 AND maquinaria_id = $2',
+        [imageId, machineryId]
+    );
+}
+
+async function findImagesByMachinery(machineryId) {
+    const result = await pool.query(
+        'SELECT * FROM imagen_maquinaria WHERE maquinaria_id = $1 ORDER BY orden ASC',
+        [machineryId]
+    );
+    return result.rows;
+}
+
+async function upsertAvailability(id, machineryId, fecha, disponible) {
+    await pool.query(
+        `INSERT INTO disponibilidad_maquinaria (id, maquinaria_id, fecha, disponible)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (maquinaria_id, fecha) DO UPDATE SET disponible = $4`,
+        [id, machineryId, fecha, disponible]
+    );
+}
+
+async function findAvailability(machineryId, startDate, endDate) {
+    const result = await pool.query(
+        `SELECT fecha, disponible FROM disponibilidad_maquinaria
+         WHERE maquinaria_id = $1 AND fecha >= $2 AND fecha <= $3
+         ORDER BY fecha ASC`,
+        [machineryId, startDate, endDate]
+    );
+    return result.rows;
+}
+
+async function getAdminStats() {
+    const result = await pool.query(
+        `SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN activo = true THEN 1 END) as activas,
+            COUNT(CASE WHEN activo = false THEN 1 END) as inactivas,
+            COUNT(DISTINCT propietario_id) as propietarios_con_maquinaria,
+            COUNT(DISTINCT tipo) as tipos_distintos,
+            COALESCE(AVG(precio_por_dia), 0) as precio_promedio_dia,
+            COALESCE(MIN(precio_por_dia), 0) as precio_minimo,
+            COALESCE(MAX(precio_por_dia), 0) as precio_maximo
+         FROM maquinaria`
+    );
+    const tipoResult = await pool.query(
+        `SELECT tipo, COUNT(*) as cantidad FROM maquinaria WHERE activo = true GROUP BY tipo ORDER BY cantidad DESC`
+    );
+    return { resumen: result.rows[0], por_tipo: tipoResult.rows };
+}
+
+async function findAllAdmin(page, size) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria');
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT * FROM maquinaria ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
+        [size, offset]
+    );
+    return { data: result.rows, total };
+}
+
+module.exports = {
+    insert, findActiveById, findByOwner, update, softDelete,
+    countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
+    upsertAvailability, findAvailability,
+    getAdminStats, findAllAdmin
+};
