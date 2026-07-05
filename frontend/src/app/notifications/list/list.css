@@ -1,6 +1,6 @@
 .container { padding: 32px 24px; max-width: 800px; margin: 0 auto; }
 .notif-card { margin: 10px 0; border-radius: 12px !important; cursor: pointer; transition: transform .2s, box-shadow .2s; }
 .notif-card:hover { transform: translateX(4px); }
-.notif-card.unread { border-left: 4px solid #1976d2; background: #f8fbff; }
-.notif-time { color: #999; font-size: 12px; }
+.notif-card.unread { border-left: 4px solid var(--rm-primary); background: #fff5e4; }
+.notif-time { color: var(--rm-muted); font-size: 12px; }
 .mark-btn { margin-bottom: 16px; border-radius: 8px !important; }

@@ -2,7 +2,7 @@
 // con carga diferida (lazy loading) para cada módulo feature.
 // La ruta por defecto redirige al listado de maquinaria.
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 
 const routes: Routes = [
   { path: '', loadChildren: () => import('./dashboard/dashboard-module').then(m => m.DashboardModule) },
@@ -13,8 +13,9 @@ const routes: Routes = [
   { path: 'payments', loadChildren: () => import('./payments/payments-module').then(m => m.PaymentsModule) },
   { path: 'ratings', loadChildren: () => import('./ratings/ratings-module').then(m => m.RatingsModule) },
   { path: 'notifications', loadChildren: () => import('./notifications/notifications-module').then(m => m.NotificationsModule) },
+  { path: 'profile', loadChildren: () => import('./profile/profile-module').then(m => m.ProfileModule) },
   { path: '**', redirectTo: '' }
 ];
 
-@NgModule({ imports: [RouterModule.forRoot(routes)], exports: [RouterModule] })
+@NgModule({ imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })], exports: [RouterModule] })
 export class AppRoutingModule {}

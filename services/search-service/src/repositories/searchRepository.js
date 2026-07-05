@@ -7,11 +7,12 @@ async function searchWithFilters(whereClause, values, orderBy, size, offset) {
     );
     const total = parseInt(countResult.rows[0].count);
 
-    const idx = values.length + 1;
+    let idx = values.length + 1;
     const result = await pool.query(
         `SELECT m.id, m.titulo, m.descripcion, m.tipo, m.marca, m.modelo, m.anio,
                 m.capacidad, m.estado, m.precio_por_dia,
-                m.ubicacion_lat, m.ubicacion_lng, m.ciudad, m.departamento
+                m.ubicacion_lat, m.ubicacion_lng, m.ciudad, m.departamento,
+                m.puntuacion_promedio, m.total_resenas
          FROM maquinaria m
          ${whereClause} ${orderBy} LIMIT $${idx++} OFFSET $${idx++}`,
         [...values, size, offset]
@@ -23,7 +24,9 @@ async function searchWithFilters(whereClause, values, orderBy, size, offset) {
 async function getSuggestions(query) {
     const result = await pool.query(
         `SELECT DISTINCT titulo FROM maquinaria
-         WHERE titulo ILIKE $1 AND activo = true AND disponible = true
+         WHERE (titulo ILIKE $1 OR COALESCE(marca, '') ILIKE $1 OR COALESCE(modelo, '') ILIKE $1)
+           AND activo = true AND disponible = true
+         ORDER BY titulo ASC
          LIMIT 10`,
         [`%${query}%`]
     );

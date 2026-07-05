@@ -49,6 +49,13 @@ router.get('/:id', validateToken, async (req, res, next) => {
     } catch (err) { next(err); }
 });
 
+router.post('/:id/simulate-approval', validateToken, async (req, res, next) => {
+    try {
+        const result = await paymentService.simulateApproval(req.params.id, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
 // Liberar fondos retenidos al propietario
 router.post('/:id/release', validateToken, async (req, res, next) => {
     try {

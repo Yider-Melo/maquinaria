@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS pago (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     reserva_id UUID NOT NULL,
     usuario_id UUID NOT NULL,
+    propietario_id UUID,
     monto DECIMAL(12, 2) NOT NULL,
     moneda VARCHAR(3) DEFAULT 'COP',
     metodo_pago VARCHAR(50),
@@ -15,5 +16,7 @@ CREATE TABLE IF NOT EXISTS pago (
 );
 CREATE INDEX IF NOT EXISTS idx_pago_reserva ON pago(reserva_id);
 CREATE INDEX IF NOT EXISTS idx_pago_usuario ON pago(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_pago_propietario ON pago(propietario_id);
 CREATE INDEX IF NOT EXISTS idx_pago_estado ON pago(estado);
 CREATE INDEX IF NOT EXISTS idx_pago_referencia ON pago(referencia_pasarela);
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS propietario_id UUID;

@@ -1,10 +1,10 @@
 const pool = require('../db');
 
-async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, precioTotal }) {
+async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, modalidad, cantidadUnidades, precioUnitario, precioTotal }) {
     const result = await pool.query(
-        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, precio_total, estado)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pendiente') RETURNING *`,
-        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, precioTotal]
+        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, modalidad, cantidad_unidades, precio_unitario, precio_total, estado)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pendiente') RETURNING *`,
+        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, modalidad, cantidadUnidades, precioUnitario, precioTotal]
     );
     return result.rows[0];
 }
@@ -15,6 +15,18 @@ async function findConflictingBookings(machineryId, startDate, endDate) {
          WHERE maquinaria_id = $1
            AND estado IN ('pendiente', 'confirmada', 'en_curso')
            AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)`,
+        [machineryId, startDate, endDate]
+    );
+    return result.rows;
+}
+
+async function findOccupiedRanges(machineryId, startDate, endDate) {
+    const result = await pool.query(
+        `SELECT fecha_inicio, fecha_fin, estado FROM reserva
+         WHERE maquinaria_id = $1
+           AND estado IN ('pendiente', 'confirmada', 'en_curso')
+           AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)
+         ORDER BY fecha_inicio ASC`,
         [machineryId, startDate, endDate]
     );
     return result.rows;
@@ -89,7 +101,7 @@ async function findRecent(limit) {
 }
 
 module.exports = {
-    insert, findConflictingBookings, findById,
+    insert, findConflictingBookings, findOccupiedRanges, findById,
     findByUser, findByOwner, updateEstado, cancel,
     getAdminStats, findRecent
 };

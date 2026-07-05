@@ -139,9 +139,18 @@ async function findAllAdmin(page, size) {
     return { data: result.rows, total };
 }
 
+async function setActiveAdmin(id, active) {
+    const result = await pool.query(
+        `UPDATE maquinaria SET activo = $1, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $2 RETURNING *`,
+        [active, id]
+    );
+    return result.rows[0] || null;
+}
+
 module.exports = {
     insert, findActiveById, findByOwner, update, softDelete,
     countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
     upsertAvailability, findAvailability,
-    getAdminStats, findAllAdmin
+    getAdminStats, findAllAdmin, setActiveAdmin
 };

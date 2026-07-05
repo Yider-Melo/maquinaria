@@ -9,6 +9,8 @@ const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '0000',
     max: 20,
+    connectionTimeoutMillis: 3000,
+    query_timeout: 3000,
     idleTimeoutMillis: 30000
 });
 

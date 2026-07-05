@@ -1,11 +1,15 @@
-.page { padding:24px; max-width:900px; margin:0 auto; }
-.page h1 { margin-bottom:24px; }
-.report-grid { display:flex; flex-direction:column; gap:12px; }
-.report-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:pointer; transition:transform .2s; }
-.report-card:hover { transform:translateX(4px); }
-.report-icon { font-size:36px; width:36px; height:36px; color:#1976d2; }
-.report-card div { flex:1; }
-.report-card h3 { margin:0 0 4px; font-size:16px; }
-.report-card p { margin:0; color:#666; font-size:13px; }
-.report-card .warn { color:#e65100; margin-top:4px; }
-.arrow { color:#ccc; }
+.page { padding: 24px; max-width: 1180px; margin: 0 auto; }
+.page h1 { margin-bottom: 22px; color: var(--rm-ink); }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.report-grid mat-card { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 16px !important; }
+.report-grid mat-icon { color: var(--rm-primary); font-size: 34px; width: 34px; height: 34px; }
+.report-grid strong { display: block; font-size: 28px; color: var(--rm-ink); }
+.report-grid span { color: var(--rm-muted); }
+.admin-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: var(--rm-surface); border-radius: 14px; overflow: hidden; }
+.admin-table th, .admin-table td { padding: 12px; border-bottom: 1px solid var(--rm-border); text-align: left; vertical-align: middle; color: var(--rm-ink); }
+.admin-table th { color: var(--rm-secondary); background: #fff3df; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.admin-table small { display: block; color: var(--rm-muted); margin-top: 3px; }
+.status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #fee2e2; color: #991b1b; font-weight: 800; font-size: 12px; }
+.status.ok { background: #d1fae5; color: #047857; }
+button[mat-stroked-button] { border-color: var(--rm-primary) !important; color: var(--rm-primary-dark) !important; }
+@media (max-width: 640px) { .page { padding: 16px 12px; } .report-grid { grid-template-columns: 1fr; } .admin-table { border-radius: 10px; } }

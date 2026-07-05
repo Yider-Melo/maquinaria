@@ -5,55 +5,63 @@ async function search(filters) {
     const conditions = [];
     const values = [];
     let idx = 1;
+    const page = Number(filters.page) || 1;
+    const size = Math.min(Number(filters.size) || 20, 100);
 
     if (filters.q) {
         conditions.push(`(m.titulo ILIKE $${idx} OR COALESCE(m.descripcion, '') ILIKE $${idx} OR COALESCE(m.marca, '') ILIKE $${idx} OR COALESCE(m.modelo, '') ILIKE $${idx})`);
-        values.push(`%${filters.q}%`);
+        values.push(`%${filters.q.trim()}%`);
         idx++;
     }
 
     if (filters.tipo) {
-        conditions.push(`m.tipo = $${idx++}`);
-        values.push(filters.tipo);
+        conditions.push(`LOWER(m.tipo) = $${idx++}`);
+        values.push(filters.tipo.toLowerCase());
     }
 
-    if (filters.minPrice !== undefined) {
+    if (filters.minPrice !== undefined && filters.minPrice !== null) {
         conditions.push(`m.precio_por_dia >= $${idx++}`);
-        values.push(filters.minPrice);
+        values.push(Number(filters.minPrice));
     }
 
-    if (filters.maxPrice !== undefined) {
+    if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
         conditions.push(`m.precio_por_dia <= $${idx++}`);
-        values.push(filters.maxPrice);
+        values.push(Number(filters.maxPrice));
     }
 
     if (filters.ciudad) {
         conditions.push(`LOWER(m.ciudad) LIKE $${idx++}`);
-        values.push(`%${filters.ciudad.toLowerCase()}%`);
+        values.push(`%${filters.ciudad.trim().toLowerCase()}%`);
     }
 
     if (filters.departamento) {
         conditions.push(`LOWER(m.departamento) = $${idx++}`);
-        values.push(filters.departamento.toLowerCase());
+        values.push(filters.departamento.trim().toLowerCase());
     }
 
     if (filters.lat !== undefined && filters.lng !== undefined && filters.radius) {
-        const latDiff = filters.radius / 111.0;
-        const lngDiff = filters.radius / (111.0 * Math.cos(filters.lat * Math.PI / 180));
+        const lat = Number(filters.lat);
+        const lng = Number(filters.lng);
+        const radius = Number(filters.radius);
+        const latDiff = radius / 111.0;
+        const lngDiff = radius / (111.0 * Math.cos(lat * Math.PI / 180));
         conditions.push(`m.ubicacion_lat BETWEEN $${idx++} AND $${idx++}`);
-        values.push(filters.lat - latDiff, filters.lat + latDiff);
+        values.push(lat - latDiff, lat + latDiff);
         conditions.push(`m.ubicacion_lng BETWEEN $${idx++} AND $${idx++}`);
-        values.push(filters.lng - lngDiff, filters.lng + lngDiff);
+        values.push(lng - lngDiff, lng + lngDiff);
     }
 
     conditions.push('m.disponible = true', 'm.activo = true');
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const page = filters.page || 1;
-    const size = Math.min(filters.size || 20, 100);
     const offset = (page - 1) * size;
-    let orderBy = 'ORDER BY m.precio_por_dia ASC';
-    if (filters.sort === 'price_desc') orderBy = 'ORDER BY m.precio_por_dia DESC';
+    const allowedSorts = {
+        price_asc: 'ORDER BY m.precio_por_dia ASC NULLS LAST',
+        price_desc: 'ORDER BY m.precio_por_dia DESC NULLS LAST',
+        rating: 'ORDER BY m.puntuacion_promedio DESC NULLS LAST, m.total_resenas DESC',
+        distance: 'ORDER BY m.precio_por_dia ASC NULLS LAST'
+    };
+    const orderBy = allowedSorts[filters.sort] || allowedSorts.price_asc;
 
     const { data, total } = await searchRepository.searchWithFilters(whereClause, values, orderBy, size, offset);
 

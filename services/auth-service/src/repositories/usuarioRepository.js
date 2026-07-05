@@ -23,6 +23,11 @@ async function findByEmailWithPassword(email) {
     return result.rows[0] || null;
 }
 
+async function findByIdWithPassword(id) {
+    const result = await pool.query('SELECT * FROM usuarios WHERE id = $1 AND activo = true', [id]);
+    return result.rows[0] || null;
+}
+
 async function insert({ id, email, passwordHash, nombre, apellido, telefono, tipo_usuario, tokenVerificacion }) {
     await pool.query(
         `INSERT INTO usuarios (id, email, password_hash, nombre, apellido, telefono, tipo_usuario, token_verificacion)
@@ -121,10 +126,31 @@ async function getStats() {
     return result.rows[0];
 }
 
+async function setActive(userId, active) {
+    const result = await pool.query(
+        `UPDATE usuarios SET activo = $1, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $2
+         RETURNING id, email, nombre, apellido, telefono, tipo_usuario, foto_url, email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en`,
+        [active, userId]
+    );
+    return result.rows[0] || null;
+}
+
+async function verifyEmail(userId) {
+    const result = await pool.query(
+        `UPDATE usuarios SET email_verificado = true, token_verificacion = NULL, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $1
+         RETURNING id, email, nombre, apellido, telefono, tipo_usuario, foto_url, email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en`,
+        [userId]
+    );
+    return result.rows[0] || null;
+}
+
 module.exports = {
     findByEmail,
     findById,
     findByEmailWithPassword,
+    findByIdWithPassword,
     insert,
     updateLastAccess,
     updateProfile,
@@ -136,5 +162,7 @@ module.exports = {
     findByResetToken,
     updatePassword,
     findAll,
-    getStats
+    getStats,
+    setActive,
+    verifyEmail
 };

@@ -41,6 +41,13 @@ router.get('/all', validateToken, requireRole('admin'), async (req, res, next) =
     } catch (err) { next(err); }
 });
 
+router.put('/all/:id/status', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const result = await machineryService.adminSetMachineryStatus(req.params.id, req.body.activo === true);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
 // Obtener maquinaria por ID, incluyendo sus imagenes
 router.get('/:id', async (req, res, next) => {
     try {

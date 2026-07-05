@@ -1,5 +1,6 @@
 .container { padding: 32px 24px; max-width: 900px; margin: 0 auto; }
-.payment-card { margin: 12px 0; border-radius: 12px !important; transition: transform .2s; }
-.payment-card:hover { transform: translateY(-2px); }
+.payment-card { margin: 12px 0; border-radius: 12px !important; transition: transform .2s, box-shadow .2s; }
+.payment-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--rm-shadow) !important; }
 .payment-info { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .payment-info strong { min-width: 80px; }
+@media (max-width: 560px) { .payment-info { align-items: flex-start; flex-direction: column; gap: 8px; } }

@@ -2,8 +2,8 @@
   <mat-card class="auth-card">
     <div class="auth-card-header">
       <mat-icon class="auth-icon">person_add</mat-icon>
-      <h1>Crear Cuenta</h1>
-      <p>Únete a RentaMaq</p>
+      <h1>Crear cuenta</h1>
+      <p>Elige tu perfil y empieza a operar</p>
     </div>
     <div class="auth-card-body">
       <form (ngSubmit)="onSubmit()">
@@ -25,7 +25,7 @@
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Email</mat-label>
-            <input matInput type="email" [(ngModel)]="data.email" name="email" required placeholder="tu@email.com">
+              <input matInput type="email" [(ngModel)]="data.email" name="email" required autocomplete="email" placeholder="tu@email.com">
             <mat-icon matPrefix>email</mat-icon>
           </mat-form-field>
         </div>
@@ -33,17 +33,28 @@
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Contraseña</mat-label>
-              <input matInput type="password" [(ngModel)]="data.password" name="password" required minlength="6" placeholder="••••••••">
+              <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="data.password" name="password" required minlength="8" autocomplete="new-password" placeholder="Crea una contraseña" (ngModelChange)="updatePasswordRules()">
               <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
             </mat-form-field>
           </div>
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Confirmar</mat-label>
-              <input matInput type="password" [(ngModel)]="data.confirmPassword" name="confirmPassword" required placeholder="••••••••">
+              <input matInput [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="data.confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repite la contraseña">
               <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" (click)="showConfirmPassword = !showConfirmPassword" [attr.aria-label]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
             </mat-form-field>
           </div>
+        </div>
+        <div class="password-rules">
+          <span *ngFor="let rule of passwordRules" [class.valid]="rule.valid">
+            <mat-icon>{{ rule.valid ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>{{ rule.label }}
+          </span>
         </div>
         <div class="form-row">
           <div class="form-field">
@@ -57,8 +68,8 @@
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Tipo de Usuario</mat-label>
               <mat-select [(ngModel)]="data.tipo_usuario" name="tipo_usuario">
-                <mat-option value="arrendatario">🔧 Arrendatario</mat-option>
-                <mat-option value="propietario">👷 Propietario</mat-option>
+                <mat-option value="arrendatario">Quiero alquilar maquinaria</mat-option>
+                <mat-option value="propietario">Quiero publicar maquinaria</mat-option>
               </mat-select>
               <mat-icon matPrefix>badge</mat-icon>
             </mat-form-field>

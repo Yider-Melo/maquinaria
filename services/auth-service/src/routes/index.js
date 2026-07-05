@@ -45,6 +45,24 @@ router.put('/profile', validateToken, async (req, res, next) => {
     }
 });
 
+router.put('/profile/password', validateToken, async (req, res, next) => {
+    try {
+        const result = await authService.changePassword(req.user.id, req.body.currentPassword, req.body.newPassword);
+        success(res, result);
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/profile/verify-email', validateToken, async (req, res, next) => {
+    try {
+        const profile = await authService.verifyEmail(req.user.id);
+        success(res, profile);
+    } catch (err) {
+        next(err);
+    }
+});
+
 // Configurar autenticacion de dos factores (2FA)
 router.post('/2fa/setup', validateToken, async (req, res, next) => {
     try {
@@ -76,7 +94,7 @@ router.post('/forgot-password', async (req, res, next) => {
 });
 
 // Restablecer contrasena con token recibido por email
-router.post('/reset-password', async (req, res, next) => {
+router.post('/reset-password', validate(schemas.resetPassword), async (req, res, next) => {
     try {
         await authService.resetPassword(req.body.token, req.body.password);
         success(res, { message: 'Contraseña actualizada' });
@@ -104,6 +122,13 @@ router.get('/users/stats', validateToken, requireRole('admin'), async (req, res,
     try {
         const stats = await authService.adminUserStats();
         success(res, stats);
+    } catch (err) { next(err); }
+});
+
+router.put('/users/:id/status', validateToken, requireRole('admin'), async (req, res, next) => {
+    try {
+        const user = await authService.adminSetUserStatus(req.params.id, req.body.activo === true);
+        success(res, user);
     } catch (err) { next(err); }
 });
 

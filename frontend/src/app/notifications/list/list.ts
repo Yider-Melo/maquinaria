@@ -8,13 +8,17 @@ import { Api } from '../../core/services/api';
   selector: 'app-notifications-list', templateUrl: './list.html', styleUrls: ['./list.css']
 })
 export class NotificationsList implements OnInit {
-  notifications: any[] = []; loading = true;
+  notifications: any[] = []; loading = true; error = '';
 
   constructor(private api: Api) {}
 
   // Obtiene la lista de notificaciones desde el backend.
   ngOnInit(): void {
-    this.api.get<any>('/notifications').subscribe(res => { this.notifications = res.data?.data || []; this.loading = false; });
+    this.loading = true; this.error = '';
+    this.api.get<any>('/notifications').subscribe({
+      next: (res) => { this.notifications = res.data?.data || []; this.loading = false; },
+      error: () => { this.error = 'No se pudieron cargar las notificaciones.'; this.loading = false; }
+    });
   }
 
   // Marca una notificación específica como leída.

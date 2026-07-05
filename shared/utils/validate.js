@@ -15,4 +15,15 @@ function validate(schema) {
     };
 }
 
-module.exports = { validate };
+function validateQuery(schema) {
+    return (req, res, next) => {
+        const { error, value } = schema.validate(req.query, { stripUnknown: true, convert: true });
+        if (error) {
+            return next(new ValidationError(error.details[0].message));
+        }
+        req.query = value;
+        next();
+    };
+}
+
+module.exports = { validate, validateQuery };

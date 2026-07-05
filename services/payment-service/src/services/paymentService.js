@@ -2,8 +2,21 @@ const { v4: uuidv4 } = require('uuid');
 const { NotFoundError, ForbiddenError, ValidationError } = require('shared');
 const pagoRepository = require('../repositories/pagoRepository');
 
+const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
+async function findReservaById(bookingId) {
+    const response = await fetch(`${BOOKING_SERVICE_URL}/internal/${bookingId}`, {
+        headers: { 'x-api-key': INTERNAL_API_KEY }
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error('No se pudo consultar la reserva');
+    const body = await response.json();
+    return body.data;
+}
+
 async function createCheckout(bookingId, userId, metodoPago) {
-    const reserva = await pagoRepository.findReservaById(bookingId);
+    const reserva = await findReservaById(bookingId);
     if (!reserva) {
         throw new NotFoundError('Reserva no encontrada');
     }
@@ -26,12 +39,28 @@ async function createCheckout(bookingId, userId, metodoPago) {
 
     await pagoRepository.insert({
         id, bookingId, userId,
+        propietarioId: reserva.propietario_id,
         monto: reserva.precio_total,
         metodoPago: metodoPago || 'tarjeta_credito',
         referenciaPasarela
     });
 
-    return { pago_id: id, referencia: referenciaPasarela, monto: reserva.precio_total, estado: 'pendiente' };
+    return {
+        pago_id: id,
+        referencia: referenciaPasarela,
+        monto: reserva.precio_total,
+        estado: 'pendiente',
+        checkout_url: `/payments/${id}?ref=${referenciaPasarela}`,
+        message: 'Checkout simulado creado. Confirma el pago para retener fondos.'
+    };
+}
+
+async function simulateApproval(pagoId, userId) {
+    const pago = await pagoRepository.findByIdWithReserva(pagoId, userId);
+    if (!pago) throw new NotFoundError('Pago no encontrado');
+    if (pago.usuario_id !== userId) throw new ForbiddenError('Solo el pagador puede confirmar este pago');
+    const result = await pagoRepository.updateEstadoWhere(pagoId, 'pendiente', 'retenido');
+    return result || await pagoRepository.findByIdWithReserva(pagoId, userId);
 }
 
 function determinarEstado(status) {
@@ -93,5 +122,5 @@ async function getDashboard() {
 module.exports = {
     createCheckout, handleWebhook, determinarEstado,
     getPaymentById, getPaymentsByBooking,
-    releaseFunds, refund, getDashboard
+    simulateApproval, releaseFunds, refund, getDashboard
 };

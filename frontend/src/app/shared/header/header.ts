@@ -29,10 +29,6 @@ export class Header implements OnInit, OnDestroy {
   // notificaciones no leídas y se suscribe al WebSocket para incrementarlo.
   ngOnInit(): void {
     if (this.auth.isLoggedIn()) {
-      this.api.get<any>('/notifications').subscribe(res => {
-        const data = res.data?.data || [];
-        this.unreadCount = data.filter((n: any) => !n.leida).length;
-      });
       this.socket.connect();
       this.subs.push(
         this.socket.onNotification().subscribe((data: any) => {

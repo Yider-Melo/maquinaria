@@ -1,0 +1,158 @@
+<div class="profile-page" *ngIf="!loading; else loadingTmpl">
+  <section class="profile-hero">
+    <img [src]="profile.foto_url || 'https://ui-avatars.com/api/?name=' + profile.nombre + '+' + profile.apellido + '&background=0f766e&color=fff'" alt="Avatar">
+    <div><span>{{ profile.tipo_usuario === 'propietario' ? 'Perfil de arrendador' : profile.tipo_usuario === 'admin' ? 'Perfil administrativo' : 'Perfil de arrendatario' }}</span><h1>{{ profile.nombre }} {{ profile.apellido }}</h1><p>{{ profile.email }} · {{ profile.tipo_usuario }}</p></div>
+  </section>
+  <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon>{{ error }}</div>
+  <div class="profile-grid">
+    <mat-card>
+      <mat-card-header><mat-card-title>Datos personales</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="profile.nombre"></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="profile.apellido"></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="profile.telefono"></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Foto URL</mat-label><input matInput [(ngModel)]="profile.foto_url" placeholder="https://..."></mat-form-field>
+        <div class="verify-row"><mat-icon>{{ profile.email_verificado ? 'verified' : 'mark_email_unread' }}</mat-icon><span>{{ profile.email_verificado ? 'Correo verificado' : 'Correo pendiente de verificación' }}</span></div>
+        <button mat-stroked-button type="button" *ngIf="!profile.email_verificado" (click)="verifyEmail()">Verificar correo demo</button>
+      </mat-card-content>
+      <mat-card-actions><button mat-raised-button class="primary" [disabled]="saving" (click)="saveProfile()">Guardar perfil</button></mat-card-actions>
+    </mat-card>
+    <mat-card>
+      <mat-card-header><mat-card-title>Seguridad</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <mat-form-field appearance="outline"><mat-label>Contraseña actual</mat-label><input matInput type="password" [(ngModel)]="password.currentPassword"></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Nueva contraseña</mat-label><input matInput type="password" [(ngModel)]="password.newPassword"></mat-form-field>
+        <p class="hint">Debe incluir mínimo 8 caracteres, mayúscula, minúscula y número.</p>
+      </mat-card-content>
+      <mat-card-actions><button mat-raised-button class="primary" [disabled]="passwordSaving" (click)="changePassword()">Cambiar contraseña</button></mat-card-actions>
+    </mat-card>
+  </div>
+
+  <section class="renter-profile" *ngIf="canUseRenterProfile">
+    <div class="renter-summary">
+      <div>
+        <span class="section-eyebrow">Reservas y confianza</span>
+        <h2>Perfil de arrendatario</h2>
+        <p>Vista enfocada en tus solicitudes, arriendos activos, pagos pendientes e historial como cliente.</p>
+      </div>
+      <button mat-raised-button class="primary" routerLink="/machinery"><mat-icon>search</mat-icon> Buscar maquinaria</button>
+    </div>
+
+    <div class="trust-grid">
+      <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
+      <div class="trust-card"><mat-icon>book_online</mat-icon><strong>{{ activeRenterBookings.length }}</strong><span>Solicitudes activas</span></div>
+      <div class="trust-card"><mat-icon>payments</mat-icon><strong>{{ pendingRenterPayments }}</strong><span>Pagos por gestionar</span></div>
+      <div class="trust-card"><mat-icon>done_all</mat-icon><strong>{{ completedRenterBookings }}</strong><span>Arriendos finalizados</span></div>
+    </div>
+
+    <div class="renter-actions">
+      <button mat-stroked-button routerLink="/bookings"><mat-icon>calendar_today</mat-icon> Mis reservas</button>
+      <button mat-stroked-button routerLink="/payments"><mat-icon>account_balance_wallet</mat-icon> Pagos</button>
+      <button mat-stroked-button routerLink="/ratings"><mat-icon>star</mat-icon> Calificaciones</button>
+    </div>
+
+    <h3>Solicitudes activas</h3>
+    <p class="empty-state" *ngIf="activeRenterBookings.length === 0">No tienes solicitudes activas. Busca maquinaria y solicita fechas para iniciar un arriendo.</p>
+    <div class="booking-list" *ngIf="activeRenterBookings.length > 0">
+      <mat-card class="booking-mini" *ngFor="let booking of activeRenterBookings.slice(0, 4)" [routerLink]="['/bookings', booking.id]">
+        <div>
+          <strong>#{{ booking.id?.substring(0, 8) }}</strong>
+          <span>{{ booking.fecha_inicio | date }} al {{ booking.fecha_fin | date }}</span>
+        </div>
+        <div>
+          <span class="booking-state" [class.confirmed]="booking.estado === 'confirmada'" [class.progress]="booking.estado === 'en_curso'">{{ formatBookingState(booking.estado) }}</span>
+          <strong>${{ booking.precio_total | number }}</strong>
+        </div>
+      </mat-card>
+    </div>
+  </section>
+
+  <section class="owner-profile" *ngIf="canManageMachineryImages">
+    <div class="owner-summary">
+      <div>
+        <span class="section-eyebrow">Confianza y catálogo</span>
+        <h2>Maquinaria disponible para arrendar</h2>
+        <p>Este perfil muestra tu experiencia operativa, disponibilidad y equipos publicados para que el arrendatario pueda decidir rápido.</p>
+      </div>
+      <button mat-raised-button class="primary" routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar maquinaria</button>
+    </div>
+
+    <div class="trust-grid">
+      <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
+      <div class="trust-card"><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Equipos publicados</span></div>
+      <div class="trust-card"><mat-icon>event_available</mat-icon><strong>{{ availableOwnerMachines.length }}</strong><span>Disponibles ahora</span></div>
+      <div class="trust-card"><mat-icon>support_agent</mat-icon><strong>{{ profile.telefono ? 'Activo' : 'Por completar' }}</strong><span>Contacto</span></div>
+    </div>
+
+    <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada. Publica un equipo para que aparezca en tu catálogo de arrendador.</p>
+
+    <div class="machine-catalog" *ngIf="ownerMachines.length > 0">
+      <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
+        <div class="machine-image">
+          <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo">
+          <span [class.unavailable]="machine.disponible === false">{{ machine.disponible === false ? 'No disponible' : 'Disponible' }}</span>
+        </div>
+        <mat-card-content>
+          <div class="machine-heading">
+            <div>
+              <h3>{{ machine.titulo }}</h3>
+              <p>{{ machine.tipo }} · {{ machine.marca || 'Marca no indicada' }} {{ machine.modelo || '' }}</p>
+            </div>
+            <strong>${{ machine.precio_por_dia | number }}<small>/día</small></strong>
+          </div>
+          <div class="machine-details">
+            <span><mat-icon>location_on</mat-icon>{{ machine.ciudad || 'Ubicación por confirmar' }}{{ machine.departamento ? ', ' + machine.departamento : '' }}</span>
+            <span><mat-icon>build_circle</mat-icon>Estado: {{ formatMachineState(machine.estado) }}</span>
+            <span *ngIf="machine.capacidad"><mat-icon>speed</mat-icon>Capacidad: {{ machine.capacidad }}</span>
+          </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-stroked-button [routerLink]="['/machinery', machine.id]">Ver detalle</button>
+          <button mat-raised-button class="primary" [routerLink]="['/machinery', machine.id, 'edit']">Editar publicación</button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </section>
+
+  <mat-card class="machinery-photo-card" *ngIf="canManageMachineryImages">
+    <mat-card-header>
+      <mat-card-title>Fotos de tus vehículos y maquinaria</mat-card-title>
+      <mat-card-subtitle>Selecciona una publicación y agrega fotos desde tu equipo o con una URL.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada. Publica un equipo para agregar fotos.</p>
+
+      <ng-container *ngIf="ownerMachines.length > 0">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Vehículo o maquinaria</mat-label>
+          <mat-select [ngModel]="selectedMachine" (selectionChange)="selectMachine($event.value)">
+            <mat-option *ngFor="let machine of ownerMachines" [value]="machine">{{ machine.titulo }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="photo-actions">
+          <button mat-raised-button class="primary" type="button" [disabled]="imageLoading" (click)="fileInput.click()">
+            <mat-icon>upload</mat-icon> Subir foto
+          </button>
+          <input #fileInput type="file" accept="image/*" hidden (change)="onImageFileSelected($event)">
+          <mat-form-field appearance="outline" class="url-field">
+            <mat-label>O pegar URL de foto</mat-label>
+            <input matInput [(ngModel)]="imageUrl" placeholder="https://...">
+          </mat-form-field>
+          <button mat-stroked-button type="button" [disabled]="imageLoading || !imageUrl.trim()" (click)="addImageFromUrl()">Agregar URL</button>
+        </div>
+
+        <p class="hint">En modo demo se aceptan imágenes locales de hasta 900 KB.</p>
+        <app-loading *ngIf="imageLoading"></app-loading>
+        <div class="vehicle-gallery" *ngIf="!imageLoading && machineImages.length > 0">
+          <div class="vehicle-photo" *ngFor="let image of machineImages">
+            <img [src]="image.url" [alt]="selectedMachine?.titulo">
+            <button mat-icon-button color="warn" type="button" (click)="deleteMachineImage(image)" aria-label="Eliminar foto"><mat-icon>delete</mat-icon></button>
+          </div>
+        </div>
+        <p class="empty-state" *ngIf="!imageLoading && machineImages.length === 0">Esta publicación todavía no tiene fotos.</p>
+      </ng-container>
+    </mat-card-content>
+  </mat-card>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

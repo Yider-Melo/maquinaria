@@ -1,17 +1,19 @@
 <div class="dashboard">
   <div class="welcome">
-    <h1>Bienvenido, {{ auth.getUser()?.nombre }}!</h1>
+    <span class="eyebrow">RentaMaq operativo</span>
+    <h1>{{ roleTitle }}</h1>
+    <p>{{ roleDescription }}</p>
     <span class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
-      {{ auth.esTipo('propietario') ? '👷 Propietario' : auth.esTipo('admin') ? '⚙️ Administrador' : '🔧 Arrendatario' }}
+      {{ auth.esTipo('propietario') ? 'Propietario' : auth.esTipo('admin') ? 'Administrador' : 'Arrendatario' }}: {{ auth.getUser()?.nombre }}
     </span>
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="stats-grid">
-      <mat-card class="stat-card" routerLink="/machinery">
+      <mat-card class="stat-card" routerLink="/machinery" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">construction</mat-icon>
         <div class="stat-info">
-          <span class="stat-value">{{ stats.totalMaquinaria }}</span>
+          <span class="stat-value">{{ ownerAvailableMachines }}</span>
           <span class="stat-label">Máquinas Disponibles</span>
         </div>
       </mat-card>
@@ -36,6 +38,46 @@
           <span class="stat-label">Notificaciones</span>
         </div>
       </mat-card>
+    </div>
+
+    <div class="role-panel">
+      <div class="panel-card" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+        <mat-icon>travel_explore</mat-icon>
+        <h3>Para alquilar más rápido</h3>
+        <p>Usa filtros por ciudad, categoría y precio. En el detalle puedes solicitar la reserva con fechas y total estimado.</p>
+        <button mat-stroked-button routerLink="/machinery">Explorar catálogo</button>
+      </div>
+      <div class="panel-card" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+        <mat-icon>inventory_2</mat-icon>
+        <h3>Para vender mejor tus equipos</h3>
+        <p>Publica fotos claras, capacidad, precio diario y ubicación. Las solicitudes aparecerán en reservas.</p>
+        <button mat-stroked-button routerLink="/machinery/new">Publicar equipo</button>
+      </div>
+      <div class="panel-card" *ngIf="auth.esTipo('admin')">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <h3>Control administrativo</h3>
+        <p>Revisa métricas, usuarios, maquinaria activa y reportes desde el panel de administración.</p>
+        <button mat-stroked-button routerLink="/admin">Abrir admin</button>
+      </div>
+    </div>
+
+    <div class="owner-workbench" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <div class="workbench-header"><div><h2>Operación del propietario</h2><p>Vista rápida de tus equipos, solicitudes e ingresos estimados.</p></div><button mat-raised-button routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar máquina</button></div>
+      <div class="owner-kpis">
+        <mat-card><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Máquinas publicadas</span></mat-card>
+        <mat-card><mat-icon>pending_actions</mat-icon><strong>{{ pendingOwnerRequests }}</strong><span>Solicitudes pendientes</span></mat-card>
+        <mat-card><mat-icon>payments</mat-icon><strong>${{ ownerIncome | number }}</strong><span>Ingresos estimados</span></mat-card>
+      </div>
+      <div class="owner-columns">
+        <mat-card><mat-card-header><mat-card-title>Mis máquinas</mat-card-title></mat-card-header><mat-card-content>
+          <div class="compact-row" *ngFor="let m of ownerMachines.slice(0,5)" [routerLink]="['/machinery', m.id]"><span>{{ m.titulo }}</span><strong>${{ m.precio_por_dia | number }}/día</strong></div>
+          <p class="empty-mini" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada.</p>
+        </mat-card-content></mat-card>
+        <mat-card><mat-card-header><mat-card-title>Solicitudes destacadas</mat-card-title></mat-card-header><mat-card-content>
+          <div class="compact-row" *ngFor="let b of ownerRequests.slice(0,5)" routerLink="/bookings"><span>{{ b.estado }} · {{ b.fecha_inicio | date }}</span><strong>${{ b.precio_total | number }}</strong></div>
+          <p class="empty-mini" *ngIf="ownerRequests.length === 0">Sin solicitudes de reserva.</p>
+        </mat-card-content></mat-card>
+      </div>
     </div>
 
     <div class="quick-actions">

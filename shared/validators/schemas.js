@@ -8,7 +8,15 @@ const schemas = {
     // Registro de nuevo usuario
     register: Joi.object({
         email: Joi.string().email().required(),
-        password: Joi.string().min(8).max(50).required(),
+        password: Joi.string()
+            .min(8)
+            .max(50)
+            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
+            .required()
+            .messages({
+                'string.pattern.base': 'La contraseña debe incluir mayúscula, minúscula y número',
+                'string.min': 'La contraseña debe tener al menos 8 caracteres'
+            }),
         nombre: Joi.string().min(2).max(100).required(),
         apellido: Joi.string().min(2).max(100).required(),
         telefono: Joi.string().max(20).optional(),
@@ -19,6 +27,19 @@ const schemas = {
     login: Joi.object({
         email: Joi.string().email().required(),
         password: Joi.string().required()
+    }),
+
+    resetPassword: Joi.object({
+        token: Joi.string().required(),
+        password: Joi.string()
+            .min(8)
+            .max(50)
+            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
+            .required()
+            .messages({
+                'string.pattern.base': 'La contraseña debe incluir mayúscula, minúscula y número',
+                'string.min': 'La contraseña debe tener al menos 8 caracteres'
+            })
     }),
 
     // Creacion/edicion de maquinaria
@@ -44,7 +65,9 @@ const schemas = {
     reserva: Joi.object({
         maquinaria_id: Joi.string().uuid().required(),
         fecha_inicio: Joi.date().iso().min('now').required(),
-        fecha_fin: Joi.date().iso().greater(Joi.ref('fecha_inicio')).required()
+        fecha_fin: Joi.date().iso().min(Joi.ref('fecha_inicio')).required(),
+        modalidad: Joi.string().valid('dia', 'hora').default('dia'),
+        cantidad_horas: Joi.number().positive().optional()
     }),
 
     // Calificacion post-alquiler
@@ -66,6 +89,8 @@ const schemas = {
     busqueda: Joi.object({
         q: Joi.string().max(200).optional(),
         tipo: Joi.string().max(50).optional(),
+        ciudad: Joi.string().max(100).optional(),
+        departamento: Joi.string().max(100).optional(),
         minPrice: Joi.number().min(0).optional(),
         maxPrice: Joi.number().positive().optional(),
         lat: Joi.number().min(-90).max(90).optional(),
@@ -75,7 +100,7 @@ const schemas = {
         endDate: Joi.date().iso().optional(),
         page: Joi.number().integer().min(1).default(1),
         size: Joi.number().integer().min(1).max(100).default(20),
-        sort: Joi.string().valid('price_asc', 'price_desc', 'rating', 'distance').optional()
+        sort: Joi.string().valid('price_asc', 'price_desc', 'rating', 'distance').default('price_asc')
     })
 };
 

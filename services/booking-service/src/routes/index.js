@@ -3,10 +3,19 @@
 const express = require('express');
 const router = express.Router();
 const bookingService = require('../services/bookingService');
-const { validateToken, requireRole, success, errorHandler } = require('shared');
+const { validate, validateToken, requireRole, schemas, success, errorHandler, ForbiddenError } = require('shared');
+
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
+function internalAuth(req, res, next) {
+    if (req.headers['x-api-key'] !== INTERNAL_API_KEY) {
+        return next(new ForbiddenError('API key inválida'));
+    }
+    next();
+}
 
 // Crear una nueva solicitud de reserva
-router.post('/', validateToken, async (req, res, next) => {
+router.post('/', validateToken, validate(schemas.reserva), async (req, res, next) => {
     try {
         const booking = await bookingService.create(req.body, req.user.id);
         success(res, booking, 201);
@@ -47,6 +56,20 @@ router.get('/recent', validateToken, requireRole('admin'), async (req, res, next
         const limit = parseInt(req.query.limit) || 10;
         const bookings = await bookingService.adminRecentBookings(limit);
         success(res, bookings);
+    } catch (err) { next(err); }
+});
+
+router.get('/machinery/:machineryId/occupied', async (req, res, next) => {
+    try {
+        const result = await bookingService.getOccupiedDates(req.params.machineryId, req.query.start, req.query.end);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
+router.get('/internal/:id', internalAuth, async (req, res, next) => {
+    try {
+        const booking = await bookingService.getInternalById(req.params.id);
+        success(res, booking);
     } catch (err) { next(err); }
 });
 

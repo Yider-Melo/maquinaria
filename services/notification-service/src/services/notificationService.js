@@ -79,6 +79,10 @@ async function getNotificationsByUser(userId, page = 1, size = 20) {
     return await notificacionRepository.findByUser(userId, page, size);
 }
 
+async function getUnreadCount(userId) {
+    return { no_leidas: await notificacionRepository.countUnread(userId) };
+}
+
 async function markAsRead(notificationId, userId) {
     await notificacionRepository.markAsRead(notificationId, userId);
     return { message: 'Notificación marcada como leída' };
@@ -91,6 +95,6 @@ async function markAllAsRead(userId) {
 
 module.exports = {
     createNotification, createNotificationDirect,
-    getNotificationsByUser, markAsRead, markAllAsRead,
+    getNotificationsByUser, getUnreadCount, markAsRead, markAllAsRead,
     TIPOS_NOTIFICACION
 };

@@ -9,7 +9,14 @@ const usuarioRepository = require('../repositories/usuarioRepository');
 const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
+function ensureStrongPassword(password) {
+    if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+        throw new ValidationError('La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula y un número');
+    }
+}
+
 async function register({ email, password, nombre, apellido, telefono, tipo_usuario }) {
+    ensureStrongPassword(password);
     const existing = await usuarioRepository.findByEmail(email);
     if (existing) {
         throw new ConflictError('El email ya está registrado');
@@ -76,6 +83,23 @@ async function updateProfile(userId, data) {
     return getProfile(userId);
 }
 
+async function changePassword(userId, currentPassword, newPassword) {
+    ensureStrongPassword(newPassword);
+    const user = await usuarioRepository.findByIdWithPassword(userId);
+    if (!user) throw new NotFoundError('Usuario no encontrado');
+    const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!validPassword) throw new UnauthorizedError('Contraseña actual incorrecta');
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await usuarioRepository.updatePassword(userId, passwordHash);
+    return { message: 'Contraseña actualizada correctamente' };
+}
+
+async function verifyEmail(userId) {
+    const user = await usuarioRepository.verifyEmail(userId);
+    if (!user) throw new NotFoundError('Usuario no encontrado');
+    return user;
+}
+
 async function setup2FA(userId) {
     const secret = speakeasy.generateSecret({ name: `Rentamaq:${userId}` });
     await usuarioRepository.update2FASecret(userId, secret.base32);
@@ -114,6 +138,7 @@ async function forgotPassword(email) {
 }
 
 async function resetPassword(token, newPassword) {
+    ensureStrongPassword(newPassword);
     const user = await usuarioRepository.findByResetToken(token);
     if (!user) {
         throw new ValidationError('Token inválido o expirado');
@@ -142,8 +167,14 @@ async function adminUserStats() {
     return await usuarioRepository.getStats();
 }
 
+async function adminSetUserStatus(userId, active) {
+    const user = await usuarioRepository.setActive(userId, active);
+    if (!user) throw new NotFoundError('Usuario no encontrado');
+    return user;
+}
+
 module.exports = {
-    register, login, getProfile, updateProfile,
+    register, login, getProfile, updateProfile, changePassword, verifyEmail,
     setup2FA, verify2FA, forgotPassword, resetPassword,
-    validateToken, adminListUsers, adminUserStats
+    validateToken, adminListUsers, adminUserStats, adminSetUserStatus
 };

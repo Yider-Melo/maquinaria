@@ -1,8 +1,9 @@
 <div class="container">
   <div class="page-header"><h1>Mis Reservas</h1></div>
+  <app-loading *ngIf="loading; else bookingsContent"></app-loading>
+  <ng-template #bookingsContent>
   <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-      <ng-container *ngIf="!loading; else loadingTmpl">
         <mat-card *ngFor="let b of asArrendatario" class="booking-card" [routerLink]="['/bookings', b.id]">
           <mat-card-header>
             <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
@@ -18,16 +19,17 @@
             <button mat-button color="warn" (click)="cancelBooking(b.id)" *ngIf="b.estado!=='cancelada'&&b.estado!=='completada'">
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
+            <button mat-button color="primary" (click)="payBooking(b)" *ngIf="b.estado==='confirmada'">
+              <mat-icon>payments</mat-icon> Pagar demo
+            </button>
           </mat-card-actions>
         </mat-card>
         <div class="empty-state" *ngIf="asArrendatario.length===0">
           <mat-icon>book_online</mat-icon>
           <p>Sin reservas como arrendatario</p>
         </div>
-      </ng-container>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-      <ng-container *ngIf="!loading; else loadingTmpl">
         <mat-card *ngFor="let b of asPropietario" class="booking-card" [routerLink]="['/bookings', b.id]">
           <mat-card-header>
             <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
@@ -55,8 +57,7 @@
           <mat-icon>list_alt</mat-icon>
           <p>Sin reservas como propietario</p>
         </div>
-      </ng-container>
     </mat-tab>
   </mat-tab-group>
+  </ng-template>
 </div>
-<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

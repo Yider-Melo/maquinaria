@@ -10,13 +10,17 @@ import { Api } from '../../core/services/api';
   selector: 'app-bookings-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
 export class BookingsDetail implements OnInit {
-  booking: any = null; loading = true;
+  booking: any = null; loading = true; error = '';
 
   constructor(private route: ActivatedRoute, private api: Api, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) this.api.get<any>(`/bookings/${id}`).subscribe(res => { this.booking = res.data; this.loading = false; });
+    if (!id) { this.error = 'Reserva no encontrada.'; this.loading = false; return; }
+    this.api.get<any>(`/bookings/${id}`).subscribe({
+      next: (res) => { this.booking = res.data; this.loading = false; },
+      error: () => { this.error = 'No se pudo cargar la reserva.'; this.loading = false; }
+    });
   }
 
   pay(): void {

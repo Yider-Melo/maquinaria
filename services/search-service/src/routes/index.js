@@ -3,10 +3,10 @@
 const express = require('express');
 const router = express.Router();
 const searchService = require('../services/searchService');
-const { validateToken, success, errorHandler } = require('shared');
+const { validateQuery, validateToken, success, errorHandler, schemas } = require('shared');
 
 // Busqueda principal con filtros (texto, tipo, precio, ubicacion, etc.)
-router.get('/', async (req, res, next) => {
+router.get('/', validateQuery(schemas.busqueda), async (req, res, next) => {
     try {
         const result = await searchService.search(req.query);
         success(res, result);

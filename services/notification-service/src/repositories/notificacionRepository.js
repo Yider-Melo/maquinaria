@@ -34,6 +34,14 @@ async function findByUser(userId, page, size) {
     };
 }
 
+async function countUnread(userId) {
+    const result = await pool.query(
+        'SELECT COUNT(*) FROM notificacion WHERE usuario_id = $1 AND leida = false',
+        [userId]
+    );
+    return parseInt(result.rows[0].count);
+}
+
 async function markAsRead(notificationId, userId) {
     await pool.query(
         `UPDATE notificacion SET leida = true, leida_en = CURRENT_TIMESTAMP
@@ -51,5 +59,5 @@ async function markAllAsRead(userId) {
 }
 
 module.exports = {
-    insert, findByUser, markAsRead, markAllAsRead
+    insert, findByUser, countUnread, markAsRead, markAllAsRead
 };

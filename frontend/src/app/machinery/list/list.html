@@ -1,18 +1,63 @@
 <div class="container">
-  <div class="list-header">
-    <h1>Maquinaria Disponible</h1>
-    <button mat-raised-button color="primary" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+  <div class="list-hero">
+    <div>
+      <span class="eyebrow">Catálogo operativo</span>
+      <h1>Encuentra maquinaria lista para trabajar</h1>
+      <p>Busca por equipo, ciudad, rango de precio y ordena los resultados según tu necesidad.</p>
+    </div>
+    <button mat-raised-button class="publish-btn" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
       <mat-icon>add</mat-icon> Publicar Maquinaria
     </button>
   </div>
-  <div class="filters">
-    <mat-form-field appearance="outline" style="min-width:180px;"><mat-label>Buscar</mat-label><input matInput [(ngModel)]="filters.q" (keyup.enter)="search()" placeholder="título..."></mat-form-field>
-    <mat-form-field appearance="outline" style="min-width:140px;"><mat-label>Tipo</mat-label><input matInput [(ngModel)]="filters.tipo" (keyup.enter)="search()" placeholder="excavadora"></mat-form-field>
-    <mat-form-field appearance="outline" style="min-width:140px;"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="filters.ciudad" (keyup.enter)="search()"></mat-form-field>
-    <mat-form-field appearance="outline" style="min-width:120px;"><mat-label>Precio min</mat-label><input matInput type="number" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0"></mat-form-field>
-    <mat-form-field appearance="outline" style="min-width:120px;"><mat-label>Precio max</mat-label><input matInput type="number" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="999999"></mat-form-field>
-    <button mat-raised-button color="primary" (click)="search()">Buscar</button>
+  <div class="filters-card">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>¿Qué máquina necesitas?</mat-label>
+      <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="loadSuggestions()" (keyup.enter)="search()" placeholder="Ej: excavadora CAT 320">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-autocomplete #machineSuggestions="matAutocomplete" (optionSelected)="search()">
+        <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">{{ suggestion }}</mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría de equipo</mat-label>
+      <mat-select [(ngModel)]="filters.tipo" (selectionChange)="search()">
+        <mat-option value="">Todas las categorías</mat-option>
+        <mat-option *ngFor="let type of machineryTypes" [value]="type.toLowerCase()">{{ type }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>category</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Ciudad de operación</mat-label>
+      <input matInput [(ngModel)]="filters.ciudad" [matAutocomplete]="citySuggestions" (keyup.enter)="search()" placeholder="Bogotá">
+      <mat-icon matPrefix>location_on</mat-icon>
+      <mat-autocomplete #citySuggestions="matAutocomplete" (optionSelected)="search()">
+        <mat-option *ngFor="let city of cities" [value]="city">{{ city }}</mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Desde COP/día</mat-label>
+      <input matInput type="number" min="0" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0">
+      <mat-icon matPrefix>payments</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta COP/día</mat-label>
+      <input matInput type="number" min="0" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="500000">
+      <mat-icon matPrefix>paid</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Ordenar resultados</mat-label>
+      <mat-select [(ngModel)]="filters.sort" (selectionChange)="search()">
+        <mat-option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>sort</mat-icon>
+    </mat-form-field>
+    <div class="filter-actions">
+      <button mat-raised-button class="search-btn" (click)="search()"><mat-icon>travel_explore</mat-icon> Buscar</button>
+      <button mat-button class="clear-btn" (click)="clearFilters()">Limpiar</button>
+    </div>
   </div>
+  <div class="result-summary" *ngIf="!loading && !error">{{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}</div>
+  <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
       <mat-card *ngFor="let item of items" class="card" [routerLink]="['/machinery', item.id]">

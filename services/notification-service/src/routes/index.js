@@ -18,6 +18,13 @@ function internalAuth(req, res, next) {
 }
 
 // Obtener notificaciones del usuario autenticado, paginadas
+router.get('/unread-count', validateToken, async (req, res, next) => {
+    try {
+        const result = await notificationService.getUnreadCount(req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
 router.get('/', validateToken, async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;

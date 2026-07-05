@@ -9,17 +9,30 @@ import { Auth } from '../../core/services/auth';
   selector: 'app-login', templateUrl: './login.html', styleUrls: ['./login.css']
 })
 export class Login {
-  email = ''; password = ''; error = ''; loading = false;
+  email = ''; password = ''; error = ''; loading = false; showPassword = false;
 
   constructor(private auth: Auth, private router: Router) {}
 
   // Procesa el envío del formulario: inicia sesión y redirige al inicio
   // o muestra un mensaje de error en caso de fallo.
   onSubmit(): void {
-    this.loading = true; this.error = '';
-    this.auth.login(this.email, this.password).subscribe({
+    this.error = '';
+    const email = this.email.trim();
+    if (!email || !this.password) {
+      this.error = 'Ingresa tu correo y contraseña para continuar.';
+      return;
+    }
+    this.loading = true;
+    this.auth.login(email, this.password).subscribe({
       next: () => this.router.navigate(['/']),
-      error: (err) => { this.error = err.error?.error?.message || 'Error al iniciar sesión'; this.loading = false; }
+      error: (err) => { this.error = this.getAuthError(err); this.loading = false; }
     });
+  }
+
+  private getAuthError(err: any): string {
+    if (err.status === 0) return 'No se pudo conectar con el servidor. Verifica que Docker esté corriendo.';
+    if (err.status === 401) return 'Correo o contraseña incorrectos.';
+    if (err.status === 429) return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
+    return err.error?.error?.message || err.error?.message || 'No fue posible iniciar sesión.';
   }
 }

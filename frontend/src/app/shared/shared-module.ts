@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,7 +30,7 @@ import { Loading } from './loading/loading';
   exports: [
     CommonModule, RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
-    MatFormFieldModule, MatSelectModule, MatMenuModule, MatTabsModule, MatIconModule,
+    MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
     MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule,
     Header, Footer, Loading
   ]

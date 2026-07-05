@@ -97,6 +97,9 @@ cp .env.example .env
 # Iniciar todos los servicios con Docker
 docker-compose up -d
 
+# Cargar datos demo en Docker
+./scripts/seed-demo.ps1
+
 # O en modo desarrollo (incluye frontend con live-reload)
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
@@ -123,15 +126,34 @@ cd services/machinery-service && npm run dev
 
 ## Datos de Prueba
 
-El archivo `scripts/seed.sql` crea 3 usuarios (contraseña: `test1234`):
+Para cargar una demo completa con usuarios, maquinaria, imágenes, reservas, pagos y calificaciones:
+
+```powershell
+cd maquinaria
+./scripts/seed-demo.ps1
+```
+
+Usuarios principales cargados por el seed:
+
+Contraseña para todos: `test1234`
 
 | Email | Rol |
 |---|---|
 | admin@rentamaq.com | admin |
 | propietario@rentamaq.com | propietario |
 | arrendatario@rentamaq.com | arrendatario |
+| propietaria2@rentamaq.com | propietario |
+| cliente2@rentamaq.com | arrendatario |
+
+El archivo legacy `scripts/seed.sql` solo crea usuarios en la base de autenticación. Para una demo funcional usa `scripts/seed-demo.ps1`.
 
 ## Variables de Entorno (`.env`)
+
+Usa `.env.example` como base:
+
+```powershell
+copy .env.example .env
+```
 
 | Variable | Descripción |
 |---|---|
@@ -152,6 +174,11 @@ node test.js
 cd api-gateway && npm test
 cd services/auth-service && npm test
 ```
+
+## Documentacion Tecnica
+
+- API: `docs/API.md`
+- Produccion: `docs/PRODUCTION.md`
 
 ## Licencia
 

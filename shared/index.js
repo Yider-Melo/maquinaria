@@ -8,7 +8,7 @@ const {
 } = require('./errors/AppError');
 const { errorHandler } = require('./errors/errorHandler');
 const { success, paginated } = require('./utils/response');
-const { validate } = require('./utils/validate');
+const { validate, validateQuery } = require('./utils/validate');
 const { validateToken, requireRole, extractUser } = require('./middleware/authMiddleware');
 const { schemas } = require('./validators/schemas');
 const eventBus = require('./events/eventBus');
@@ -19,7 +19,7 @@ module.exports = {
     UnauthorizedError, ForbiddenError, ConflictError,
     errorHandler,
     success, paginated,
-    validate,
+    validate, validateQuery,
     validateToken, requireRole, extractUser,
     schemas,
     eventBus,

@@ -80,7 +80,7 @@ services:
       - DB_NAME=rentamaq_machinery
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
     depends_on:
       machinery-db:
         condition: service_healthy
@@ -119,7 +119,7 @@ services:
       - DB_NAME=rentamaq_search
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
     depends_on:
       search-db:
         condition: service_healthy
@@ -158,7 +158,7 @@ services:
       - DB_NAME=rentamaq_booking
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
       - MACHINERY_SERVICE_URL=http://machinery-service:3002
     depends_on:
       booking-db:
@@ -198,8 +198,10 @@ services:
       - DB_NAME=rentamaq_payment
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
       - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN:-}
+      - BOOKING_SERVICE_URL=http://booking-service:3004
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
     depends_on:
       payment-db:
         condition: service_healthy
@@ -236,7 +238,7 @@ services:
       - DB_NAME=rentamaq_rating
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
     depends_on:
       rating-db:
         condition: service_healthy
@@ -273,7 +275,7 @@ services:
       - DB_NAME=rentamaq_notification
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-}

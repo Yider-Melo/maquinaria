@@ -17,11 +17,11 @@ async function findActivePaymentByBooking(bookingId) {
     return result.rows[0] || null;
 }
 
-async function insert({ id, bookingId, userId, monto, metodoPago, referenciaPasarela }) {
+async function insert({ id, bookingId, userId, propietarioId, monto, metodoPago, referenciaPasarela }) {
     await pool.query(
-        `INSERT INTO pago (id, reserva_id, usuario_id, monto, metodo_pago, estado, referencia_pasarela)
-         VALUES ($1, $2, $3, $4, $5, 'pendiente', $6)`,
-        [id, bookingId, userId, monto, metodoPago || 'tarjeta_credito', referenciaPasarela]
+        `INSERT INTO pago (id, reserva_id, usuario_id, propietario_id, monto, metodo_pago, estado, referencia_pasarela)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pendiente', $7)`,
+        [id, bookingId, userId, propietarioId, monto, metodoPago || 'tarjeta_credito', referenciaPasarela]
     );
 }
 
@@ -42,9 +42,8 @@ async function updateEstado(id, estado) {
 
 async function findByIdWithReserva(pagoId, userId) {
     const result = await pool.query(
-        `SELECT p.*, r.maquinaria_id, r.fecha_inicio, r.fecha_fin
-         FROM pago p JOIN reserva r ON p.reserva_id = r.id
-         WHERE p.id = $1 AND (r.arrendatario_id = $2 OR r.propietario_id = $2)`,
+        `SELECT p.* FROM pago p
+         WHERE p.id = $1 AND (p.usuario_id = $2 OR p.propietario_id = $2)`,
         [pagoId, userId]
     );
     return result.rows[0] || null;
@@ -53,8 +52,7 @@ async function findByIdWithReserva(pagoId, userId) {
 async function findByBooking(bookingId, userId) {
     const result = await pool.query(
         `SELECT p.* FROM pago p
-         JOIN reserva r ON p.reserva_id = r.id
-         WHERE p.reserva_id = $1 AND (r.arrendatario_id = $2 OR r.propietario_id = $2)
+         WHERE p.reserva_id = $1 AND (p.usuario_id = $2 OR p.propietario_id = $2)
          ORDER BY p.creado_en DESC`,
         [bookingId, userId]
     );

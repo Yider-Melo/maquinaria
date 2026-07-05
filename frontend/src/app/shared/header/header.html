@@ -25,6 +25,10 @@
         {{ auth.getUser()?.tipo_usuario === 'propietario' ? '👷 Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? '⚙️ Admin' : '🔧 Arrendatario' }}
       </button>
       <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        Mi perfil
+      </button>
       <button mat-menu-item routerLink="/admin" *ngIf="auth.esTipo('admin')">
         <mat-icon>admin_panel_settings</mat-icon>
         Panel Admin

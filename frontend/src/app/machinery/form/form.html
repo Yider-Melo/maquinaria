@@ -52,6 +52,24 @@
         </div>
 
         <div class="form-section">
+          <h3 class="form-section-title"><mat-icon>photo_camera</mat-icon> Fotos del vehículo</h3>
+          <div class="photo-drop" [class.dragging]="isDragging" (drop)="onPhotoDrop($event)" (dragover)="onPhotoDragOver($event)" (dragleave)="onPhotoDragLeave()">
+            <mat-icon>cloud_upload</mat-icon>
+            <strong>Arrastra aquí las fotos</strong>
+            <span>o selecciona archivos desde tu equipo. Mínimo 4 fotos para publicar.</span>
+            <button mat-stroked-button type="button" (click)="photoInput.click()">Subir fotos</button>
+            <input #photoInput type="file" accept="image/*" multiple hidden (change)="onPhotoInput($event)">
+          </div>
+          <div class="photo-preview" *ngIf="photos.length > 0">
+            <div class="photo-item" *ngFor="let photo of photos; let i = index">
+              <img [src]="photo.preview" [alt]="photo.file.name">
+              <button mat-icon-button type="button" color="warn" (click)="removePhoto(i)" aria-label="Eliminar foto"><mat-icon>close</mat-icon></button>
+            </div>
+          </div>
+          <p class="photo-count" [class.invalid]="!isEdit && photos.length < 4">{{ photos.length }} foto{{ photos.length === 1 ? '' : 's' }} seleccionada{{ photos.length === 1 ? '' : 's' }}{{ !isEdit ? ' · mínimo 4' : '' }}</p>
+        </div>
+
+        <div class="form-section">
           <h3 class="form-section-title"><mat-icon>map</mat-icon> Ubicación en el mapa</h3>
           <div class="map-wrapper">
             <app-machinery-map [lat]="data.ubicacion_lat" [lng]="data.ubicacion_lng" (locationChange)="onLocationChange($event)"></app-machinery-map>

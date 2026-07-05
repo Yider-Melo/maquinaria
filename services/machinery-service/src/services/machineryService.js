@@ -125,9 +125,15 @@ async function adminAllMachinery(page = 1, size = 20) {
     return { data, total, page, size };
 }
 
+async function adminSetMachineryStatus(id, active) {
+    const maquinaria = await maquinariaRepository.setActiveAdmin(id, active);
+    if (!maquinaria) throw new NotFoundError('Maquinaria no encontrada');
+    return maquinaria;
+}
+
 module.exports = {
     create, getById, getByOwner, update, remove,
     addImage, deleteImage, getImages,
     updateAvailability, getAvailability,
-    adminMachineryStats, adminAllMachinery
+    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus
 };

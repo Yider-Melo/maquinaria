@@ -2,25 +2,29 @@
   <mat-card class="auth-card">
     <div class="auth-card-header">
       <mat-icon class="auth-icon">lock_outline</mat-icon>
-      <h1>Iniciar Sesión</h1>
-      <p>Accede a tu cuenta de RentaMaq</p>
+      <h1>Iniciar sesión</h1>
+      <p>Accede para reservar o publicar maquinaria</p>
     </div>
     <div class="auth-card-body">
       <form (ngSubmit)="onSubmit()">
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Email</mat-label>
-            <input matInput type="email" [(ngModel)]="email" name="email" required placeholder="tu@email.com">
+            <input matInput type="email" [(ngModel)]="email" name="email" required autocomplete="email" placeholder="tu@email.com">
             <mat-icon matPrefix>email</mat-icon>
           </mat-form-field>
         </div>
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Contraseña</mat-label>
-            <input matInput type="password" [(ngModel)]="password" name="password" required placeholder="••••••••">
+            <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" required autocomplete="current-password" placeholder="Tu contraseña">
             <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
           </mat-form-field>
         </div>
+        <p class="auth-hint">Usa el correo con el que te registraste. Si falla, se mostrará el motivo aquí.</p>
         <div class="error-box" *ngIf="error">
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>

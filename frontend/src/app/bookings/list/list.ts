@@ -13,19 +13,26 @@ import { Auth } from '../../core/services/auth';
 })
 export class BookingsList implements OnInit {
   asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
+  error = '';
   tabIndex = 0;
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.loadBookings(true); }
+
+  private loadBookings(showLoading = false): void {
+    if (showLoading) this.loading = true;
+    this.error = '';
     if (this.auth.esTipo('propietario')) this.tabIndex = 0;
     else if (this.auth.esTipo('arrendatario')) this.tabIndex = 0;
-    this.api.get<any>('/bookings/my-bookings').subscribe(res => {
-      this.asArrendatario = res.data?.data || []; this.loading = false;
-    });
-    this.api.get<any>('/bookings/my-listings').subscribe(res => {
-      this.asPropietario = res.data?.data || [];
-    });
+    const calls: Promise<any>[] = [];
+    if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
+      calls.push(this.api.get<any>('/bookings/my-bookings').toPromise().then(res => this.asArrendatario = res?.data?.data || []).catch(() => this.asArrendatario = []));
+    }
+    if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
+      calls.push(this.api.get<any>('/bookings/my-listings').toPromise().then(res => this.asPropietario = res?.data?.data || []).catch(() => this.asPropietario = []));
+    }
+    Promise.all(calls).then(() => this.loading = false).catch(() => { this.error = 'No se pudieron cargar las reservas.'; this.loading = false; });
   }
 
   private confirmAction(msg: string): import('rxjs').Observable<boolean> {
@@ -35,16 +42,29 @@ export class BookingsList implements OnInit {
 
   cancelBooking(id: string): void {
     this.confirmAction('¿Cancelar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.ngOnInit());
+      if (confirmed) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.loadBookings());
     });
   }
-  confirmBooking(id: string): void { this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.ngOnInit()); }
+  confirmBooking(id: string): void { this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.loadBookings()); }
   rejectBooking(id: string): void {
     this.confirmAction('¿Rechazar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.ngOnInit());
+      if (confirmed) this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.loadBookings());
     });
   }
-  completeBooking(id: string): void { this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.ngOnInit()); }
+  completeBooking(id: string): void { this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.loadBookings()); }
+
+  payBooking(booking: any): void {
+    this.api.post<any>('/payments/checkout', { reserva_id: booking.id, metodo_pago: 'simulado' }).subscribe({
+      next: (res) => {
+        const paymentId = res.data?.pago_id;
+        if (!paymentId) return;
+        this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
+          this.snackBar.open('Pago simulado aprobado. Fondos retenidos hasta completar la reserva.', 'Cerrar', { duration: 4000 });
+        });
+      },
+      error: (err) => this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 })
+    });
+  }
 }
 
 @Component({

@@ -1,10 +1,11 @@
 .header-toolbar {
   position: sticky; top: 0; z-index: 100;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
-  color: white !important;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+  background: linear-gradient(135deg, #4a2618 0%, #7c3f22 48%, #b85f2c 100%) !important;
+  color: #fff7ec !important;
+  box-shadow: 0 8px 28px rgba(74,38,24,0.2);
   padding: 0 24px;
   height: 64px;
+  gap: 4px;
 }
 .brand {
   font-weight: 700; cursor: pointer; margin-right: 32px;
@@ -18,25 +19,37 @@
   font-size: 14px; font-weight: 500;
   transition: background .2s;
 }
-.nav-link:hover { background: rgba(255,255,255,0.1); }
+.nav-link:hover { background: rgba(255,248,236,0.14); }
 .nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; }
 .badge {
-  background: #f44336; color: white; border-radius: 50%;
+  background: #e2a84b; color: #3b2416; border-radius: 50%;
   padding: 1px 7px; font-size: 11px; font-weight: 700;
   margin-left: 6px; vertical-align: super;
 }
 .user-btn {
   border-radius: 20px !important;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,248,236,0.12);
   margin-left: 8px; padding: 4px 16px !important;
   font-weight: 500;
 }
-.user-btn:hover { background: rgba(255,255,255,0.15); }
+.user-btn:hover { background: rgba(255,248,236,0.2); }
 .user-btn mat-icon { margin-right: 4px; }
 .auth-link { border-radius: 8px !important; font-weight: 500; }
 .auth-link:hover { background: rgba(255,255,255,0.1); }
 @media (max-width: 768px) {
-  .header-toolbar { padding: 0 12px; }
-  .brand { font-size: 18px; margin-right: 16px; }
+  .header-toolbar { padding: 0 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .header-toolbar::-webkit-scrollbar { display: none; }
+  .brand { font-size: 18px; margin-right: 8px; flex: 0 0 auto; }
   .nav-link span { display: none; }
+  .nav-link { min-width: 42px; padding: 0 8px !important; flex: 0 0 auto; }
+  .nav-link mat-icon { margin-right: 0; }
+  .user-btn { min-width: 44px; padding: 0 10px !important; flex: 0 0 auto; }
+  .user-btn mat-icon { margin-right: 0; }
+}
+
+@media (max-width: 520px) {
+  .header-toolbar { height: 58px; }
+  .brand { font-size: 0; margin-right: 4px; }
+  .brand .brand-icon { font-size: 26px; width: 26px; height: 26px; }
+  .auth-link { padding: 0 10px !important; }
 }

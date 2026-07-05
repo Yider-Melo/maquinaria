@@ -1,50 +1,51 @@
-<div class="page">
-  <h1>Reportes</h1>
+<div class="page" *ngIf="!loading; else loadingTmpl">
+  <h1>Gestión administrativa</h1>
 
   <div class="report-grid">
-    <mat-card class="report-card" routerLink="/admin/accounting">
-      <mat-icon class="report-icon">account_balance</mat-icon>
-      <div>
-        <h3>Reporte Financiero</h3>
-        <p>Ingresos, retenciones, reembolsos y transacciones</p>
-      </div>
-      <mat-icon class="arrow">chevron_right</mat-icon>
-    </mat-card>
-
-    <mat-card class="report-card" routerLink="/admin/performance">
-      <mat-icon class="report-icon">bar_chart</mat-icon>
-      <div>
-        <h3>Rendimiento de Maquinaria</h3>
-        <p>Distribución por tipo, precios, disponibilidad</p>
-      </div>
-      <mat-icon class="arrow">chevron_right</mat-icon>
-    </mat-card>
-
-    <mat-card class="report-card" routerLink="/admin/performance">
-      <mat-icon class="report-icon">assignment</mat-icon>
-      <div>
-        <h3>Estadísticas de Reservas</h3>
-        <p>Volumen, estados, ingresos generados</p>
-      </div>
-      <mat-icon class="arrow">chevron_right</mat-icon>
-    </mat-card>
-
-    <mat-card class="report-card">
-      <mat-icon class="report-icon">group</mat-icon>
-      <div>
-        <h3>Usuarios</h3>
-        <p>{{ stats?.total || 0 }} usuarios registrados: {{ stats?.propietarios || 0 }} propietarios, {{ stats?.arrendatarios || 0 }} arrendatarios</p>
-        <p *ngIf="stats?.inactivos" class="warn">{{ stats.inactivos }} inactivos, {{ stats.no_verificados }} no verificados</p>
-      </div>
-    </mat-card>
-
-    <mat-card class="report-card" routerLink="/admin/performance">
-      <mat-icon class="report-icon">star</mat-icon>
-      <div>
-        <h3>Calificaciones Reportadas</h3>
-        <p>{{ ratingReportadas || 0 }} calificaciones marcadas como inapropiadas</p>
-      </div>
-      <mat-icon class="arrow">chevron_right</mat-icon>
-    </mat-card>
+    <mat-card><mat-icon>group</mat-icon><div><strong>{{ stats?.total || 0 }}</strong><span>Usuarios registrados</span></div></mat-card>
+    <mat-card><mat-icon>engineering</mat-icon><div><strong>{{ stats?.propietarios || 0 }}</strong><span>Propietarios</span></div></mat-card>
+    <mat-card><mat-icon>person_search</mat-icon><div><strong>{{ stats?.arrendatarios || 0 }}</strong><span>Arrendatarios</span></div></mat-card>
+    <mat-card><mat-icon>report</mat-icon><div><strong>{{ ratingReportadas || 0 }}</strong><span>Calificaciones reportadas</span></div></mat-card>
   </div>
+
+  <mat-tab-group>
+    <mat-tab label="Usuarios">
+      <table class="admin-table">
+        <thead><tr><th>Usuario</th><th>Rol</th><th>Teléfono</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let u of users">
+            <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><small>{{ u.email }}</small></td>
+            <td>{{ u.tipo_usuario }}</td>
+            <td>{{ u.telefono || 'N/A' }}</td>
+            <td><span class="status" [class.ok]="u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+            <td><button mat-stroked-button (click)="toggleUser(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-tab>
+    <mat-tab label="Maquinaria">
+      <table class="admin-table">
+        <thead><tr><th>Máquina</th><th>Tipo</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let m of machinery">
+            <td><strong>{{ m.titulo }}</strong><small>{{ m.marca }} {{ m.modelo }}</small></td>
+            <td>{{ m.tipo }}</td><td>{{ m.ciudad }}</td><td>${{ m.precio_por_dia | number }}</td>
+            <td><span class="status" [class.ok]="m.activo">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
+            <td><button mat-stroked-button (click)="toggleMachinery(m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-tab>
+    <mat-tab label="Reservas">
+      <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
+        <tr *ngFor="let b of recentBookings"><td>{{ b.id?.substring(0,8) }}</td><td>{{ b.maquinaria_id?.substring(0,8) }}</td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date }} - {{ b.fecha_fin | date }}</td></tr>
+      </tbody></table>
+    </mat-tab>
+    <mat-tab label="Pagos">
+      <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
+        <tr *ngFor="let p of payments"><td>{{ p.id?.substring(0,8) }}</td><td>{{ p.reserva_id?.substring(0,8) }}</td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
+      </tbody></table>
+    </mat-tab>
+  </mat-tab-group>
 </div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>

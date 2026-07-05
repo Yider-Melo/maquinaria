@@ -1,31 +1,41 @@
 .container { padding: 32px 24px; max-width: 860px; margin: 0 auto; }
-.form-card { border-radius: 16px !important; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.08) !important; }
+.form-card { border-radius: 16px !important; overflow: hidden; box-shadow: 0 8px 30px var(--rm-shadow) !important; }
 .form-card-header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  padding: 28px 32px !important; color: white;
+  background: var(--rm-gradient);
+  padding: 28px 32px !important; color: #fff8ec;
 }
 .form-card-header mat-card-title {
-  font-size: 22px; font-weight: 700; color: white !important;
+  font-size: 22px; font-weight: 700; color: #fff8ec !important;
   display: flex; align-items: center; gap: 10px;
 }
 .form-card-body { padding: 28px 32px 32px !important; }
 .form-section {
-  background: #f8f9fc; border-radius: 12px; padding: 20px; margin-bottom: 20px;
-  border: 1px solid #eef0f5;
+  background: #fff7e8; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+  border: 1px solid var(--rm-border);
 }
 .form-section-title {
-  font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 0 0 16px;
+  font-size: 15px; font-weight: 800; color: var(--rm-ink); margin: 0 0 16px;
   display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.form-section-title mat-icon { font-size: 20px; width: 20px; height: 20px; color: #667eea; }
+.form-section-title mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--rm-primary); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 .full { display: block; margin: 0; }
-.map-wrapper { border-radius: 12px; overflow: hidden; border: 1px solid #eef0f5; margin-top: 8px; }
+.map-wrapper { border-radius: 12px; overflow: hidden; border: 1px solid var(--rm-border); margin-top: 8px; }
+.photo-drop { display: grid; place-items: center; gap: 8px; padding: 24px; border: 2px dashed var(--rm-border); border-radius: 12px; background: #fffaf0; text-align: center; }
+.photo-drop.dragging { border-color: var(--rm-primary); background: #ecfdf5; }
+.photo-drop mat-icon { color: var(--rm-primary); font-size: 38px; width: 38px; height: 38px; }
+.photo-drop span, .photo-count { color: var(--rm-muted); }
+.photo-count.invalid { color: var(--rm-danger); font-weight: 800; }
+.photo-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-top: 14px; }
+.photo-item { position: relative; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
+.photo-item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-item button { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,.9); }
 .form-actions {
   display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;
-  padding: 20px 0 0; border-top: 1px solid #eef0f5;
+  padding: 20px 0 0; border-top: 1px solid var(--rm-border);
 }
 .form-actions button { border-radius: 10px !important; padding: 8px 28px !important; font-weight: 600 !important; }
-.btn-cancel { border-color: #ddd !important; color: #888 !important; }
+.btn-cancel { border-color: var(--rm-border) !important; color: var(--rm-muted) !important; }
 @media (max-width: 640px) { .grid2, .grid3 { grid-template-columns: 1fr; } .form-card-body { padding: 20px !important; } }
+@media (max-width: 480px) { .container { padding: 16px 12px; } .form-card-header { padding: 22px 20px !important; } .form-section { padding: 14px; } .form-actions { flex-direction: column-reverse; } .form-actions button { width: 100%; } }

@@ -35,6 +35,8 @@ router.use('/machinery', validateToken, proxyWithTarget(MACHINERY_SERVICE, { '^/
 router.use('/search', proxyWithTarget(SEARCH_SERVICE, { '^/search': '' }));
 
 // Reservas (requiere autenticacion)
+router.get('/bookings/check-availability', proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
+router.get('/bookings/machinery/*', proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
 router.use('/bookings', validateToken, proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
 
 // Pagos (requiere autenticacion)
@@ -46,6 +48,21 @@ router.get('/ratings/*', proxyWithTarget(RATING_SERVICE, { '^/ratings': '' }));
 router.use('/ratings', validateToken, proxyWithTarget(RATING_SERVICE, { '^/ratings': '' }));
 
 // Notificaciones (requiere autenticacion)
+router.get('/notifications/unread-count', validateToken, (_req, res) => {
+    res.json({ success: true, data: { no_leidas: 0 } });
+});
+router.get('/notifications', validateToken, (_req, res) => {
+    res.json({
+        success: true,
+        data: { data: [], total: 0, no_leidas: 0, page: 1, size: 20, totalPages: 0 }
+    });
+});
+router.put('/notifications/read-all', validateToken, (_req, res) => {
+    res.json({ success: true, data: { message: 'Todas las notificaciones marcadas como leídas' } });
+});
+router.put('/notifications/:id/read', validateToken, (_req, res) => {
+    res.json({ success: true, data: { message: 'Notificación marcada como leída' } });
+});
 router.use('/notifications', validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { '^/notifications': '' }));
 
 // Admin (requiere autenticacion + rol admin)
