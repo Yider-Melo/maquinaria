@@ -35,6 +35,18 @@ async function findByOwner(ownerId, page, size) {
     return { data: result.rows, total };
 }
 
+async function findActive(page, size) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria WHERE activo = true');
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT * FROM maquinaria WHERE activo = true
+         ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
+        [size, offset]
+    );
+    return { data: result.rows, total };
+}
+
 async function update(id, fields, values) {
     fields.push('actualizado_en = CURRENT_TIMESTAMP');
     values.push(id);
@@ -149,7 +161,7 @@ async function setActiveAdmin(id, active) {
 }
 
 module.exports = {
-    insert, findActiveById, findByOwner, update, softDelete,
+    insert, findActiveById, findByOwner, findActive, update, softDelete,
     countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
     upsertAvailability, findAvailability,
     getAdminStats, findAllAdmin, setActiveAdmin

@@ -13,6 +13,16 @@ router.post('/', validateToken, validate(schemas.maquinaria), async (req, res, n
     } catch (err) { next(err); }
 });
 
+// Listar maquinaria activa disponible para reservar (pública, solo lectura)
+router.get('/', async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await machineryService.listActive(page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+});
+
 // Listar maquinaria del propietario autenticado, paginada
 router.get('/owner', validateToken, async (req, res, next) => {
     try {

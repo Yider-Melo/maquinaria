@@ -22,6 +22,11 @@ async function getByOwner(ownerId, page = 1, size = 20) {
     return { data, total, page, size };
 }
 
+async function listActive(page = 1, size = 20) {
+    const { data, total } = await maquinariaRepository.findActive(page, size);
+    return { data, total, page, size };
+}
+
 async function update(id, data, userId) {
     const existing = await getById(id);
     if (existing.propietario_id !== userId) {
@@ -132,7 +137,7 @@ async function adminSetMachineryStatus(id, active) {
 }
 
 module.exports = {
-    create, getById, getByOwner, update, remove,
+    create, getById, getByOwner, listActive, update, remove,
     addImage, deleteImage, getImages,
     updateAvailability, getAvailability,
     adminMachineryStats, adminAllMachinery, adminSetMachineryStatus
