@@ -1,11 +1,13 @@
 // Componente que lista las reservas del usuario, tanto las que hizo
 // como arrendatario como las que recibió como propietario. Permite
 // cancelar, confirmar, rechazar o completar reservas según el estado.
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
+import { forkJoin, of, timeout } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   standalone: false,
@@ -16,7 +18,7 @@ export class BookingsList implements OnInit {
   error = '';
   tabIndex = 0;
 
-  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar) {}
+  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.loadBookings(true); }
 
@@ -25,14 +27,27 @@ export class BookingsList implements OnInit {
     this.error = '';
     if (this.auth.esTipo('propietario')) this.tabIndex = 0;
     else if (this.auth.esTipo('arrendatario')) this.tabIndex = 0;
-    const calls: Promise<any>[] = [];
-    if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
-      calls.push(this.api.get<any>('/bookings/my-bookings').toPromise().then(res => this.asArrendatario = res?.data?.data || []).catch(() => this.asArrendatario = []));
-    }
-    if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
-      calls.push(this.api.get<any>('/bookings/my-listings').toPromise().then(res => this.asPropietario = res?.data?.data || []).catch(() => this.asPropietario = []));
-    }
-    Promise.all(calls).then(() => this.loading = false).catch(() => { this.error = 'No se pudieron cargar las reservas.'; this.loading = false; });
+
+    // Simple subscription directly to the API call
+    this.api.get<any>('/bookings/my-bookings').pipe(
+      timeout(10000),
+      catchError((err) => {
+        console.error('Error loading bookings:', err);
+        this.error = 'No se pudieron cargar las reservas.';
+        this.loading = false;
+        this.cdr.markForCheck();
+        return of({ data: { data: [] } });
+      }),
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: (res: any) => {
+        this.asArrendatario = res?.data?.data || [];
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   private confirmAction(msg: string): import('rxjs').Observable<boolean> {

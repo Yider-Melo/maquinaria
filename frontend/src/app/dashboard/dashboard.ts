@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth } from '../core/services/auth';
 import { Api } from '../core/services/api';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard', templateUrl: './dashboard.html', styleUrls: ['./dashboard.css'],
@@ -14,7 +16,7 @@ export class Dashboard implements OnInit {
   ownerRequests: any[] = [];
   ownerIncome = 0;
 
-  constructor(public auth: Auth, private api: Api, private router: Router) {}
+  constructor(public auth: Auth, private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
@@ -25,23 +27,78 @@ export class Dashboard implements OnInit {
   }
 
   private loadStats(): void {
-    const calls: Promise<any>[] = [];
+    const calls: any[] = [];
+    
     if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
-      calls.push(this.api.get<any>('/bookings/my-listings').toPromise().then((r: any) => {
-        this.ownerRequests = r?.data?.data || [];
-        this.stats.misListados = this.ownerRequests.length;
-        this.ownerIncome = this.ownerRequests.filter((b: any) => ['confirmada', 'en_curso', 'completada'].includes(b.estado)).reduce((sum: number, b: any) => sum + Number(b.precio_total || 0), 0);
-      }).catch(() => 0));
-      calls.push(this.api.get<any>('/machinery/owner').toPromise().then((r: any) => this.ownerMachines = r?.data?.data || []).catch(() => 0));
+      calls.push(
+        this.api.get<any>('/bookings/my-listings').pipe(
+          catchError(() => of({ data: { data: [] } }))
+        )
+      );
+      calls.push(
+        this.api.get<any>('/machinery/owner').pipe(
+          catchError(() => of({ data: { data: [] } }))
+        )
+      );
     }
+    
     if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
-      calls.push(this.api.get<any>('/bookings/my-bookings').toPromise().then((r: any) => this.stats.misReservas = (r?.data?.data?.length) || 0).catch(() => 0));
+      calls.push(
+        this.api.get<any>('/bookings/my-bookings').pipe(
+          catchError(() => of({ data: { data: [] } }))
+        )
+      );
     }
+    
     if (this.auth.esTipo('admin')) {
-      calls.push(this.api.get<any>('/search').toPromise().then((r: any) => this.stats.totalMaquinaria = (r?.data?.pagination?.total) || 0).catch(() => 0));
+      calls.push(
+        this.api.get<any>('/search').pipe(
+          catchError(() => of({ data: { pagination: { total: 0 } } }))
+        )
+      );
     }
-    Promise.all(calls).then(() => {
+    
+    if (calls.length === 0) {
       this.loading = false;
+      return;
+    }
+
+    forkJoin(calls).pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: (results: any[]) => {
+        let resultIndex = 0;
+        
+        if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
+          this.ownerRequests = results[resultIndex]?.data?.data || [];
+          this.stats.misListados = this.ownerRequests.length;
+          this.ownerIncome = this.ownerRequests
+            .filter((b: any) => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
+            .reduce((sum: number, b: any) => sum + Number(b.precio_total || 0), 0);
+          resultIndex++;
+          
+          this.ownerMachines = results[resultIndex]?.data?.data || [];
+          resultIndex++;
+        }
+        
+        if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
+          this.stats.misReservas = (results[resultIndex]?.data?.data?.length) || 0;
+          resultIndex++;
+        }
+        
+        if (this.auth.esTipo('admin')) {
+          this.stats.totalMaquinaria = (results[resultIndex]?.data?.pagination?.total) || 0;
+        }
+        
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading dashboard stats:', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 

@@ -4,6 +4,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../core/services/api';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-machinery-form', templateUrl: './form.html', styleUrls: ['./form.css'],
@@ -99,8 +101,17 @@ export class MachineryForm implements OnInit {
       this.router.navigate(['/machinery', machineId]);
       return;
     }
-    Promise.all(this.photos.map(photo => this.api.post(`/machinery/${machineId}/images`, { url: photo.preview }).toPromise()))
-      .then(() => this.router.navigate(['/machinery', machineId]))
-      .catch(() => { this.error = 'La maquinaria se guardó, pero no se pudieron subir todas las fotos.'; this.loading = false; });
+    const uploadRequests = this.photos.map(photo => 
+      this.api.post(`/machinery/${machineId}/images`, { url: photo.preview }).pipe(
+        catchError(() => of(null))
+      )
+    );
+    forkJoin(uploadRequests).subscribe({
+      next: () => this.router.navigate(['/machinery', machineId]),
+      error: () => { 
+        this.error = 'La maquinaria se guardó, pero no se pudieron subir todas las fotos.'; 
+        this.loading = false; 
+      }
+    });
   }
 }

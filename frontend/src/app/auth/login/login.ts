@@ -1,6 +1,6 @@
 // Componente de inicio de sesión. Presenta un formulario de email y
 // contraseña, y al enviarlo llama al servicio de autenticación.
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth } from '../../core/services/auth';
 
@@ -11,7 +11,7 @@ import { Auth } from '../../core/services/auth';
 export class Login {
   email = ''; password = ''; error = ''; loading = false; showPassword = false;
 
-  constructor(private auth: Auth, private router: Router) {}
+  constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef) {}
 
   // Procesa el envío del formulario: inicia sesión y redirige al inicio
   // o muestra un mensaje de error en caso de fallo.
@@ -23,9 +23,14 @@ export class Login {
       return;
     }
     this.loading = true;
+    this.cdr.markForCheck();
     this.auth.login(email, this.password).subscribe({
       next: () => this.router.navigate(['/']),
-      error: (err) => { this.error = this.getAuthError(err); this.loading = false; }
+      error: (err) => {
+        this.error = this.getAuthError(err);
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 

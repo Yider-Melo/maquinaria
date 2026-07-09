@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -18,7 +18,7 @@ export class MachineryList implements OnInit {
     { value: 'rating', label: 'Mejor calificación' }
   ];
 
-  constructor(private api: Api, public auth: Auth) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -30,10 +30,12 @@ export class MachineryList implements OnInit {
         this.total = res.data?.pagination?.total || 0;
         this.totalPages = res.data?.pagination?.totalPages || 0;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.error = 'No se pudo cargar la maquinaria. Intenta ajustar los filtros o revisar el backend.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -44,7 +46,16 @@ export class MachineryList implements OnInit {
   loadSuggestions(): void {
     const q = this.filters.q?.trim();
     if (!q || q.length < 2) { this.suggestions = []; return; }
-    this.api.get<string[]>('/search/suggestions', { q }).subscribe({ next: (res) => this.suggestions = res.data || [], error: () => this.suggestions = [] });
+    this.api.get<string[]>('/search/suggestions', { q }).subscribe({ 
+      next: (res) => {
+        this.suggestions = res.data || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.suggestions = [];
+        this.cdr.markForCheck();
+      }
+    });
   }
   // Navega a la página anterior.
   prevPage(): void { if (this.page > 1) { this.page--; this.load(); } }

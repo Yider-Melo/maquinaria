@@ -1,6 +1,6 @@
 // Componente de registro de usuario. Recoge los datos del formulario
 // y los envía al servicio de autenticación para crear una cuenta nueva.
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth } from '../../core/services/auth';
 
@@ -19,7 +19,7 @@ export class Register {
     { label: 'Un número', valid: false }
   ];
 
-  constructor(private auth: Auth, private router: Router) {}
+  constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef) {}
 
   onSubmit(): void {
     this.error = '';
@@ -33,10 +33,15 @@ export class Register {
       return;
     }
     this.loading = true;
+    this.cdr.markForCheck();
     const { confirmPassword, ...payload } = this.data;
     this.auth.register(payload).subscribe({
       next: () => this.router.navigate(['/auth/login']),
-      error: (err) => { this.error = err.error?.error?.message || err.error?.message || 'Error al registrarse'; this.loading = false; }
+      error: (err) => {
+        this.error = err.error?.error?.message || err.error?.message || 'Error al registrarse';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 

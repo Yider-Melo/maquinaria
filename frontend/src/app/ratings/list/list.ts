@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 import { RatingForm } from '../form/rating-form';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-ratings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
@@ -11,16 +13,32 @@ import { RatingForm } from '../form/rating-form';
 export class RatingsList implements OnInit {
   ratings: any[] = []; completedBookings: any[] = []; loading = true; error = '';
 
-  constructor(private api: Api, private auth: Auth, private dialog: MatDialog) {}
+  constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loading = true; this.error = '';
     const userId = this.auth.getUser()?.id;
     if (userId) {
-      Promise.all([
-        this.api.get<any>(`/ratings/user/${userId}`).toPromise().then(res => this.ratings = res?.data || []).catch(() => this.ratings = []),
-        this.api.get<any>('/bookings/my-bookings').toPromise().then(res => this.completedBookings = (res?.data?.data || []).filter((b: any) => b.estado === 'completada')).catch(() => this.completedBookings = [])
-      ]).then(() => this.loading = false).catch(() => { this.error = 'No se pudieron cargar las calificaciones.'; this.loading = false; });
+      forkJoin([
+        this.api.get<any>(`/ratings/user/${userId}`).pipe(catchError(() => of({ data: [] }))),
+        this.api.get<any>('/bookings/my-bookings').pipe(catchError(() => of({ data: { data: [] } })))
+      ]).pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      ).subscribe({
+        next: ([ratingsRes, bookingsRes]) => {
+          this.ratings = ratingsRes?.data || [];
+          this.completedBookings = (bookingsRes?.data?.data || []).filter((b: any) => b.estado === 'completada');
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = 'No se pudieron cargar las calificaciones.';
+          console.error('Error loading ratings:', err);
+          this.cdr.markForCheck();
+        }
+      });
     } else {
       this.loading = false;
     }

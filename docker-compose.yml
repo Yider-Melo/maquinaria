@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: api-gateway/Dockerfile
     ports:
-      - "3000:3000"
+      - "3100:3000"
     environment:
       - PORT=3000
       - AUTH_SERVICE_URL=http://auth-service:3001
@@ -33,7 +33,7 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     ports:
-      - "3001:3001"
+      - "3101:3001"
     environment:
       - PORT=3001
       - DB_HOST=auth-db
@@ -72,7 +72,7 @@ services:
       context: .
       dockerfile: services/machinery-service/Dockerfile
     ports:
-      - "3002:3002"
+      - "3102:3002"
     environment:
       - PORT=3002
       - DB_HOST=machinery-db
@@ -111,7 +111,7 @@ services:
       context: .
       dockerfile: services/search-service/Dockerfile
     ports:
-      - "3003:3003"
+      - "3103:3003"
     environment:
       - PORT=3003
       - DB_HOST=search-db
@@ -150,7 +150,7 @@ services:
       context: .
       dockerfile: services/booking-service/Dockerfile
     ports:
-      - "3004:3004"
+      - "3104:3004"
     environment:
       - PORT=3004
       - DB_HOST=booking-db
@@ -190,7 +190,7 @@ services:
       context: .
       dockerfile: services/payment-service/Dockerfile
     ports:
-      - "3005:3005"
+      - "3105:3005"
     environment:
       - PORT=3005
       - DB_HOST=payment-db
@@ -230,7 +230,7 @@ services:
       context: .
       dockerfile: services/rating-service/Dockerfile
     ports:
-      - "3006:3006"
+      - "3106:3006"
     environment:
       - PORT=3006
       - DB_HOST=rating-db
@@ -267,7 +267,7 @@ services:
       context: .
       dockerfile: services/notification-service/Dockerfile
     ports:
-      - "3007:3007"
+      - "3107:3007"
     environment:
       - PORT=3007
       - DB_HOST=notification-db

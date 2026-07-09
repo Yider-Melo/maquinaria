@@ -10,17 +10,17 @@
 .brand {
   font-weight: 700; cursor: pointer; margin-right: 32px;
   font-size: 22px; letter-spacing: 0.5px;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; color: white !important;
 }
-.brand .brand-icon { font-size: 28px; width: 28px; height: 28px; }
+.brand .brand-icon { font-size: 28px; width: 28px; height: 28px; color: white !important; }
 .spacer { flex: 1 1 auto; }
 .nav-link {
   margin: 0 2px; border-radius: 8px !important;
-  font-size: 14px; font-weight: 500;
-  transition: background .2s;
+  font-size: 14px; font-weight: 500; color: white !important;
+  transition: background .3s ease !important;
 }
-.nav-link:hover { background: rgba(255,248,236,0.14); }
-.nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; }
+.nav-link:hover { background: rgba(0,0,0,0.3) !important; color: white !important; }
+.nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; color: white !important; }
 .badge {
   background: #e2a84b; color: #3b2416; border-radius: 50%;
   padding: 1px 7px; font-size: 11px; font-weight: 700;
@@ -30,12 +30,14 @@
   border-radius: 20px !important;
   background: rgba(255,248,236,0.12);
   margin-left: 8px; padding: 4px 16px !important;
-  font-weight: 500;
+  font-weight: 500; color: white !important;
+  transition: background .3s ease !important;
 }
-.user-btn:hover { background: rgba(255,248,236,0.2); }
-.user-btn mat-icon { margin-right: 4px; }
-.auth-link { border-radius: 8px !important; font-weight: 500; }
-.auth-link:hover { background: rgba(255,255,255,0.1); }
+.user-btn:hover { background: rgba(0,0,0,0.3) !important; color: white !important; }
+.user-btn mat-icon { margin-right: 4px; color: white !important; }
+.auth-link { border-radius: 8px !important; font-weight: 500; color: white !important; transition: background .3s ease !important; }
+.login-btn:hover { background: #e74c3c !important; color: white !important; }
+.register-btn:hover { background: #3498db !important; color: white !important; }
 @media (max-width: 768px) {
   .header-toolbar { padding: 0 10px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
   .header-toolbar::-webkit-scrollbar { display: none; }

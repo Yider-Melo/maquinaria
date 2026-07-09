@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-dashboard', templateUrl: './dashboard.html', styleUrls: ['./dashboard.css'],
@@ -10,26 +12,37 @@ export class AdminDashboard implements OnInit {
   topTypes: any[] = [];
   loading = true;
 
-  constructor(private api: Api) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    Promise.all([
-      this.api.get<any>('/admin/users/stats').toPromise(),
-      this.api.get<any>('/admin/machinery/stats').toPromise(),
-      this.api.get<any>('/admin/bookings/stats').toPromise(),
-      this.api.get<any>('/admin/payments/dashboard').toPromise(),
-      this.api.get<any>('/admin/bookings/recent?limit=10').toPromise()
-    ]).then(([users, machinery, bookings, payments, recent]) => {
-      this.stats = {
-        users: users?.data,
-        machinery: machinery?.data,
-        bookings: bookings?.data,
-        payments: payments?.data,
-        recentBookings: recent?.data || []
-      };
-      this.topTypes = (machinery?.data?.por_tipo || []).slice(0, 5);
-      this.loading = false;
-    }).catch(() => this.loading = false);
+    forkJoin([
+      this.api.get<any>('/admin/users/stats').pipe(catchError(() => of({ data: {} }))),
+      this.api.get<any>('/admin/machinery/stats').pipe(catchError(() => of({ data: {} }))),
+      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ data: {} }))),
+      this.api.get<any>('/admin/payments/dashboard').pipe(catchError(() => of({ data: {} }))),
+      this.api.get<any>('/admin/bookings/recent?limit=10').pipe(catchError(() => of({ data: [] })))
+    ]).pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: ([users, machinery, bookings, payments, recent]) => {
+        this.stats = {
+          users: users?.data,
+          machinery: machinery?.data,
+          bookings: bookings?.data,
+          payments: payments?.data,
+          recentBookings: recent?.data || []
+        };
+        this.topTypes = (machinery?.data?.por_tipo || []).slice(0, 5);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading admin dashboard:', err);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   barPercent(value: number, total: number): number {

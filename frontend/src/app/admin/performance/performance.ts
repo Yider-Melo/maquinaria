@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-performance', templateUrl: './performance.html', styleUrls: ['./performance.css'],
@@ -11,19 +13,30 @@ export class AdminPerformance implements OnInit {
   ratingStats: any = null;
   loading = true;
 
-  constructor(private api: Api) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    Promise.all([
-      this.api.get<any>('/admin/machinery/stats').toPromise(),
-      this.api.get<any>('/admin/bookings/stats').toPromise(),
-      this.api.get<any>('/admin/ratings/stats').toPromise()
-    ]).then(([machinery, bookings, ratings]) => {
-      this.machineryStats = machinery?.data;
-      this.bookingStats = bookings?.data;
-      this.ratingStats = ratings?.data;
-      this.loading = false;
-    }).catch(() => this.loading = false);
+    forkJoin([
+      this.api.get<any>('/admin/machinery/stats').pipe(catchError(() => of({ data: null }))),
+      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ data: null }))),
+      this.api.get<any>('/admin/ratings/stats').pipe(catchError(() => of({ data: null })))
+    ]).pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: ([machinery, bookings, ratings]) => {
+        this.machineryStats = machinery?.data;
+        this.bookingStats = bookings?.data;
+        this.ratingStats = ratings?.data;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading performance stats:', err);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   barPercent(value: number, total: number): number {

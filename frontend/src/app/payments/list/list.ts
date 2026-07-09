@@ -1,9 +1,9 @@
 // Componente que lista los pagos del usuario. Obtiene primero las
 // reservas del usuario y luego consulta los pagos asociados a cada una,
 // combinando los resultados en un solo arreglo.
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -14,7 +14,7 @@ import { Auth } from '../../core/services/auth';
 export class PaymentsList implements OnInit {
   payments: any[] = []; loading = true; error = '';
 
-  constructor(private api: Api, public auth: Auth) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loading = true; this.error = '';
@@ -31,13 +31,21 @@ export class PaymentsList implements OnInit {
             catchError(() => of(null))
           )
         ));
+      }),
+      finalize(() => {
+        this.cdr.markForCheck();
       })
     ).subscribe({
       next: (results: any[]) => {
         this.payments = results.filter(r => r?.data).flatMap(r => r.data);
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => { this.error = 'No se pudieron cargar los pagos.'; this.loading = false; }
+      error: () => {
+        this.error = 'No se pudieron cargar los pagos.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 }
