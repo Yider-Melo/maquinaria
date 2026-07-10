@@ -63,10 +63,10 @@
           <mat-icon>{{ availability.disponible ? 'event_available' : 'event_busy' }}</mat-icon><span>{{ availability.message }}</span>
         </div>
         <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
-        <button mat-stroked-button class="availability-btn" [disabled]="checkingAvailability" (click)="checkAvailability()">
+        <button mat-stroked-button class="availability-btn" [disabled]="checkingAvailability || loading" (click)="checkAvailability()">
           <mat-icon>{{ checkingAvailability ? 'hourglass_top' : 'event_available' }}</mat-icon> {{ checkingAvailability ? 'Verificando...' : 'Verificar disponibilidad' }}
         </button>
-        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading" (click)="reserve()">
+        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading" (click)="reserve()">
           <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Reservar ahora' }}
         </button>
       </div>

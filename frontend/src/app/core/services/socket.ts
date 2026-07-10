@@ -17,6 +17,16 @@ export class SocketService {
     if (this.socket?.connected) return;
     this.socket = io(environment.socketUrl, {
       auth: { token: this.auth.getToken() }
+      ,
+      reconnectionAttempts: 5,
+      transports: ['websocket', 'polling']
+    });
+
+    this.socket.on('connect', () => {
+      console.debug('SocketService: connected to notification gateway');
+    });
+    this.socket.on('connect_error', (err) => {
+      console.error('SocketService: connect error', err);
     });
   }
 
@@ -30,7 +40,11 @@ export class SocketService {
   onNotification(): Observable<any> {
     return new Observable(observer => {
       if (!this.socket) this.connect();
-      this.socket!.on('notification', (data: any) => observer.next(data));
+      const handler = (data: any) => observer.next(data);
+      this.socket!.on('notification', handler);
+      return () => {
+        this.socket?.off('notification', handler);
+      };
     });
   }
 
@@ -38,7 +52,11 @@ export class SocketService {
   onNewBooking(): Observable<any> {
     return new Observable(observer => {
       if (!this.socket) this.connect();
-      this.socket!.on('new_booking', (data: any) => observer.next(data));
+      const handler = (data: any) => observer.next(data);
+      this.socket!.on('new_booking', handler);
+      return () => {
+        this.socket?.off('new_booking', handler);
+      };
     });
   }
 }

@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 export class Header implements OnInit, OnDestroy {
   unreadCount = 0;
   private subs: Subscription[] = [];
+  private notificationSub: Subscription | null = null;
 
   constructor(
     public auth: Auth,
@@ -28,23 +29,46 @@ export class Header implements OnInit, OnDestroy {
   // Al iniciar, si el usuario está autenticado, carga el conteo de
   // notificaciones no leídas y se suscribe al WebSocket para incrementarlo.
   ngOnInit(): void {
-    if (this.auth.isLoggedIn()) {
-      this.socket.connect();
-      this.subs.push(
-        this.socket.onNotification().subscribe((data: any) => {
-          this.unreadCount++;
-          this.snackBar.open(data?.mensaje || 'Nueva notificación', 'Ver', {
-            duration: 4000,
-            direction: 'ltr'
-          }).onAction().subscribe(() => this.router.navigate(['/notifications']));
-        })
-      );
-    }
+    this.subs.push(
+      this.auth.authState$?.subscribe((loggedIn) => {
+        if (loggedIn) {
+          this.socket.connect();
+          this.loadUnreadCount();
+          if (!this.notificationSub) {
+            this.notificationSub = this.socket.onNotification().subscribe((data: any) => {
+              this.unreadCount++;
+              this.snackBar.open(data?.mensaje || 'Nueva notificación', 'Ver', {
+                duration: 4000,
+                direction: 'ltr'
+              }).onAction().subscribe(() => this.router.navigate(['/notifications']));
+            });
+          }
+        } else {
+          this.socket.disconnect();
+          this.unreadCount = 0;
+        }
+      })
+    );
+  }
+
+  private loadUnreadCount(): void {
+    this.api.get<any>('/notifications/unread-count').subscribe({
+      next: (res) => {
+        this.unreadCount = res.data?.no_leidas || 0;
+      },
+      error: (err) => {
+        console.warn('No se pudo cargar el conteo de notificaciones', err);
+      }
+    });
   }
 
   // Al destruir, cancela suscripciones y desconecta el WebSocket.
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
+    if (this.notificationSub) {
+      this.notificationSub.unsubscribe();
+      this.notificationSub = null;
+    }
     this.socket.disconnect();
   }
 

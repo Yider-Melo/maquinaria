@@ -25,27 +25,47 @@ export class BookingsList implements OnInit {
   private loadBookings(showLoading = false): void {
     if (showLoading) this.loading = true;
     this.error = '';
-    if (this.auth.esTipo('propietario')) this.tabIndex = 0;
-    else if (this.auth.esTipo('arrendatario')) this.tabIndex = 0;
+    this.asArrendatario = [];
+    this.asPropietario = [];
+    this.tabIndex = this.auth.esTipo('propietario') ? 1 : 0;
 
-    // Simple subscription directly to the API call
-    this.api.get<any>('/bookings/my-bookings').pipe(
+    const calls: any[] = [
+      this.api.get<any>('/bookings/my-bookings').pipe(
+        catchError((err) => {
+          console.error('Error loading my-bookings:', err);
+          return of({ data: { data: [] } });
+        })
+      )
+    ];
+
+    if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
+      calls.push(
+        this.api.get<any>('/bookings/my-listings').pipe(
+          catchError((err) => {
+            console.error('Error loading my-listings:', err);
+            return of({ data: { data: [] } });
+          })
+        )
+      );
+    }
+
+    forkJoin(calls).pipe(
       timeout(10000),
-      catchError((err) => {
-        console.error('Error loading bookings:', err);
-        this.error = 'No se pudieron cargar las reservas.';
-        this.loading = false;
-        this.cdr.markForCheck();
-        return of({ data: { data: [] } });
-      }),
       finalize(() => {
         this.loading = false;
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: (res: any) => {
-        this.asArrendatario = res?.data?.data || [];
+      next: (results: any[]) => {
+        this.asArrendatario = results[0]?.data?.data || [];
+        if (calls.length > 1) {
+          this.asPropietario = results[1]?.data?.data || [];
+        }
         this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading bookings:', err);
+        this.error = 'No se pudieron cargar las reservas.';
       }
     });
   }

@@ -1,10 +1,11 @@
 // Componente de detalle de maquinaria. Muestra la información completa
 // de un equipo, sus imágenes, y permite al propietario editar, eliminar
 // o gestionar las imágenes asociadas.
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -14,7 +15,7 @@ import { Auth } from '../../core/services/auth';
 })
 export class MachineryDetail implements OnInit {
   item: any = null; images: any[] = []; loading = true; error = '';
-  selectedImage = '';
+  selectedImage = this.fallbackImage;
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia', cantidad_horas: 1 };
   bookingLoading = false; checkingAvailability = false;
   availability: { checked: boolean; disponible: boolean; message: string } = { checked: false, disponible: false, message: '' };
@@ -24,21 +25,36 @@ export class MachineryDetail implements OnInit {
   constructor(
     private route: ActivatedRoute, public router: Router,
     private api: Api, public auth: Auth,
-    private dialog: MatDialog, private snackBar: MatSnackBar
+    private dialog: MatDialog, private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.error = 'Maquinaria no encontrada.'; this.loading = false; return; }
-    this.api.get<any>(`/machinery/${id}`).subscribe({
+    if (!id) {
+      this.error = 'Maquinaria no encontrada.';
+      this.loading = false;
+      return;
+    }
+
+    this.api.get<any>(`/machinery/${id}`).pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: (res) => {
-        this.item = res.data; this.images = res.data?.imagenes || [];
+        this.item = res.data;
+        this.images = res.data?.imagenes || [];
         this.selectedImage = this.images[0]?.url || this.fallbackImage;
         this.buildCalendar();
         this.loadOccupiedDates();
-        this.loading = false;
+        this.cdr.detectChanges();
       },
-      error: () => { this.error = 'No se pudo cargar la maquinaria. Intenta nuevamente.'; this.loading = false; }
+      error: () => {
+        this.error = 'No se pudo cargar la maquinaria. Intenta nuevamente.';
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -105,13 +121,22 @@ export class MachineryDetail implements OnInit {
       this.error = 'Selecciona fechas válidas para consultar disponibilidad.';
       return;
     }
-    if (!this.validateBookableRange()) return;
+    if (!this.validateBookableRange()) {
+      this.checkingAvailability = false;
+      return;
+    }
     this.checkingAvailability = true;
+
     this.api.get<any>('/bookings/check-availability', {
       machineryId: this.item.id,
       start: this.booking.fecha_inicio,
       end: this.booking.fecha_fin
-    }).subscribe({
+    }).pipe(
+      finalize(() => {
+        this.checkingAvailability = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: (res) => {
         const available = !!res.data?.disponible;
         this.availability = {
@@ -119,11 +144,9 @@ export class MachineryDetail implements OnInit {
           disponible: available,
           message: available ? 'Disponible para las fechas seleccionadas.' : 'No disponible en ese rango de fechas.'
         };
-        this.checkingAvailability = false;
       },
       error: () => {
         this.error = 'No se pudo verificar la disponibilidad.';
-        this.checkingAvailability = false;
       }
     });
   }
@@ -190,6 +213,7 @@ export class MachineryDetail implements OnInit {
       next: (res) => {
         this.occupiedDates = new Set(res.data?.dates || []);
         this.calendarDays = this.calendarDays.map(day => ({ ...day, occupied: this.occupiedDates.has(day.date) }));
+        this.cdr.detectChanges();
       }
     });
   }

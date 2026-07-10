@@ -4,6 +4,7 @@
 import { Injectable } from '@angular/core';
 import { Api } from './api';
 import { Observable, tap } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 // Interfaz que representa un usuario de la plataforma.
 export interface Usuario {
@@ -18,6 +19,7 @@ export interface LoginResponse { token: string; usuario: Usuario; }
 export class Auth {
   private tokenKey = 'rentamaq_token';
   private userKey = 'rentamaq_user';
+  private authState = new BehaviorSubject<boolean>(!!this.getToken());
 
   constructor(private api: Api) {}
 
@@ -28,6 +30,7 @@ export class Auth {
         if (res.success) {
           localStorage.setItem(this.tokenKey, res.data.token);
           localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
+          this.authState.next(true);
         }
       })
     );
@@ -42,6 +45,7 @@ export class Auth {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+    this.authState.next(false);
   }
 
   // Devuelve el token JWT almacenado o null si no hay sesión activa.
@@ -53,6 +57,7 @@ export class Auth {
   }
   // Indica si hay una sesión activa (existe token).
   isLoggedIn(): boolean { return !!this.getToken(); }
+  get authState$(): Observable<boolean> { return this.authState.asObservable(); }
   // Devuelve el tipo de usuario o null.
   get tipoUsuario(): string | null { return this.getUser()?.tipo_usuario || null; }
   // Verifica si el usuario es de un tipo específico.
