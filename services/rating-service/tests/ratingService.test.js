@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
-const ratingService = require('../services/ratingService');
+const pool = require('../src/db');
+const ratingService = require('../src/services/ratingService');
 
 describe('create', () => {
     it('debe lanzar ValidationError si faltan campos requeridos', async () => {

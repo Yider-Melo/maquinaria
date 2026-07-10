@@ -1,11 +1,11 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
+const pool = require('../src/db');
 const { eventBus } = require('shared');
 const axios = require('axios');
 
-const bookingService = require('../services/bookingService');
+const bookingService = require('../src/services/bookingService');
 
 process.env.MACHINERY_SERVICE_URL = 'http://localhost:3002';
 

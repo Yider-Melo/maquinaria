@@ -7,8 +7,8 @@ process.env.DB_NAME = 'rentamaq_rating_test';
 process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 
-const pool = require('../db');
-const ratingService = require('../services/ratingService');
+const pool = require('../src/db');
+const ratingService = require('../src/services/ratingService');
 
 const CALIFICADOR_ID = 'a0000000-0000-0000-0000-000000000003';
 const CALIFICADO_ID = 'a0000000-0000-0000-0000-000000000002';

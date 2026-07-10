@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
-const searchService = require('../services/searchService');
+const pool = require('../src/db');
+const searchService = require('../src/services/searchService');
 
 describe('search', () => {
     it('debe buscar sin filtros', async () => {

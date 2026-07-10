@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
-const paymentService = require('../services/paymentService');
+const pool = require('../src/db');
+const paymentService = require('../src/services/paymentService');
 
 describe('createCheckout', () => {
     it('debe lanzar NotFoundError si la reserva no existe', async () => {

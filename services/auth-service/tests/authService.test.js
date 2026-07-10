@@ -4,12 +4,12 @@ const { describe, it, before, after, mock } = require('node:test');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const pool = require('../db');
+const pool = require('../src/db');
 
 process.env.JWT_SECRET = 'test-secret';
 process.env.JWT_EXPIRES_IN = '1h';
 
-const authService = require('../services/authService');
+const authService = require('../src/services/authService');
 
 const noopQuery = mock.fn(() => Promise.resolve({ rows: [], rowCount: 0 }));
 

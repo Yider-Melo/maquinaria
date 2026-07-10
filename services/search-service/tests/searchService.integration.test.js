@@ -7,8 +7,8 @@ process.env.DB_NAME = 'rentamaq_search_test';
 process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 
-const pool = require('../db');
-const searchService = require('../services/searchService');
+const pool = require('../src/db');
+const searchService = require('../src/services/searchService');
 
 before(async () => {
     await pool.query('DELETE FROM maquinaria');

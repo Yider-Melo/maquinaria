@@ -8,8 +8,8 @@ process.env.DB_NAME = 'rentamaq_payment_test';
 process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 
-const pool = require('../db');
-const paymentService = require('../services/paymentService');
+const pool = require('../src/db');
+const paymentService = require('../src/services/paymentService');
 
 const MAQUINARIA_ID = 'a0000000-0000-0000-0000-000000000200';
 const ARRENDATARIO_ID = 'a0000000-0000-0000-0000-000000000003';

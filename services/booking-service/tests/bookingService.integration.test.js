@@ -8,10 +8,10 @@ process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 process.env.MACHINERY_SERVICE_URL = 'http://localhost:3002';
 
-const pool = require('../db');
+const pool = require('../src/db');
 const axios = require('axios');
 const { eventBus } = require('shared');
-const bookingService = require('../services/bookingService');
+const bookingService = require('../src/services/bookingService');
 
 eventBus.publishEvent = async () => {};
 

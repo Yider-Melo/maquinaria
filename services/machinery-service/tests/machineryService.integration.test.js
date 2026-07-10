@@ -7,8 +7,8 @@ process.env.DB_NAME = 'rentamaq_machinery_test';
 process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 
-const pool = require('../db');
-const machineryService = require('../services/machineryService');
+const pool = require('../src/db');
+const machineryService = require('../src/services/machineryService');
 const { eventBus } = require('shared');
 
 eventBus.publishEvent = async () => {};

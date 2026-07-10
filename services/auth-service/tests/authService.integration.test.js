@@ -21,7 +21,7 @@ const pool = new Pool({
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const authService = require('../services/authService');
+const authService = require('../src/services/authService');
 
 async function clean() {
     await pool.query('DELETE FROM usuarios');

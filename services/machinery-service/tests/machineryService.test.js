@@ -1,10 +1,10 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
+const pool = require('../src/db');
 const { eventBus } = require('shared');
 
-const machineryService = require('../services/machineryService');
+const machineryService = require('../src/services/machineryService');
 
 function mockQuery(result) {
     return mock.fn(() => Promise.resolve({ rows: result, rowCount: result ? result.length : 0 }));

@@ -1,0 +1,124 @@
+const machineryService = require('../services/machineryService');
+const { success } = require('shared');
+
+async function create(req, res, next) {
+    try {
+        const machinery = await machineryService.create(req.body, req.user.id);
+        success(res, machinery, 201);
+    } catch (err) { next(err); }
+}
+
+async function listActive(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await machineryService.listActive(page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getByOwner(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await machineryService.getByOwner(req.user.id, page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function adminMachineryStats(req, res, next) {
+    try {
+        const stats = await machineryService.adminMachineryStats();
+        success(res, stats);
+    } catch (err) { next(err); }
+}
+
+async function adminAllMachinery(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await machineryService.adminAllMachinery(page, size);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function adminSetMachineryStatus(req, res, next) {
+    try {
+        const result = await machineryService.adminSetMachineryStatus(req.params.id, req.body.activo === true);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getById(req, res, next) {
+    try {
+        const machinery = await machineryService.getById(req.params.id);
+        const images = await machineryService.getImages(req.params.id);
+        success(res, { ...machinery, imagenes: images });
+    } catch (err) { next(err); }
+}
+
+async function update(req, res, next) {
+    try {
+        const machinery = await machineryService.update(req.params.id, req.body, req.user.id);
+        success(res, machinery);
+    } catch (err) { next(err); }
+}
+
+async function remove(req, res, next) {
+    try {
+        const result = await machineryService.remove(req.params.id, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function addImage(req, res, next) {
+    try {
+        const image = await machineryService.addImage(req.params.id, req.body.url, req.user.id);
+        success(res, image, 201);
+    } catch (err) { next(err); }
+}
+
+async function getImages(req, res, next) {
+    try {
+        const images = await machineryService.getImages(req.params.id);
+        success(res, images);
+    } catch (err) { next(err); }
+}
+
+async function deleteImage(req, res, next) {
+    try {
+        const result = await machineryService.deleteImage(req.params.id, req.params.imageId, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function updateAvailability(req, res, next) {
+    try {
+        const result = await machineryService.updateAvailability(req.params.id, req.body.fechas, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getAvailability(req, res, next) {
+    try {
+        const availability = await machineryService.getAvailability(req.params.id, req.query.start, req.query.end);
+        success(res, availability);
+    } catch (err) { next(err); }
+}
+
+module.exports = {
+    create,
+    listActive,
+    getByOwner,
+    adminMachineryStats,
+    adminAllMachinery,
+    adminSetMachineryStatus,
+    getById,
+    update,
+    remove,
+    addImage,
+    getImages,
+    deleteImage,
+    updateAvailability,
+    getAvailability,
+};
