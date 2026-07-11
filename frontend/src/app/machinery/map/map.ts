@@ -38,25 +38,44 @@ export class MachineryMap implements AfterViewInit, OnChanges {
     }).addTo(this.map);
 
     if (this.lat && this.lng) {
-      this.marker = L.marker([this.lat, this.lng]).addTo(this.map);
+      this.colocarMarcador(this.lat, this.lng, true);
     }
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.colocarMarcador(e.latlng.lat, e.latlng.lng);
+      this.mostrarDireccion(e.latlng.lat, e.latlng.lng);
     });
   }
 
+  private ultimoCambio = 0;
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['direccion'] || changes['ciudad'] || changes['departamento']) {
+    if (!this.map) return;
+    const ahora = Date.now();
+    if (ahora - this.ultimoCambio < 500) return;
+    if ((changes['direccion'] || changes['ciudad'] || changes['departamento']) && this.ciudad && this.departamento) {
+      this.ultimoCambio = ahora;
       this.geocodificar();
     }
   }
 
-  colocarMarcador(lat: number, lng: number): void {
+  colocarMarcador(lat: number, lng: number, mantenerZoom = false): void {
     if (this.marker) this.marker.setLatLng([lat, lng]);
     else this.marker = L.marker([lat, lng]).addTo(this.map!);
-    if (this.map) this.map.setView([lat, lng], this.map.getZoom());
+    if (this.map) this.map.setView([lat, lng], mantenerZoom ? this.map.getZoom() : 15);
     this.locationChange.emit({ lat, lng });
+  }
+
+  mostrarDireccion(lat: number, lng: number): void {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=es`;
+    fetch(url, { headers: { 'User-Agent': 'RentaMaq/1.0' } })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.display_name && this.marker) {
+          this.marker.bindPopup(data.display_name).openPopup();
+        }
+      })
+      .catch(() => {});
   }
 
   geocodificar(): void {
@@ -67,25 +86,23 @@ export class MachineryMap implements AfterViewInit, OnChanges {
     const q2 = [this.ciudad, this.departamento, 'Colombia'].filter(p => p).join(', ');
 
     this.buscando = true;
-    this.intentarGeocodificar(q1, q2);
+    this._geocodificar(q1, q2);
   }
 
-  private intentarGeocodificar(q1: string, q2: string): void {
+  private _geocodificar(q1: string, q2: string): void {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q1)}&limit=1&countrycodes=co`;
 
     fetch(url, { headers: { 'User-Agent': 'RentaMaq/1.0' } })
       .then(r => r.json())
       .then((data: any[]) => {
+        this.buscando = false;
         if (data && data.length > 0 && data[0].addresstype !== 'country') {
-          this.buscando = false;
           const lat = parseFloat(data[0].lat);
           const lng = parseFloat(data[0].lon);
           this.colocarMarcador(lat, lng);
-          if (this.map) this.map.setView([lat, lng], 15);
+          this.mostrarDireccion(lat, lng);
         } else if (q2 !== q1) {
-          this.intentarGeocodificar(q2, q2);
-        } else {
-          this.buscando = false;
+          this._geocodificar(q2, q2);
         }
       })
       .catch(() => this.buscando = false);
