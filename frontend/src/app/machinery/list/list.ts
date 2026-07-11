@@ -17,14 +17,27 @@ export class MachineryList implements OnInit {
     { value: 'price_desc', label: 'Mayor precio primero' },
     { value: 'rating', label: 'Mejor calificación' }
   ];
+  soloMisEquipos = false;
 
   constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.soloMisEquipos = this.auth.esTipo('propietario');
+    this.load();
+  }
+
+  toggleModo(): void {
+    this.soloMisEquipos = !this.soloMisEquipos;
+    this.search();
+  }
 
   load(): void {
     this.loading = true; this.error = '';
-    this.api.get<any>('/search', { ...this.cleanFilters(), page: this.page, size: this.size }).subscribe({
+    const params: any = { ...this.cleanFilters(), page: this.page, size: this.size };
+    if (this.soloMisEquipos && this.auth.getUser()?.id) {
+      params.propietario_id = this.auth.getUser()!.id;
+    }
+    this.api.get<any>('/search', params).subscribe({
       next: (res) => {
         this.items = res.data?.data || [];
         this.total = res.data?.pagination?.total || 0;
@@ -40,7 +53,6 @@ export class MachineryList implements OnInit {
     });
   }
 
-  // Reinicia la paginación y ejecuta una nueva búsqueda.
   search(): void { this.page = 1; this.load(); }
   clearFilters(): void { this.filters = { q: '', tipo: '', ciudad: '', minPrice: null, maxPrice: null, sort: 'price_asc' }; this.search(); }
   loadSuggestions(): void {
@@ -57,9 +69,7 @@ export class MachineryList implements OnInit {
       }
     });
   }
-  // Navega a la página anterior.
   prevPage(): void { if (this.page > 1) { this.page--; this.load(); } }
-  // Navega a la página siguiente si hay más resultados.
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.load(); } }
 
   private cleanFilters(): Record<string, any> {

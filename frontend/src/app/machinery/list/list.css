@@ -4,6 +4,8 @@
 .list-hero h1 { margin: 0; max-width: 680px; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; font-weight: 800; }
 .list-hero p { max-width: 640px; color: rgba(255,255,255,.78); margin: 10px 0 0; }
 .publish-btn { background: #fff2d7 !important; color: #6b3520 !important; border-radius: 14px !important; font-weight: 800 !important; }
+.hero-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toggle-btn { background: rgba(255,255,255,.15) !important; color: #fff8ec !important; border-color: rgba(255,255,255,.35) !important; border-radius: 14px !important; font-weight: 700 !important; backdrop-filter: blur(4px); }
 .filters-card { display: grid; grid-template-columns: minmax(260px, 1.4fr) repeat(5, minmax(155px, 1fr)); gap: 12px; align-items: start; margin-bottom: 18px; background: rgba(255,253,248,.97); padding: 18px; border: 1px solid var(--rm-border); border-radius: 20px; box-shadow: 0 12px 32px var(--rm-shadow); }
 .filters-card mat-form-field { margin-bottom: 0; }
 .search-field { min-width: 260px; }
