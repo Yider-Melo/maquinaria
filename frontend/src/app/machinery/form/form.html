@@ -95,7 +95,7 @@
         <div class="form-section">
           <h3 class="form-section-title"><mat-icon>map</mat-icon> Ubicación en el mapa</h3>
           <div class="map-wrapper">
-            <app-machinery-map [lat]="data.ubicacion_lat" [lng]="data.ubicacion_lng" (locationChange)="onLocationChange($event)"></app-machinery-map>
+            <app-machinery-map [lat]="data.ubicacion_lat" [lng]="data.ubicacion_lng" [direccion]="data.direccion" [ciudad]="data.ciudad" [departamento]="data.departamento" (locationChange)="onLocationChange($event)"></app-machinery-map>
           </div>
         </div>
 

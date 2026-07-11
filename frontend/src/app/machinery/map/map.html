@@ -1,1 +1,4 @@
-<div #mapContainer class="map-container"></div>
+<div class="map-wrapper">
+  <div class="map-search-hint" *ngIf="buscando"><mat-icon>search</mat-icon> Buscando dirección...</div>
+  <div #mapContainer class="map-container" [class.searching]="buscando"></div>
+</div>
