@@ -4,12 +4,17 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
+import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
   standalone: false,
   selector: 'app-payments-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
 export class PaymentsDetail implements OnInit {
+  formatDate = formatDate;
+  formatDateTime = formatDateTime;
+  formatId = formatId;
+  estadoLabel = estadoLabel;
   payment: any = null; loading = true; error = '';
 
   constructor(
@@ -79,9 +84,9 @@ export class PaymentsDetail implements OnInit {
   }
 
   getBookingDateLabel(): string {
-    const start = this.payment?.fecha_inicio || 'Sin fecha';
-    const end = this.payment?.fecha_fin ? ` al ${this.payment.fecha_fin}` : '';
-    return `${start}${end}`;
+    if (!this.payment?.fecha_inicio && !this.payment?.fecha_fin) return 'Sin fecha';
+    if (!this.payment?.fecha_fin) return formatDate(this.payment.fecha_inicio);
+    return `${formatDate(this.payment.fecha_inicio)} → ${formatDate(this.payment.fecha_fin)}`;
   }
 
   getBookingTimeLabel(): string {

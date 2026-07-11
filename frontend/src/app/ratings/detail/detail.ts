@@ -3,12 +3,16 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
+import { formatDate, formatDateTime, formatId } from '../../shared/utils';
 
 @Component({
   standalone: false,
   selector: 'app-ratings-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
 export class RatingsDetail implements OnInit {
+  formatDate = formatDate;
+  formatDateTime = formatDateTime;
+  formatId = formatId;
   rating: any = null; loading = true; error = '';
 
   constructor(
@@ -118,9 +122,9 @@ export class RatingsDetail implements OnInit {
   }
 
   getBookingDateLabel(): string {
-    const start = this.rating?.fecha_inicio || 'Sin fecha';
-    const end = this.rating?.fecha_fin ? ` al ${this.rating.fecha_fin}` : '';
-    return `${start}${end}`;
+    if (!this.rating?.fecha_inicio && !this.rating?.fecha_fin) return 'Sin fecha';
+    if (!this.rating?.fecha_fin) return formatDate(this.rating.fecha_inicio);
+    return `${formatDate(this.rating.fecha_inicio)} → ${formatDate(this.rating.fecha_fin)}`;
   }
 
   getBookingTimeLabel(): string {

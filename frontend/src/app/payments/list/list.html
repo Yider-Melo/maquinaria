@@ -5,20 +5,20 @@
       <mat-card-header>
         <mat-card-title>
           <mat-icon style="vertical-align:middle;margin-right:8px;color:#1976d2;">receipt</mat-icon>
-          #{{ p.id?.substring(0,8) }}
+          {{ formatId(p.id, 'ID') }}
         </mat-card-title>
         <mat-card-subtitle>{{ p.referencia_pasarela }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="payment-info">
-          <span class="status-badge" [class]="p.estado">{{ p.estado }}</span>
+          <span class="status-badge" [class]="p.estado">{{ estadoLabel(p.estado) }}</span>
           <strong>${{ p.monto | number }}</strong>
           <span style="color:#888;">{{ p.metodo_pago || 'N/A' }}</span>
         </div>
         <div class="payment-details" *ngIf="p.booking">
           <div><strong>Equipo:</strong> {{ p.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
           <div><strong>Precio:</strong> ${{ (p.booking.precio_total || p.monto || 0) | number }}</div>
-          <div><strong>Fecha:</strong> {{ getBookingDateLabel(p.booking) }}</div>
+          <div><strong>Fechas:</strong> {{ getBookingDateLabel(p.booking) }}</div>
           <div><strong>Horario:</strong> {{ getBookingTimeLabel(p.booking) }}</div>
         </div>
       </mat-card-content>

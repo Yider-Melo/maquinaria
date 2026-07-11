@@ -4,12 +4,17 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
+import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
   standalone: false,
   selector: 'app-bookings-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
 export class BookingsDetail implements OnInit {
+  formatDate = formatDate;
+  formatDateTime = formatDateTime;
+  formatId = formatId;
+  estadoLabel = estadoLabel;
   booking: any = null; loading = true; error = '';
 
   constructor(

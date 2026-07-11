@@ -5,6 +5,7 @@ import { Auth } from '../../core/services/auth';
 import { RatingForm } from '../form/rating-form';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
   selector: 'app-ratings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
@@ -90,10 +91,14 @@ export class RatingsList implements OnInit {
     });
   }
 
+  formatDate = formatDate;
+  formatId = formatId;
+  estadoLabel = estadoLabel;
+
   getBookingDateLabel(booking: any): string {
-    const start = booking?.fecha_inicio || 'Sin fecha';
-    const end = booking?.fecha_fin ? ` al ${booking.fecha_fin}` : '';
-    return `${start}${end}`;
+    if (!booking?.fecha_inicio && !booking?.fecha_fin) return 'Sin fecha';
+    if (!booking?.fecha_fin) return formatDate(booking.fecha_inicio);
+    return `${formatDate(booking.fecha_inicio)} → ${formatDate(booking.fecha_fin)}`;
   }
 
   getBookingTimeLabel(booking: any): string {

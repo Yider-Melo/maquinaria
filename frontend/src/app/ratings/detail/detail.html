@@ -2,20 +2,18 @@
   <div class="page-header"><h1>Detalle de Calificación</h1></div>
   <mat-card class="detail-card">
     <mat-card-content>
-      <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">#{{ rating.id?.substring(0,12) }}...</span></div>
+      <div class="detail-row"><span class="detail-label">Calificación</span><span class="detail-value">{{ formatId(rating.id, 'ID') }}</span></div>
       <div class="detail-row"><span class="detail-label">Puntuación</span><span class="detail-value"><span class="stars">{{ '★'.repeat(rating.puntuacion) }}{{ '☆'.repeat(5 - rating.puntuacion) }}</span></span></div>
       <div class="detail-row"><span class="detail-label">Comentario</span><span class="detail-value">{{ rating.comentario || 'Sin comentario' }}</span></div>
       <div class="detail-row" *ngIf="rating.maquinaria_titulo"><span class="detail-label">Equipo</span><span class="detail-value">{{ rating.maquinaria_titulo }}</span></div>
-      <div class="detail-row" *ngIf="rating.maquinaria_tipo"><span class="detail-label">Tipo equipo</span><span class="detail-value">{{ rating.maquinaria_tipo }}</span></div>
-      <div class="detail-row" *ngIf="rating.maquinaria_estado"><span class="detail-label">Estado equipo</span><span class="detail-value">{{ rating.maquinaria_estado }}</span></div>
-      <div class="detail-row" *ngIf="rating.maquinaria_precio !== undefined"><span class="detail-label">Precio equipo</span><span class="detail-value">${{ rating.maquinaria_precio | number }}</span></div>
-      <div class="detail-row" *ngIf="rating.reserva_id"><span class="detail-label">Reserva</span><span class="detail-value">#{{ rating.reserva_id?.substring(0,12) }}...</span></div>
-      <div class="detail-row" *ngIf="rating.fecha_inicio"><span class="detail-label">Fechas reserva</span><span class="detail-value">{{ getBookingDateLabel() }}</span></div>
+      <div class="detail-row" *ngIf="rating.maquinaria_tipo"><span class="detail-label">Tipo</span><span class="detail-value">{{ rating.maquinaria_tipo }}</span></div>
+      <div class="detail-row" *ngIf="rating.maquinaria_estado"><span class="detail-label">Estado</span><span class="detail-value">{{ rating.maquinaria_estado }}</span></div>
+      <div class="detail-row" *ngIf="rating.maquinaria_precio !== undefined"><span class="detail-label">Precio</span><span class="detail-value">${{ rating.maquinaria_precio | number }}</span></div>
+      <div class="detail-row" *ngIf="rating.reserva_id"><span class="detail-label">Reserva</span><span class="detail-value">{{ formatId(rating.reserva_id, 'ID') }}</span></div>
+      <div class="detail-row" *ngIf="rating.fecha_inicio"><span class="detail-label">Fechas</span><span class="detail-value">{{ getBookingDateLabel() }}</span></div>
       <div class="detail-row" *ngIf="rating.modalidad"><span class="detail-label">Modalidad</span><span class="detail-value">{{ rating.modalidad === 'hora' ? 'Por hora' : 'Por día' }}</span></div>
-      <div class="detail-row" *ngIf="rating.precio_total !== undefined"><span class="detail-label">Total reserva</span><span class="detail-value">${{ rating.precio_total | number }}</span></div>
-      <div class="detail-row" *ngIf="rating.calificador_id"><span class="detail-label">Calificador</span><span class="detail-value">#{{ rating.calificador_id?.substring(0,12) }}...</span></div>
-      <div class="detail-row" *ngIf="rating.calificado_id"><span class="detail-label">Calificado</span><span class="detail-value">#{{ rating.calificado_id?.substring(0,12) }}...</span></div>
-      <div class="detail-row" *ngIf="rating.creado_en"><span class="detail-label">Fecha</span><span class="detail-value">{{ rating.creado_en }}</span></div>
+      <div class="detail-row" *ngIf="rating.precio_total !== undefined"><span class="detail-label">Total</span><span class="detail-value">${{ rating.precio_total | number }}</span></div>
+      <div class="detail-row" *ngIf="rating.creado_en"><span class="detail-label">Calificado el</span><span class="detail-value">{{ formatDateTime(rating.creado_en) }}</span></div>
     </mat-card-content>
     <mat-card-actions class="detail-actions">
       <button mat-stroked-button color="accent" [routerLink]="['/bookings', rating.reserva_id]" *ngIf="rating.reserva_id">

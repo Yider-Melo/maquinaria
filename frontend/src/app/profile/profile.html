@@ -56,11 +56,11 @@
     <div class="booking-list" *ngIf="activeRenterBookings.length > 0">
       <mat-card class="booking-mini" *ngFor="let booking of activeRenterBookings.slice(0, 4)" [routerLink]="['/bookings', booking.id]">
         <div>
-          <strong>#{{ booking.id?.substring(0, 8) }}</strong>
-          <span>{{ booking.fecha_inicio | date }} al {{ booking.fecha_fin | date }}</span>
+          <strong>{{ formatId(booking.id, 'ID') }}</strong>
+          <span>{{ formatDate(booking.fecha_inicio) }} → {{ formatDate(booking.fecha_fin) }}</span>
         </div>
         <div>
-          <span class="booking-state" [class.confirmed]="booking.estado === 'confirmada'" [class.progress]="booking.estado === 'en_curso'">{{ formatBookingState(booking.estado) }}</span>
+          <span class="booking-state" [class.confirmed]="booking.estado === 'confirmada'" [class.progress]="booking.estado === 'en_curso'">{{ estadoLabel(booking.estado) }}</span>
           <strong>${{ booking.precio_total | number }}</strong>
         </div>
       </mat-card>

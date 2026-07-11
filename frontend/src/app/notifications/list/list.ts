@@ -2,12 +2,14 @@
 // marcarlas como leídas, individualmente o todas a la vez.
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api';
+import { formatDateTime } from '../../shared/utils';
 
 @Component({
   standalone: false,
   selector: 'app-notifications-list', templateUrl: './list.html', styleUrls: ['./list.css']
 })
 export class NotificationsList implements OnInit {
+  formatDateTime = formatDateTime;
   notifications: any[] = []; loading = true; error = '';
 
   constructor(private api: Api, private cdr: ChangeDetectorRef) {}

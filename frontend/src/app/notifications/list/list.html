@@ -12,7 +12,7 @@
           <mat-icon *ngIf="!n.leida" style="font-size:18px;width:18px;height:18px;color:#1976d2;vertical-align:middle;margin-right:6px;">circle</mat-icon>
           {{ n.titulo }}
         </mat-card-title>
-        <mat-card-subtitle class="notif-time">{{ n.creado_en | date:'medium' }}</mat-card-subtitle>
+        <mat-card-subtitle class="notif-time">{{ formatDateTime(n.creado_en) }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content><p>{{ n.mensaje }}</p></mat-card-content>
     </mat-card>

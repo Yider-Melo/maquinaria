@@ -9,7 +9,8 @@
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
             <div class="rating-details">
               <div><strong>Equipo:</strong> {{ r.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
-              <div *ngIf="r.reserva_id"><strong>Reserva:</strong> #{{ r.reserva_id?.substring(0,8) }}</div>
+              <div *ngIf="r.reserva_id"><strong>Reserva:</strong> {{ formatId(r.reserva_id, 'ID') }}</div>
+              <div *ngIf="r.creado_en"><strong>Fecha:</strong> {{ formatDate(r.creado_en) }}</div>
             </div>
           </mat-card-content>
         </mat-card>
@@ -21,12 +22,12 @@
       <mat-tab label="Pendientes por calificar">
         <mat-card *ngFor="let b of completedBookings" class="rating-card">
           <mat-card-content>
-            <p><strong>Reserva:</strong> #{{ b.id?.substring(0,8) }} | <strong>Total:</strong> ${{ b.precio_total | number }}</p>
+            <p><strong>{{ formatId(b.id, 'ID') }}</strong> — <strong>Total:</strong> ${{ b.precio_total | number }}</p>
             <div class="rating-details">
               <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
               <div><strong>Precio:</strong> ${{ (b.maquinaria_precio || b.precio_total || 0) | number }}</div>
-              <div><strong>Fecha:</strong> {{ getBookingDateLabel(b) }}</div>
-              <div><strong>Horario:</strong> {{ getBookingTimeLabel(b) }}</div>
+              <div><strong>Fechas:</strong> {{ getBookingDateLabel(b) }}</div>
+              <div><strong>Modalidad:</strong> {{ getBookingTimeLabel(b) }}</div>
             </div>
           </mat-card-content>
           <mat-card-actions>

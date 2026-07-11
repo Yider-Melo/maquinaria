@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../core/services/api';
 import { Auth } from '../core/services/auth';
+import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
 
 @Component({ selector: 'app-profile', templateUrl: './profile.html', styleUrls: ['./profile.css'], standalone: false })
 export class Profile implements OnInit {
@@ -56,13 +57,12 @@ export class Profile implements OnInit {
     return this.renterBookings.filter(booking => booking.estado === 'confirmada').length;
   }
 
+  formatDate = formatDate;
+  formatId = formatId;
+  estadoLabel = estadoLabel;
+
   formatMachineState(state: string): string {
     const labels: Record<string, string> = { nuevo: 'Nuevo', excelente: 'Excelente', bueno: 'Bueno', regular: 'Regular' };
-    return labels[state] || state || 'Sin estado';
-  }
-
-  formatBookingState(state: string): string {
-    const labels: Record<string, string> = { pendiente: 'Pendiente', confirmada: 'Aprobada', en_curso: 'En curso', completada: 'Finalizada', cancelada: 'Cancelada', rechazada: 'Rechazada' };
     return labels[state] || state || 'Sin estado';
   }
 
