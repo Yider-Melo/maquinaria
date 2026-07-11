@@ -5,10 +5,12 @@
       <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">#{{ booking.id?.substring(0,12) }}...</span></div>
       <div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="status-badge" [class]="booking.estado">{{ booking.estado }}</span></span></div>
       <div class="detail-row"><span class="detail-label">Fechas</span><span class="detail-value">{{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</span></div>
+      <div class="detail-row"><span class="detail-label">Horario</span><span class="detail-value">{{ booking.modalidad === 'hora' ? 'Por hora' : 'Por día' }}</span></div>
       <div class="detail-row"><span class="detail-label">Total</span><span class="detail-value" style="font-size:20px;font-weight:700;color:#1976d2;">${{ booking.precio_total | number }}</span></div>
       <div class="detail-row" *ngIf="booking.propietario_nombre"><span class="detail-label">Propietario</span><span class="detail-value">{{ booking.propietario_nombre }}</span></div>
       <div class="detail-row" *ngIf="booking.arrendatario_nombre"><span class="detail-label">Arrendatario</span><span class="detail-value">{{ booking.arrendatario_nombre }}</span></div>
       <div class="detail-row" *ngIf="booking.maquinaria_titulo"><span class="detail-label">Maquinaria</span><span class="detail-value">{{ booking.maquinaria_titulo }}</span></div>
+      <div class="detail-row" *ngIf="booking.maquinaria_precio !== undefined"><span class="detail-label">Precio equipo</span><span class="detail-value">${{ booking.maquinaria_precio | number }}</span></div>
     </mat-card-content>
     <mat-card-actions class="detail-actions">
       <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'">

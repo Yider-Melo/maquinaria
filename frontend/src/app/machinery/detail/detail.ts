@@ -1,6 +1,3 @@
-// Componente de detalle de maquinaria. Muestra la información completa
-// de un equipo, sus imágenes, y permite al propietario editar, eliminar
-// o gestionar las imágenes asociadas.
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -8,6 +5,18 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
+
+interface CalendarDay {
+  date: string;
+  day: number;
+  occupied: boolean;
+  selected: boolean;
+  past: boolean;
+  isPadding: boolean;
+  isStart: boolean;
+  isEnd: boolean;
+  isToday: boolean;
+}
 
 @Component({
   selector: 'app-machinery-detail', templateUrl: './detail.html', styleUrls: ['./detail.css'],
@@ -19,8 +28,13 @@ export class MachineryDetail implements OnInit {
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia', cantidad_horas: 1 };
   bookingLoading = false; checkingAvailability = false;
   availability: { checked: boolean; disponible: boolean; message: string } = { checked: false, disponible: false, message: '' };
-  calendarDays: { date: string; day: number; occupied: boolean; selected: boolean; past: boolean }[] = [];
   occupiedDates = new Set<string>();
+  todayIndex = -1;
+
+  dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  calendarWeeks: CalendarDay[][] = [];
+  currentMonth: Date = new Date();
+  calendarTitle = '';
 
   constructor(
     private route: ActivatedRoute, public router: Router,
@@ -60,10 +74,11 @@ export class MachineryDetail implements OnInit {
 
   get fallbackImage(): string { return 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80'; }
   get minDate(): string {
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${today.getFullYear()}-${month}-${day}`;
+    const date = new Date();
+    date.setDate(date.getDate() + 2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
   }
   get bookingDays(): number {
     if (!this.booking.fecha_inicio || !this.booking.fecha_fin) return 0;
@@ -76,7 +91,25 @@ export class MachineryDetail implements OnInit {
   get unitPrice(): number { return this.booking.modalidad === 'hora' ? Number(this.item?.precio_por_hora || 0) : Number(this.item?.precio_por_dia || 0); }
   get estimatedTotal(): number { return this.bookingUnits * this.unitPrice; }
 
+  canGoPrevMonth(): boolean {
+    const min = new Date();
+    return this.currentMonth.getFullYear() > min.getFullYear() ||
+      (this.currentMonth.getFullYear() === min.getFullYear() && this.currentMonth.getMonth() > min.getMonth());
+  }
+
   isOwner(): boolean { return this.auth.getUser()?.id === this.item?.propietario_id; }
+
+  prevMonth(): void {
+    this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
+    this.buildCalendar();
+    this.markSelectedDays();
+  }
+
+  nextMonth(): void {
+    this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
+    this.buildCalendar();
+    this.markSelectedDays();
+  }
 
   reserve(): void {
     this.error = '';
@@ -117,12 +150,16 @@ export class MachineryDetail implements OnInit {
   checkAvailability(): void {
     this.error = '';
     this.availability = { checked: false, disponible: false, message: '' };
-    if (!this.booking.fecha_inicio || !this.booking.fecha_fin || this.bookingDays <= 0) {
-      this.error = 'Selecciona fechas válidas para consultar disponibilidad.';
+    if (!this.booking.fecha_inicio || !this.booking.fecha_fin) {
+      this.error = 'Selecciona una fecha de inicio y fin para consultar disponibilidad.';
       return;
     }
-    if (!this.validateBookableRange()) {
-      this.checkingAvailability = false;
+    if (this.booking.fecha_inicio < this.minDate || this.booking.fecha_fin < this.minDate) {
+      this.error = 'No puedes agendar una fecha que ya pasó.';
+      return;
+    }
+    if (this.booking.fecha_fin < this.booking.fecha_inicio) {
+      this.error = 'La fecha final no puede ser anterior a la fecha inicial.';
       return;
     }
     this.checkingAvailability = true;
@@ -142,11 +179,14 @@ export class MachineryDetail implements OnInit {
         this.availability = {
           checked: true,
           disponible: available,
-          message: available ? 'Disponible para las fechas seleccionadas.' : 'No disponible en ese rango de fechas.'
+          message: available
+            ? 'Disponible para las fechas seleccionadas.'
+            : 'No disponible. Hay conflictos con otras reservas en este rango.'
         };
+        this.error = '';
       },
       error: () => {
-        this.error = 'No se pudo verificar la disponibilidad.';
+        this.error = 'No se pudo verificar la disponibilidad. Intenta nuevamente.';
       }
     });
   }
@@ -156,26 +196,20 @@ export class MachineryDetail implements OnInit {
     this.markSelectedDays();
   }
 
-  selectCalendarDate(day: any): void {
-    if (day.occupied || day.past) return;
+  selectCalendarDate(day: CalendarDay): void {
+    if (day.occupied || day.past || day.isPadding) return;
     if (!this.booking.fecha_inicio || (this.booking.fecha_inicio && this.booking.fecha_fin)) {
       this.booking.fecha_inicio = day.date;
       this.booking.fecha_fin = '';
     } else if (day.date < this.booking.fecha_inicio) {
-      if (this.rangeHasOccupiedDay(day.date, this.booking.fecha_inicio)) {
-        this.error = 'Ese rango incluye días ocupados. Selecciona fechas disponibles.';
-        return;
-      }
       this.booking.fecha_fin = this.booking.fecha_inicio;
       this.booking.fecha_inicio = day.date;
     } else {
-      if (this.rangeHasOccupiedDay(this.booking.fecha_inicio, day.date)) {
-        this.error = 'Ese rango incluye días ocupados. Selecciona fechas disponibles.';
-        return;
-      }
       this.booking.fecha_fin = day.date;
     }
-    this.resetAvailability();
+    this.markSelectedDays();
+    this.availability = { checked: false, disponible: false, message: '' };
+    this.error = '';
   }
 
   private validateBookableRange(): boolean {
@@ -183,48 +217,101 @@ export class MachineryDetail implements OnInit {
       this.error = 'No puedes agendar una fecha que ya pasó.';
       return false;
     }
-    if (this.rangeHasOccupiedDay(this.booking.fecha_inicio, this.booking.fecha_fin)) {
-      this.error = 'La maquinaria ya está ocupada en una o más fechas seleccionadas.';
+    if (this.booking.fecha_fin < this.booking.fecha_inicio) {
+      this.error = 'La fecha final no puede ser anterior a la fecha inicial.';
       return false;
     }
     return true;
   }
 
-  private rangeHasOccupiedDay(start: string, end: string): boolean {
-    return Array.from(this.occupiedDates).some(date => date >= start && date <= end);
-  }
-
   private buildCalendar(): void {
-    const today = new Date();
-    const start = new Date(today);
-    this.calendarDays = Array.from({ length: 42 }, (_, index) => {
-      const date = new Date(start);
-      date.setDate(start.getDate() + index);
+    const year = this.currentMonth.getFullYear();
+    const month = this.currentMonth.getMonth();
+    const today = new Date().toISOString().slice(0, 10);
+
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    this.calendarTitle = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const allDays: CalendarDay[] = [];
+
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const date = new Date(year, month - 1, daysInPrevMonth - i);
+      allDays.push({
+        date: date.toISOString().slice(0, 10), day: daysInPrevMonth - i,
+        occupied: false, selected: false, past: true, isPadding: true,
+        isStart: false, isEnd: false, isToday: false
+      });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
       const iso = date.toISOString().slice(0, 10);
-      return { date: iso, day: date.getDate(), occupied: this.occupiedDates.has(iso), selected: false, past: iso < this.minDate };
-    });
+      const isToday = iso === today;
+      allDays.push({
+        date: iso, day: d,
+        occupied: this.occupiedDates.has(iso),
+        selected: false,
+        past: isToday || iso < this.minDate,
+        isPadding: false,
+        isStart: false,
+        isEnd: false,
+        isToday
+      });
+      if (isToday) this.todayIndex = allDays.length - 1;
+    }
+
+    const remaining = 7 - (allDays.length % 7);
+    if (remaining < 7) {
+      for (let i = 1; i <= remaining; i++) {
+        const date = new Date(year, month + 1, i);
+        allDays.push({
+          date: date.toISOString().slice(0, 10), day: i,
+          occupied: false, selected: false, past: false, isPadding: true,
+          isStart: false, isEnd: false, isToday: false
+        });
+      }
+    }
+
+    this.calendarWeeks = [];
+    for (let i = 0; i < allDays.length; i += 7) {
+      this.calendarWeeks.push(allDays.slice(i, i + 7));
+    }
   }
 
   private loadOccupiedDates(): void {
     const start = this.minDate;
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 41);
+    const endDate = new Date(this.currentMonth);
+    endDate.setMonth(endDate.getMonth() + 2);
+    endDate.setDate(0);
     this.api.get<any>(`/bookings/machinery/${this.item.id}/occupied`, { start, end: endDate.toISOString().slice(0, 10) }).subscribe({
       next: (res) => {
         this.occupiedDates = new Set(res.data?.dates || []);
-        this.calendarDays = this.calendarDays.map(day => ({ ...day, occupied: this.occupiedDates.has(day.date) }));
+        this.buildCalendar();
+        this.markSelectedDays();
         this.cdr.detectChanges();
       }
     });
   }
 
   private markSelectedDays(): void {
-    this.calendarDays = this.calendarDays.map(day => ({
-      ...day,
-      selected: !!this.booking.fecha_inicio && !!this.booking.fecha_fin
-        ? day.date >= this.booking.fecha_inicio && day.date <= this.booking.fecha_fin
-        : day.date === this.booking.fecha_inicio
-    }));
+    for (const week of this.calendarWeeks) {
+      for (const day of week) {
+        if (day.isPadding) {
+          day.selected = false; day.isStart = false; day.isEnd = false;
+          continue;
+        }
+        const inRange = !!this.booking.fecha_inicio && !!this.booking.fecha_fin
+          ? day.date >= this.booking.fecha_inicio && day.date <= this.booking.fecha_fin
+          : day.date === this.booking.fecha_inicio;
+        day.selected = inRange && !day.occupied;
+        day.isStart = day.date === this.booking.fecha_inicio;
+        day.isEnd = day.date === this.booking.fecha_fin;
+      }
+    }
   }
 
   deleteItem(): void {

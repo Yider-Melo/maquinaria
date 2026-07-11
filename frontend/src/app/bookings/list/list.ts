@@ -4,6 +4,7 @@
 import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 import { forkJoin, of, timeout } from 'rxjs';
@@ -18,7 +19,7 @@ export class BookingsList implements OnInit {
   error = '';
   tabIndex = 0;
 
-  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
 
   ngOnInit(): void { this.loadBookings(true); }
 
@@ -57,17 +58,76 @@ export class BookingsList implements OnInit {
       })
     ).subscribe({
       next: (results: any[]) => {
-        this.asArrendatario = results[0]?.data?.data || [];
-        if (calls.length > 1) {
-          this.asPropietario = results[1]?.data?.data || [];
-        }
-        this.cdr.markForCheck();
+        const asArrendatario = results[0]?.data?.data || [];
+        const asPropietario = calls.length > 1 ? results[1]?.data?.data || [] : [];
+        this.enrichBookingsWithMachinery(asArrendatario, asPropietario);
       },
       error: (err) => {
         console.error('Error loading bookings:', err);
         this.error = 'No se pudieron cargar las reservas.';
       }
     });
+  }
+
+  private enrichBookingsWithMachinery(arrendatario: any[], propietario: any[]): void {
+    const uniqueIds = [...new Set([...arrendatario, ...propietario]
+      .map((booking: any) => booking?.maquinaria_id)
+      .filter((id: string | undefined): id is string => !!id))];
+
+    if (uniqueIds.length === 0) {
+      this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
+      this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
+      this.cdr.markForCheck();
+      return;
+    }
+
+    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
+      next: (results: any[]) => {
+        const machinesById = new Map<string, any>();
+        uniqueIds.forEach((id: string, index: number) => {
+          const machine = results[index]?.data;
+          if (machine) machinesById.set(id, machine);
+        });
+
+        this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
+        this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
+        this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private attachMachineDetails(booking: any, machine: any): any {
+    const price = booking?.precio_total ?? booking?.precio_unitario ?? machine?.precio_por_dia ?? machine?.precio_por_hora;
+    return {
+      ...booking,
+      maquinaria_titulo: booking?.maquinaria_titulo || machine?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
+      maquinaria_precio: price,
+      modalidad_label: booking?.modalidad === 'hora' ? 'Por hora' : 'Por día'
+    };
+  }
+
+  getBookingDateLabel(booking: any): string {
+    const start = booking?.fecha_inicio || 'Sin fecha';
+    const end = booking?.fecha_fin ? ` al ${booking.fecha_fin}` : '';
+    return `${start}${end}`;
+  }
+
+  getBookingTimeLabel(booking: any): string {
+    if (booking?.modalidad === 'hora') {
+      const hours = Number(booking?.cantidad_horas || 1);
+      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+    }
+    return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
+  }
+
+  openBookingDetail(booking: any): void {
+    if (!booking?.id) return;
+    this.router.navigate(['/bookings', booking.id]);
   }
 
   private confirmAction(msg: string): import('rxjs').Observable<boolean> {

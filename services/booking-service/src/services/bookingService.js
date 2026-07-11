@@ -16,10 +16,18 @@ function todayDateOnly() {
     return `${now.getFullYear()}-${month}-${day}`;
 }
 
+function minStartDate() {
+    const date = new Date();
+    date.setDate(date.getDate() + 2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
 function validateDateRange(startDate, endDate) {
     const start = toDateOnly(startDate);
     const end = toDateOnly(endDate);
-    if (start < todayDateOnly()) throw new ValidationError('No puedes agendar una fecha que ya pasó');
+    if (start < minStartDate()) throw new ValidationError('La fecha de inicio debe ser al menos 2 días después de hoy');
     if (end < start) throw new ValidationError('La fecha final no puede ser anterior a la fecha inicial');
     return { start, end };
 }

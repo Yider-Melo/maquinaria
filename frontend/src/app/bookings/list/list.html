@@ -4,15 +4,26 @@
   <ng-template #bookingsContent>
   <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [routerLink]="['/bookings', b.id]">
+        <mat-card *ngFor="let b of asArrendatario" class="booking-card" (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
-            <mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle>
+            <mat-card-subtitle>
+              <div class="booking-subtitle">
+                <span>{{ b.maquinaria_titulo || 'Maquinaria' }}</span>
+                <span>{{ getBookingDateLabel(b) }}</span>
+              </div>
+            </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <div class="booking-status">
               <span class="status-badge" [class]="b.estado">{{ b.estado }}</span>
               <strong>Total:</strong> ${{ b.precio_total | number }}
+            </div>
+            <div class="booking-details">
+              <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
+              <div><strong>Precio:</strong> ${{ (b.maquinaria_precio || b.precio_total || 0) | number }}</div>
+              <div><strong>Fecha:</strong> {{ getBookingDateLabel(b) }}</div>
+              <div><strong>Horario:</strong> {{ getBookingTimeLabel(b) }}</div>
             </div>
           </mat-card-content>
           <mat-card-actions (click)="$event.stopPropagation()">
@@ -30,15 +41,26 @@
         </div>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asPropietario" class="booking-card" [routerLink]="['/bookings', b.id]">
+        <mat-card *ngFor="let b of asPropietario" class="booking-card" (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>#{{ b.id?.substring(0,8) }}</mat-card-title>
-            <mat-card-subtitle>{{ b.fecha_inicio }} al {{ b.fecha_fin }}</mat-card-subtitle>
+            <mat-card-subtitle>
+              <div class="booking-subtitle">
+                <span>{{ b.maquinaria_titulo || 'Maquinaria' }}</span>
+                <span>{{ getBookingDateLabel(b) }}</span>
+              </div>
+            </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <div class="booking-status">
               <span class="status-badge" [class]="b.estado">{{ b.estado }}</span>
               <strong>Total:</strong> ${{ b.precio_total | number }}
+            </div>
+            <div class="booking-details">
+              <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
+              <div><strong>Precio:</strong> ${{ (b.maquinaria_precio || b.precio_total || 0) | number }}</div>
+              <div><strong>Fecha:</strong> {{ getBookingDateLabel(b) }}</div>
+              <div><strong>Horario:</strong> {{ getBookingTimeLabel(b) }}</div>
             </div>
           </mat-card-content>
           <mat-card-actions (click)="$event.stopPropagation()">

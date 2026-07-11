@@ -41,20 +41,69 @@
             <mat-option value="hora" [disabled]="!item.precio_por_hora">Por hora - ${{ (item.precio_por_hora || 0) | number }}/hora</mat-option>
           </mat-select>
         </mat-form-field>
+
+        <details class="rules-section" open>
+          <summary><mat-icon>info_outline</mat-icon> Reglas de reserva</summary>
+          <ul>
+            <li>Selecciona las fechas de inicio y fin en el calendario.</li>
+            <li>Los días en <strong>rojo</strong> están ocupados por otra reserva.</li>
+            <li>La fecha de inicio debe ser al menos <strong>2 días después de hoy</strong>.</li>
+            <li>Debes verificar la disponibilidad antes de reservar.</li>
+            <li>El propietario deberá confirmar tu solicitud para que sea válida.</li>
+          </ul>
+        </details>
+
+        <div class="calendar-section">
+          <div class="calendar-header">
+            <button type="button" class="cal-nav" [disabled]="!canGoPrevMonth()" (click)="prevMonth()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <span class="cal-title">{{ calendarTitle }}</span>
+            <button type="button" class="cal-nav" (click)="nextMonth()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-day-header" *ngFor="let name of dayNames">{{ name }}</div>
+            <ng-container *ngFor="let week of calendarWeeks">
+              <button type="button" *ngFor="let day of week"
+                class="cal-cell"
+                [class.padding]="day.isPadding"
+                [class.occupied]="!day.isPadding && day.occupied"
+                [class.selected]="day.selected"
+                [class.range-start]="day.isStart"
+                [class.range-end]="day.isEnd"
+                [class.past]="!day.isPadding && day.past"
+                [class.today]="day.isToday"
+                [disabled]="day.occupied || day.past || day.isPadding"
+                [title]="day.isPadding ? '' : day.occupied ? 'Ocupado' : day.past ? 'Fecha pasada' : day.date"
+                (click)="selectCalendarDate(day)">
+                <span>{{ day.day }}</span>
+              </button>
+            </ng-container>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="dot free"></span> Libre</span>
+            <span class="legend-item"><span class="dot busy"></span> Ocupado</span>
+            <span class="legend-item"><span class="dot sel"></span> Seleccionado</span>
+            <span class="legend-item"><span class="dot today-dot"></span> Hoy</span>
+          </div>
+        </div>
+
         <div class="booking-fields">
-          <mat-form-field appearance="outline"><mat-label>Fecha inicio</mat-label><input matInput type="date" [(ngModel)]="booking.fecha_inicio" [min]="minDate" (ngModelChange)="resetAvailability()"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Fecha fin</mat-label><input matInput type="date" [(ngModel)]="booking.fecha_fin" [min]="booking.fecha_inicio || minDate" (ngModelChange)="resetAvailability()"></mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Fecha inicio</mat-label>
+            <input matInput type="date" [(ngModel)]="booking.fecha_inicio" [min]="minDate" (ngModelChange)="resetAvailability()">
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Fecha fin</mat-label>
+            <input matInput type="date" [(ngModel)]="booking.fecha_fin" [min]="booking.fecha_inicio || minDate" (ngModelChange)="resetAvailability()">
+          </mat-form-field>
         </div>
         <mat-form-field appearance="outline" class="full" *ngIf="booking.modalidad === 'hora'">
           <mat-label>Cantidad de horas</mat-label>
           <input matInput type="number" min="1" [(ngModel)]="booking.cantidad_horas">
         </mat-form-field>
-        <div class="mini-calendar">
-          <button type="button" *ngFor="let day of calendarDays" [class.occupied]="day.occupied" [class.selected]="day.selected" [class.past]="day.past" [disabled]="day.occupied || day.past" (click)="selectCalendarDate(day)">
-            <span>{{ day.day }}</span>
-          </button>
-        </div>
-        <div class="calendar-legend"><span class="free"></span> Libre <span class="busy"></span> Ocupado <span class="sel"></span> Seleccionado</div>
         <div class="booking-summary">
           <span>{{ bookingUnits || 0 }} {{ booking.modalidad === 'hora' ? 'hora' : 'día' }}{{ bookingUnits === 1 ? '' : 's' }} x ${{ unitPrice | number }}</span>
           <strong>${{ estimatedTotal | number }}</strong>
@@ -69,6 +118,7 @@
         <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading" (click)="reserve()">
           <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Reservar ahora' }}
         </button>
+        <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>
       </div>
       <div class="actions" *ngIf="auth.isLoggedIn()">
         <button *ngIf="isOwner()" mat-raised-button color="accent" [routerLink]="['/machinery', item.id, 'edit']">

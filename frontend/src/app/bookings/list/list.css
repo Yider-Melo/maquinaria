@@ -2,4 +2,6 @@
 .booking-card { margin: 12px 0; border-radius: 12px !important; transition: transform .2s, box-shadow .2s; }
 .booking-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--rm-shadow) !important; }
 .booking-status { display: flex; align-items: center; gap: 12px; }
+.booking-subtitle { display: flex; flex-direction: column; gap: 4px; }
+.booking-details { margin-top: 10px; display: grid; gap: 4px; color: #555; }
 @media (max-width: 560px) { .booking-status { align-items: flex-start; flex-direction: column; } .booking-card mat-card-actions { flex-direction: column; align-items: stretch; } .booking-card mat-card-actions button { width: 100%; } }

@@ -1,6 +1,6 @@
 // Componente de detalle de una reserva. Muestra la información completa
 // de la reserva y permite iniciar el proceso de pago.
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
@@ -12,14 +12,67 @@ import { Api } from '../../core/services/api';
 export class BookingsDetail implements OnInit {
   booking: any = null; loading = true; error = '';
 
-  constructor(private route: ActivatedRoute, private api: Api, private snackBar: MatSnackBar) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private api: Api, 
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.error = 'Reserva no encontrada.'; this.loading = false; return; }
+    if (!id) { 
+      this.error = 'Reserva no encontrada.'; 
+      this.loading = false;
+      this.cdr.markForCheck();
+      return; 
+    }
+    
+    this.loadBooking(id);
+  }
+
+  private loadBooking(id: string): void {
     this.api.get<any>(`/bookings/${id}`).subscribe({
-      next: (res) => { this.booking = res.data; this.loading = false; },
-      error: () => { this.error = 'No se pudo cargar la reserva.'; this.loading = false; }
+      next: (res: any) => {
+        if (!res?.data) {
+          this.error = 'No se pudo cargar la reserva.';
+          this.loading = false;
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.booking = res.data;
+        
+        // Si hay maquinaria_id, cargar los detalles de la maquinaria
+        if (this.booking?.maquinaria_id) {
+          this.api.get<any>(`/machinery/${this.booking.maquinaria_id}`).subscribe({
+            next: (machineRes: any) => {
+              const machine = machineRes?.data;
+              if (machine) {
+                this.booking.maquinaria_titulo = machine?.titulo || `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8)}`;
+                this.booking.maquinaria_precio = machine?.precio_por_dia ?? machine?.precio_por_hora;
+              }
+              this.loading = false;
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              // Aunque falle cargar la maquinaria, mostrar la reserva igual
+              this.booking.maquinaria_titulo = `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8) || 'sin asignar'}`;
+              this.loading = false;
+              this.cdr.markForCheck();
+            }
+          });
+        } else {
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      },
+      error: () => {
+        console.error('Error en API /bookings/:id');
+        this.error = 'No se pudo cargar la reserva.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
