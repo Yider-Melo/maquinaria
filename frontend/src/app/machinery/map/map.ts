@@ -40,34 +40,26 @@ export class MachineryMap implements AfterViewInit, OnChanges {
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.colocarMarcador(e.latlng.lat, e.latlng.lng);
-      this.mostrarDireccion(e.latlng.lat, e.latlng.lng);
     });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.map) return;
-    if (this.ciudad && this.departamento) {
-      this.geocodificar();
-    }
+    if (this.timeoutId) clearTimeout(this.timeoutId);
+    this.timeoutId = setTimeout(() => {
+      if (this.ciudad && this.departamento) {
+        this.geocodificar();
+      }
+    }, 800);
   }
 
-  colocarMarcador(lat: number, lng: number, mantenerZoom = false): void {
+  private timeoutId: any = null;
+
+  colocarMarcador(lat: number, lng: number): void {
     if (this.marker) this.marker.setLatLng([lat, lng]);
     else this.marker = L.marker([lat, lng]).addTo(this.map!);
-    if (this.map) this.map.setView([lat, lng], mantenerZoom ? this.map.getZoom() : 15);
+    if (this.map) this.map.setView([lat, lng], 15);
     this.locationChange.emit({ lat, lng });
-  }
-
-  mostrarDireccion(lat: number, lng: number): void {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=es`;
-    fetch(url, { headers: { 'User-Agent': 'RentaMaq/1.0' } })
-      .then(r => r.json())
-      .then(data => {
-        if (data?.display_name && this.marker) {
-          this.marker.bindPopup(data.display_name).openPopup();
-        }
-      })
-      .catch(() => {});
   }
 
   geocodificar(): void {
@@ -82,21 +74,23 @@ export class MachineryMap implements AfterViewInit, OnChanges {
   }
 
   private _geocodificar(q1: string, q2: string): void {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q1)}&limit=1&countrycodes=co`;
 
-    fetch(url, { headers: { 'User-Agent': 'RentaMaq/1.0' } })
+    fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'RentaMaq/1.0' } })
       .then(r => r.json())
       .then((data: any[]) => {
+        clearTimeout(timeout);
         this.buscando = false;
         if (data && data.length > 0 && data[0].addresstype !== 'country') {
           const lat = parseFloat(data[0].lat);
           const lng = parseFloat(data[0].lon);
           this.colocarMarcador(lat, lng);
-          this.mostrarDireccion(lat, lng);
         } else if (q2 !== q1) {
           this._geocodificar(q2, q2);
         }
       })
-      .catch(() => this.buscando = false);
+      .catch(() => { clearTimeout(timeout); this.buscando = false; });
   }
 }
