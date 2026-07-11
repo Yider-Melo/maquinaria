@@ -17,24 +17,14 @@ export class MachineryList implements OnInit {
     { value: 'price_desc', label: 'Mayor precio primero' },
     { value: 'rating', label: 'Mejor calificación' }
   ];
-  soloMisEquipos = false;
-
   constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {
-    this.soloMisEquipos = this.auth.esTipo('propietario');
-    this.load();
-  }
-
-  toggleModo(): void {
-    this.soloMisEquipos = !this.soloMisEquipos;
-    this.search();
-  }
+  ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading = true; this.error = '';
     const params: any = { ...this.cleanFilters(), page: this.page, size: this.size };
-    if (this.soloMisEquipos && this.auth.getUser()?.id) {
+    if (this.auth.esTipo('propietario') && this.auth.getUser()?.id) {
       params.propietario_id = this.auth.getUser()!.id;
     }
     this.api.get<any>('/search', params).subscribe({

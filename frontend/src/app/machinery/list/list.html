@@ -1,19 +1,13 @@
 <div class="container">
   <div class="list-hero">
     <div>
-      <span class="eyebrow">{{ soloMisEquipos ? 'Mis equipos' : 'Catálogo operativo' }}</span>
-      <h1>{{ soloMisEquipos ? 'Tus máquinas publicadas' : 'Encuentra maquinaria lista para trabajar' }}</h1>
-      <p>{{ soloMisEquipos ? 'Aquí puedes buscar, filtrar y gestionar tus propios equipos publicados.' : 'Busca por equipo, ciudad, rango de precio y ordena los resultados según tu necesidad.' }}</p>
+      <span class="eyebrow">{{ auth.esTipo('propietario') ? 'Mis equipos' : 'Catálogo operativo' }}</span>
+      <h1>{{ auth.esTipo('propietario') ? 'Tus máquinas publicadas' : 'Encuentra maquinaria lista para trabajar' }}</h1>
+      <p>{{ auth.esTipo('propietario') ? 'Aquí puedes buscar, filtrar y gestionar tus propios equipos publicados.' : 'Busca por equipo, ciudad, rango de precio y ordena los resultados según tu necesidad.' }}</p>
     </div>
-    <div class="hero-actions">
-      <button mat-stroked-button class="toggle-btn" *ngIf="auth.esTipo('propietario')" (click)="toggleModo()">
-        <mat-icon>{{ soloMisEquipos ? 'travel_explore' : 'person' }}</mat-icon>
-        {{ soloMisEquipos ? 'Ver todas las máquinas' : 'Solo mis equipos' }}
-      </button>
-      <button mat-raised-button class="publish-btn" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-icon>add</mat-icon> Publicar maquinaria
-      </button>
-    </div>
+    <button mat-raised-button class="publish-btn" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <mat-icon>add</mat-icon> Publicar maquinaria
+    </button>
   </div>
   <div class="filters-card">
     <mat-form-field appearance="outline" class="search-field">
