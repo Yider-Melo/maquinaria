@@ -3,4 +3,5 @@
 .payment-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--rm-shadow) !important; }
 .payment-info { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .payment-info strong { min-width: 80px; }
+.payment-details { margin-top: 10px; display: grid; gap: 4px; color: #555; }
 @media (max-width: 560px) { .payment-info { align-items: flex-start; flex-direction: column; gap: 8px; } }

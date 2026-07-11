@@ -3,10 +3,14 @@
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-tab-group animationDuration="300ms">
       <mat-tab label="Recibidas">
-        <mat-card *ngFor="let r of ratings" class="rating-card">
+        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]" style="cursor:pointer;">
           <mat-card-content>
             <div class="stars">{{ '★'.repeat(r.puntuacion) }}{{ '☆'.repeat(5 - r.puntuacion) }}</div>
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
+            <div class="rating-details">
+              <div><strong>Equipo:</strong> {{ r.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
+              <div *ngIf="r.reserva_id"><strong>Reserva:</strong> #{{ r.reserva_id?.substring(0,8) }}</div>
+            </div>
           </mat-card-content>
         </mat-card>
         <div class="empty-state" *ngIf="ratings.length===0">
@@ -18,7 +22,12 @@
         <mat-card *ngFor="let b of completedBookings" class="rating-card">
           <mat-card-content>
             <p><strong>Reserva:</strong> #{{ b.id?.substring(0,8) }} | <strong>Total:</strong> ${{ b.precio_total | number }}</p>
-            <p style="color:#888;">{{ b.fecha_inicio }} al {{ b.fecha_fin }}</p>
+            <div class="rating-details">
+              <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
+              <div><strong>Precio:</strong> ${{ (b.maquinaria_precio || b.precio_total || 0) | number }}</div>
+              <div><strong>Fecha:</strong> {{ getBookingDateLabel(b) }}</div>
+              <div><strong>Horario:</strong> {{ getBookingTimeLabel(b) }}</div>
+            </div>
           </mat-card-content>
           <mat-card-actions>
             <button mat-raised-button color="primary" (click)="openRatingDialog(b)">

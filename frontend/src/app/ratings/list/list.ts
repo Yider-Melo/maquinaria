@@ -44,6 +44,66 @@ export class RatingsList implements OnInit {
     }
   }
 
+  private enrichRatings(ratings: any[]): void {
+    const uniqueIds = [...new Set(ratings.filter((rating: any) => rating?.maquinaria_id).map((rating: any) => rating.maquinaria_id))];
+    if (uniqueIds.length === 0) return;
+
+    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
+      next: (results: any[]) => {
+        const machinesById = new Map<string, any>();
+        uniqueIds.forEach((id: string, index: number) => {
+          const machine = results[index]?.data;
+          if (machine) machinesById.set(id, machine);
+        });
+
+        this.ratings = ratings.map((rating: any) => ({
+          ...rating,
+          maquinaria_titulo: rating?.maquinaria_titulo || machinesById.get(rating.maquinaria_id)?.titulo || `Maquinaria #${rating?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`
+        }));
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private enrichBookingsWithMachinery(bookings: any[]): void {
+    const uniqueIds = [...new Set(bookings.filter((booking: any) => booking?.maquinaria_id).map((booking: any) => booking.maquinaria_id))];
+    if (uniqueIds.length === 0) {
+      this.completedBookings = bookings;
+      return;
+    }
+
+    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
+      next: (results: any[]) => {
+        const machinesById = new Map<string, any>();
+        uniqueIds.forEach((id: string, index: number) => {
+          const machine = results[index]?.data;
+          if (machine) machinesById.set(id, machine);
+        });
+
+        this.completedBookings = bookings.map((booking: any) => ({
+          ...booking,
+          maquinaria_titulo: booking?.maquinaria_titulo || machinesById.get(booking.maquinaria_id)?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
+          maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia ?? machinesById.get(booking.maquinaria_id)?.precio_por_hora
+        }));
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  getBookingDateLabel(booking: any): string {
+    const start = booking?.fecha_inicio || 'Sin fecha';
+    const end = booking?.fecha_fin ? ` al ${booking.fecha_fin}` : '';
+    return `${start}${end}`;
+  }
+
+  getBookingTimeLabel(booking: any): string {
+    if (booking?.modalidad === 'hora') {
+      const hours = Number(booking?.cantidad_horas || 1);
+      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+    }
+    return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
+  }
+
   openRatingDialog(booking: any): void {
     const dialogRef = this.dialog.open(RatingForm, {
       data: {

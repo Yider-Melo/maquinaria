@@ -2,8 +2,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RatingsList } from './list/list';
+import { RatingsDetail } from './detail/detail';
 import { AuthGuard } from '../core/guards/auth-guard';
 
-const routes: Routes = [{ path: '', component: RatingsList, canActivate: [AuthGuard] }];
+const routes: Routes = [
+  { path: '', component: RatingsList, canActivate: [AuthGuard] },
+  { path: ':id', component: RatingsDetail, canActivate: [AuthGuard] }
+];
 @NgModule({ imports: [RouterModule.forChild(routes)], exports: [RouterModule] })
 export class RatingsRoutingModule {}
