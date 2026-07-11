@@ -28,7 +28,7 @@
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Departamento</mat-label>
-      <mat-select [(ngModel)]="filters.departamento" (selectionChange)="search()">
+      <mat-select [(ngModel)]="filters.departamento" (selectionChange)="onDepartamentoChange()">
         <mat-option value="">Todos los departamentos</mat-option>
         <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
       </mat-select>
@@ -38,7 +38,7 @@
       <mat-label>Ciudad</mat-label>
       <mat-select [(ngModel)]="filters.ciudad" (selectionChange)="search()">
         <mat-option value="">Todas las ciudades</mat-option>
-        <mat-option *ngFor="let city of cities" [value]="city">{{ city }}</mat-option>
+        <mat-option *ngFor="let city of ciudadesPorDepto" [value]="city">{{ city }}</mat-option>
       </mat-select>
       <mat-icon matPrefix>location_on</mat-icon>
     </mat-form-field>

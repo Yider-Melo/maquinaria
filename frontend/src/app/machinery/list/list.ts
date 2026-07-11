@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -18,9 +19,24 @@ export class MachineryList implements OnInit {
     { value: 'price_desc', label: 'Mayor precio primero' },
     { value: 'rating', label: 'Mejor calificación' }
   ];
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
+  ciudadesPorDepto: string[] = [];
+  colombiaData: any[] = [];
 
-  ngOnInit(): void { this.load(); }
+  constructor(private api: Api, public auth: Auth, private http: HttpClient, private cdr: ChangeDetectorRef) {}
+
+  ngOnInit(): void {
+    this.http.get<any[]>('/assets/colombia.json').subscribe(data => {
+      this.colombiaData = data;
+    });
+    this.load();
+  }
+
+  onDepartamentoChange(): void {
+    this.filters.ciudad = '';
+    const depto = this.colombiaData.find(d => d.departamento === this.filters.departamento);
+    this.ciudadesPorDepto = depto ? depto.ciudades : [];
+    this.search();
+  }
 
   load(): void {
     this.loading = true; this.error = '';
