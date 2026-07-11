@@ -22,7 +22,7 @@ export class MachineryForm implements OnInit {
   };
 
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora', 'Cargador frontal', 'Tractor', 'Minicargador', 'Vibrocompactador', 'Camión grúa', 'Barredora', 'Desbrozadora', 'Martillo hidráulico', 'Zanjadora', 'Perforadora', 'Planta de asfalto', 'Mezcladora de concreto'];
-  capacidadUnidades = ['toneladas', 'kilos', 'litros', 'metros cúbicos', 'metros', 'caballos de fuerza', 'libras'];
+  capacidadUnidades = ['toneladas', 'kilos', 'libras', 'litros', 'metros cúbicos', 'metros'];
 
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
 
