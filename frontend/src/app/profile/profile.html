@@ -70,23 +70,24 @@
   <section class="owner-profile" *ngIf="canManageMachineryImages">
     <div class="owner-summary">
       <div>
-        <span class="section-eyebrow">Confianza y catálogo</span>
-        <h2>Maquinaria disponible para arrendar</h2>
-        <p>Este perfil muestra tu experiencia operativa, disponibilidad y equipos publicados para que el arrendatario pueda decidir rápido.</p>
+        <span class="section-eyebrow">Catálogo propio</span>
+        <h2>Mis equipos publicados</h2>
+        <p>Estas son las máquinas que has registrado como arrendador. Puedes verlas, editarlas o agregar fotos.</p>
       </div>
-      <button mat-raised-button class="primary" routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar maquinaria</button>
+      <button mat-raised-button class="primary" routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar nuevo equipo</button>
     </div>
 
     <div class="trust-grid">
       <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
-      <div class="trust-card"><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Equipos publicados</span></div>
-      <div class="trust-card"><mat-icon>event_available</mat-icon><strong>{{ availableOwnerMachines.length }}</strong><span>Disponibles ahora</span></div>
+      <div class="trust-card"><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Tus equipos</span></div>
+      <div class="trust-card"><mat-icon>event_available</mat-icon><strong>{{ availableOwnerMachines.length }}</strong><span>Disponibles para arrendar</span></div>
       <div class="trust-card"><mat-icon>support_agent</mat-icon><strong>{{ profile.telefono ? 'Activo' : 'Por completar' }}</strong><span>Contacto</span></div>
     </div>
 
-    <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada. Publica un equipo para que aparezca en tu catálogo de arrendador.</p>
+    <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no has publicado maquinaria. Publica tu primer equipo para empezar a recibir solicitudes de arriendo.</p>
 
     <div class="machine-catalog" *ngIf="ownerMachines.length > 0">
+      <h3>Tus equipos ({{ ownerMachines.length }})</h3>
       <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
         <div class="machine-image">
           <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo">
