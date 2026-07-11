@@ -26,6 +26,7 @@ export class MachineryMap implements AfterViewInit, OnChanges {
 
   private map: L.Map | null = null;
   private marker: L.Marker | null = null;
+  private geocodeController: AbortController | null = null;
   buscando = false;
 
   ngAfterViewInit(): void {
@@ -33,14 +34,19 @@ export class MachineryMap implements AfterViewInit, OnChanges {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
+    L.control.scale().addTo(this.map);
 
     if (this.lat && this.lng) {
       this.colocarMarcador(this.lat, this.lng);
+    } else if (this.ciudad && this.departamento) {
+      this.geocodificar();
     }
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.colocarMarcador(e.latlng.lat, e.latlng.lng);
     });
+
+    setTimeout(() => this.invalidateMapSize(), 100);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -50,14 +56,30 @@ export class MachineryMap implements AfterViewInit, OnChanges {
       if (this.ciudad && this.departamento) {
         this.geocodificar();
       }
+      this.invalidateMapSize();
     }, 800);
   }
 
   private timeoutId: any = null;
 
+  private invalidateMapSize(): void {
+    if (this.map) {
+      this.map.invalidateSize({ pan: false });
+    }
+  }
+
   colocarMarcador(lat: number, lng: number): void {
-    if (this.marker) this.marker.setLatLng([lat, lng]);
-    else this.marker = L.marker([lat, lng]).addTo(this.map!);
+    if (this.marker) {
+      this.marker.setLatLng([lat, lng]);
+    } else {
+      this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map!);
+      this.marker.on('dragend', () => {
+        const position = this.marker?.getLatLng();
+        if (position) {
+          this.locationChange.emit({ lat: position.lat, lng: position.lng });
+        }
+      });
+    }
     if (this.map) this.map.setView([lat, lng], 15);
     this.locationChange.emit({ lat, lng });
   }
@@ -65,32 +87,75 @@ export class MachineryMap implements AfterViewInit, OnChanges {
   geocodificar(): void {
     if (!this.ciudad || !this.departamento) return;
 
+    if (this.geocodeController) {
+      this.geocodeController.abort();
+      this.geocodeController = null;
+    }
+
     const direccion = this.direccion?.trim() || '';
     const q1 = [direccion, this.ciudad, this.departamento, 'Colombia'].filter(p => p).join(', ');
     const q2 = [this.ciudad, this.departamento, 'Colombia'].filter(p => p).join(', ');
+    const q3 = [this.departamento, 'Colombia'].filter(p => p).join(', ');
 
     this.buscando = true;
-    this._geocodificar(q1, q2);
+    this._geocodificar(q1, q2, q3, direccion !== '');
   }
 
-  private _geocodificar(q1: string, q2: string): void {
-    const controller = new AbortController();
+  private _geocodificar(primary: string, fallback1: string, fallback2: string, hasDireccion: boolean): void {
+    this.geocodeController = new AbortController();
+    const controller = this.geocodeController;
     const timeout = setTimeout(() => controller.abort(), 5000);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q1)}&limit=1&countrycodes=co`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(primary)}&limit=5&countrycodes=co`;
 
     fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'RentaMaq/1.0' } })
       .then(r => r.json())
       .then((data: any[]) => {
         clearTimeout(timeout);
-        this.buscando = false;
-        if (data && data.length > 0 && data[0].addresstype !== 'country') {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
+        if (controller.signal.aborted) return;
+        const result = this.elegirMejorResultado(data);
+        if (result) {
+          const lat = parseFloat(result.lat);
+          const lng = parseFloat(result.lon);
           this.colocarMarcador(lat, lng);
-        } else if (q2 !== q1) {
-          this._geocodificar(q2, q2);
+          this.buscando = false;
+        } else if (primary !== fallback1) {
+          this._geocodificar(fallback1, fallback1, fallback2, hasDireccion);
+        } else if (fallback1 !== fallback2) {
+          this._geocodificar(fallback2, fallback2, fallback2, hasDireccion);
+        } else {
+          this.buscando = false;
         }
       })
-      .catch(() => { clearTimeout(timeout); this.buscando = false; });
+      .catch(() => {
+        clearTimeout(timeout);
+        if (!controller.signal.aborted) {
+          this.buscando = false;
+        }
+      });
+  }
+
+  private elegirMejorResultado(results: any[]): any | null {
+    if (!results || results.length === 0) return null;
+    const normalize = (value: string | undefined): string =>
+      (value || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').trim();
+
+    const targetCiudad = normalize(this.ciudad);
+    const targetDepartamento = normalize(this.departamento);
+
+    const scoreCandidate = (candidate: any): number => {
+      const address = candidate.address || {};
+      const fields = [address.city, address.town, address.village, address.hamlet, address.municipality, address.county, address.suburb, address.state_district, address.district].map(normalize);
+      const state = normalize(address.state || address.region || address.state_district || '');
+      const hasDept = state && state.includes(targetDepartamento);
+      const hasCity = fields.some(value => value && targetCiudad && value.includes(targetCiudad));
+      let score = 0;
+      if (hasDept) score += 10;
+      if (hasCity) score += 20;
+      if (candidate.osm_type === 'relation' || candidate.osm_type === 'way') score += 5;
+      return score;
+    };
+
+    const sorted = [...results].sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
+    return sorted[0].lat && sorted[0].lon ? sorted[0] : null;
   }
 }

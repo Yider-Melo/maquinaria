@@ -1,9 +1,9 @@
 <div class="map-wrapper">
   <div class="map-search-hint" *ngIf="buscando"><mat-icon>search</mat-icon> Buscando ubicación...</div>
-  <div *ngIf="!ciudad || !departamento" class="map-placeholder">
+  <div #mapContainer class="map-container" [class.searching]="buscando"></div>
+  <div *ngIf="!ciudad || !departamento" class="map-overlay">
     <mat-icon>map</mat-icon>
     <span>Selecciona ciudad y departamento para ver la ubicación en el mapa</span>
   </div>
-  <div #mapContainer class="map-container" [class.searching]="buscando" [class.hidden]="!ciudad || !departamento"></div>
   <p class="map-legend">Haz clic en el mapa para ajustar la ubicación exacta.</p>
 </div>
