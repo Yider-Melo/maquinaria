@@ -11,15 +11,15 @@
   </div>
   <div class="filters-card">
     <mat-form-field appearance="outline" class="search-field">
-      <mat-label>¿Qué máquina necesitas?</mat-label>
-      <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="loadSuggestions()" (keyup.enter)="search()" placeholder="Ej: excavadora CAT 320">
+      <mat-label>Buscar máquina</mat-label>
+      <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="loadSuggestions()" (keyup.enter)="search()" placeholder="excavadora CAT 320">
       <mat-icon matPrefix>search</mat-icon>
       <mat-autocomplete #machineSuggestions="matAutocomplete" (optionSelected)="search()">
         <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">{{ suggestion }}</mat-option>
       </mat-autocomplete>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Categoría de equipo</mat-label>
+      <mat-label>Categoría</mat-label>
       <mat-select [(ngModel)]="filters.tipo" (selectionChange)="search()">
         <mat-option value="">Todas las categorías</mat-option>
         <mat-option *ngFor="let type of machineryTypes" [value]="type.toLowerCase()">{{ type }}</mat-option>
@@ -43,17 +43,17 @@
       <mat-icon matPrefix>location_on</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Desde COP/día</mat-label>
+      <mat-label>Mín /día</mat-label>
       <input matInput type="number" min="0" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0">
       <mat-icon matPrefix>payments</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Hasta COP/día</mat-label>
+      <mat-label>Máx /día</mat-label>
       <input matInput type="number" min="0" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="500000">
       <mat-icon matPrefix>paid</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Ordenar resultados</mat-label>
+      <mat-label>Ordenar</mat-label>
       <mat-select [(ngModel)]="filters.sort" (selectionChange)="search()">
         <mat-option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</mat-option>
       </mat-select>
