@@ -20,6 +20,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Header } from './header/header';
 import { Footer } from './footer/footer';
 import { Loading } from './loading/loading';
@@ -31,7 +32,7 @@ import { Loading } from './loading/loading';
     CommonModule, RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
-    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule,
+    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule, MatTooltipModule,
     Header, Footer, Loading
   ]
 })
