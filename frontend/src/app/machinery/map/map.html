@@ -1,4 +1,5 @@
 <div class="map-wrapper">
-  <div class="map-search-hint" *ngIf="buscando"><mat-icon>search</mat-icon> Buscando dirección...</div>
+  <div class="map-search-hint" *ngIf="buscando"><mat-icon>search</mat-icon> Buscando ubicación...</div>
   <div #mapContainer class="map-container" [class.searching]="buscando"></div>
+  <p class="map-legend">Completa los campos de dirección, ciudad y departamento para ubicar la posición en el mapa. También puedes hacer clic directamente en el mapa.</p>
 </div>
