@@ -12,11 +12,22 @@
           <h3 class="form-section-title"><mat-icon>info</mat-icon> Información General</h3>
           <div class="grid2">
             <mat-form-field appearance="outline"><mat-label>Título *</mat-label><input matInput [(ngModel)]="data.titulo" name="titulo" required placeholder="Excavadora CAT 320"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Tipo *</mat-label><input matInput [(ngModel)]="data.tipo" name="tipo" required placeholder="excavadora"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Marca</mat-label><input matInput [(ngModel)]="data.marca" name="marca" placeholder="Caterpillar"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Modelo</mat-label><input matInput [(ngModel)]="data.modelo" name="modelo" placeholder="320D"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Año</mat-label><input matInput type="number" [(ngModel)]="data.anio" name="anio" placeholder="2020"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Capacidad</mat-label><input matInput [(ngModel)]="data.capacidad" name="capacidad" placeholder="20 ton"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Tipo *</mat-label>
+              <mat-select [(ngModel)]="data.tipo" name="tipo" required>
+                <mat-option value="">Seleccionar</mat-option>
+                <mat-option *ngFor="let t of machineryTypes" [value]="t.toLowerCase()">{{ t }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Marca *</mat-label><input matInput [(ngModel)]="data.marca" name="marca" required placeholder="Caterpillar"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Modelo *</mat-label><input matInput [(ngModel)]="data.modelo" name="modelo" required placeholder="320D"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Año *</mat-label><input matInput type="number" [(ngModel)]="data.anio" name="anio" required placeholder="2020"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Capacidad *</mat-label><input matInput [(ngModel)]="data.capacidad" name="capacidad" required placeholder="20"></mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Unidad de capacidad *</mat-label>
+              <mat-select [(ngModel)]="data.capacidad_unidad" name="capacidad_unidad" required>
+                <mat-option *ngFor="let u of capacidadUnidades" [value]="u">{{ u }}</mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
 
@@ -24,8 +35,8 @@
           <h3 class="form-section-title"><mat-icon>sell</mat-icon> Estado y Precio</h3>
           <div class="grid3">
             <mat-form-field appearance="outline">
-              <mat-label>Estado</mat-label>
-              <mat-select [(ngModel)]="data.estado" name="estado">
+              <mat-label>Estado *</mat-label>
+              <mat-select [(ngModel)]="data.estado" name="estado" required>
                 <mat-option value="nuevo">🆕 Nuevo</mat-option>
                 <mat-option value="excelente">⭐ Excelente</mat-option>
                 <mat-option value="bueno">👍 Bueno</mat-option>
@@ -38,11 +49,23 @@
         </div>
 
         <div class="form-section">
-          <h3 class="form-section-title"><mat-icon>location_on</mat-icon> Ubicación</h3>
+          <h3 class="form-section-title"><mat-icon>location_on</mat-icon> Ubicación *</h3>
           <div class="grid2">
-            <mat-form-field appearance="outline"><mat-label>Dirección</mat-label><input matInput [(ngModel)]="data.direccion" name="direccion" placeholder="Calle 123 #45-67"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="data.ciudad" name="ciudad" placeholder="Bogotá"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Departamento</mat-label><input matInput [(ngModel)]="data.departamento" name="departamento" placeholder="Cundinamarca"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Dirección *</mat-label><input matInput [(ngModel)]="data.direccion" name="direccion" required placeholder="Calle 123 #45-67"></mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Departamento *</mat-label>
+              <mat-select [(ngModel)]="data.departamento" name="departamento" required (selectionChange)="onDepartamentoChange()">
+                <mat-option value="">Seleccionar</mat-option>
+                <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Ciudad *</mat-label>
+              <mat-select [(ngModel)]="data.ciudad" name="ciudad" required>
+                <mat-option value="">Seleccionar</mat-option>
+                <mat-option *ngFor="let c of ciudadesPorDepto" [value]="c">{{ c }}</mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
 
