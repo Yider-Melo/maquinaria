@@ -27,7 +27,7 @@ import { Loading } from './loading/loading';
 
 @NgModule({
   declarations: [Header, Footer, Loading],
-  imports: [CommonModule, RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule, MatTooltipModule],
   exports: [
     CommonModule, RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
