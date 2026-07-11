@@ -80,6 +80,8 @@ export class MachineryForm implements OnInit {
   // Actualiza las coordenadas de ubicación desde el componente de mapa.
   onDepartamentoChange(): void {
     this.data.ciudad = '';
+    this.data.ubicacion_lat = null;
+    this.data.ubicacion_lng = null;
     const depto = this.colombiaData.find(d => d.departamento === this.data.departamento);
     this.ciudadesPorDepto = depto ? depto.ciudades : [];
   }

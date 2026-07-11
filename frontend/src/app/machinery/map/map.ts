@@ -29,16 +29,13 @@ export class MachineryMap implements AfterViewInit, OnChanges {
   buscando = false;
 
   ngAfterViewInit(): void {
-    const defaultLat = this.lat || 4.711;
-    const defaultLng = this.lng || -74.072;
-
-    this.map = L.map(this.mapContainer.nativeElement).setView([defaultLat, defaultLng], 13);
+    this.map = L.map(this.mapContainer.nativeElement).setView([4.711, -74.072], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(this.map);
 
     if (this.lat && this.lng) {
-      this.colocarMarcador(this.lat, this.lng, true);
+      this.colocarMarcador(this.lat, this.lng);
     }
 
     this.map.on('click', (e: L.LeafletMouseEvent) => {
@@ -47,14 +44,9 @@ export class MachineryMap implements AfterViewInit, OnChanges {
     });
   }
 
-  private ultimoCambio = 0;
-
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.map) return;
-    const ahora = Date.now();
-    if (ahora - this.ultimoCambio < 500) return;
-    if ((changes['direccion'] || changes['ciudad'] || changes['departamento']) && this.ciudad && this.departamento) {
-      this.ultimoCambio = ahora;
+    if (this.ciudad && this.departamento) {
       this.geocodificar();
     }
   }
