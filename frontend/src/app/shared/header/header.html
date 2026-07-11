@@ -2,7 +2,9 @@
   <span class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'">
     <mat-icon class="brand-icon">precision_manufacturing</mat-icon>
     RentaMaq
+    <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Arrendador' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
   </span>
+  <a mat-button class="nav-link home-btn" routerLink="/" *ngIf="auth.isLoggedIn()"><mat-icon>home</mat-icon></a>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
     <a mat-button class="nav-link" routerLink="/machinery"><mat-icon>search</mat-icon> <span>Maquinaria</span></a>
