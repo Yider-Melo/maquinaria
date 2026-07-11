@@ -7,7 +7,8 @@ import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/uti
 @Component({ selector: 'app-profile', templateUrl: './profile.html', styleUrls: ['./profile.css'], standalone: false })
 export class Profile implements OnInit {
   loading = true; saving = false; passwordSaving = false;
-  profile: any = { nombre: '', apellido: '', telefono: '', foto_url: '' };
+  profile: any = { nombre: '', apellido: '', telefono: '', departamento: '', foto_url: '' };
+  departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };
   ownerMachines: any[] = [];
   renterBookings: any[] = [];
@@ -161,7 +162,7 @@ export class Profile implements OnInit {
 
   saveProfile(): void {
     this.saving = true; this.error = '';
-    const payload = { nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono, foto_url: this.profile.foto_url };
+    const payload = { nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono, departamento: this.profile.departamento, foto_url: this.profile.foto_url };
     this.api.put<any>('/auth/profile', payload).subscribe({
       next: (res) => {
         const current = this.auth.getUser();

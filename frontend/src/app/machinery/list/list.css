@@ -4,7 +4,7 @@
 .list-hero h1 { margin: 0; max-width: 680px; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; font-weight: 800; }
 .list-hero p { max-width: 640px; color: rgba(255,255,255,.78); margin: 10px 0 0; }
 .publish-btn { background: #fff2d7 !important; color: #6b3520 !important; border-radius: 14px !important; font-weight: 800 !important; }
-.filters-card { display: grid; grid-template-columns: minmax(260px, 1.4fr) repeat(5, minmax(155px, 1fr)); gap: 12px; align-items: start; margin-bottom: 18px; background: rgba(255,253,248,.97); padding: 18px; border: 1px solid var(--rm-border); border-radius: 20px; box-shadow: 0 12px 32px var(--rm-shadow); }
+.filters-card { display: grid; grid-template-columns: minmax(260px, 1.4fr) repeat(6, minmax(145px, 1fr)); gap: 12px; align-items: start; margin-bottom: 18px; background: rgba(255,253,248,.97); padding: 18px; border: 1px solid var(--rm-border); border-radius: 20px; box-shadow: 0 12px 32px var(--rm-shadow); }
 .filters-card mat-form-field { margin-bottom: 0; }
 .search-field { min-width: 260px; }
 .filter-actions { display: flex; gap: 8px; align-items: center; grid-column: 1 / -1; justify-content: flex-end; }
@@ -25,6 +25,7 @@
 .rating { color: var(--rm-accent); font-size: 13px; display: flex; align-items: center; gap: 4px; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
 .pagination span { color: #888; font-size: 14px; }
-@media (max-width: 1100px) { .filters-card { grid-template-columns: repeat(2, minmax(220px, 1fr)); } }
+@media (max-width: 1200px) { .filters-card { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 800px) { .filters-card { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .container { padding: 20px 14px; } .filters-card { grid-template-columns: 1fr; } .filter-actions { justify-content: stretch; flex-direction: column; } .search-btn, .clear-btn { width: 100%; } }
 @media (max-width: 480px) { .list-hero { padding: 20px; border-radius: 18px; } .grid { grid-template-columns: 1fr; gap: 16px; } .card-img { height: 170px; } .pagination { flex-direction: column; } }

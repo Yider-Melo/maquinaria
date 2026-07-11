@@ -75,6 +75,7 @@ async function updateProfile(userId, data) {
     if (data.nombre) { fields.push(`nombre = $${idx++}`); values.push(data.nombre); }
     if (data.apellido) { fields.push(`apellido = $${idx++}`); values.push(data.apellido); }
     if (data.telefono) { fields.push(`telefono = $${idx++}`); values.push(data.telefono); }
+    if (data.departamento !== undefined) { fields.push(`departamento = $${idx++}`); values.push(data.departamento); }
     if (data.foto_url) { fields.push(`foto_url = $${idx++}`); values.push(data.foto_url); }
 
     if (fields.length === 0) return getProfile(userId);

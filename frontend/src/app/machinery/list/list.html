@@ -27,12 +27,20 @@
       <mat-icon matPrefix>category</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Ciudad de operación</mat-label>
-      <input matInput [(ngModel)]="filters.ciudad" [matAutocomplete]="citySuggestions" (keyup.enter)="search()" placeholder="Bogotá">
-      <mat-icon matPrefix>location_on</mat-icon>
-      <mat-autocomplete #citySuggestions="matAutocomplete" (optionSelected)="search()">
+      <mat-label>Departamento</mat-label>
+      <mat-select [(ngModel)]="filters.departamento" (selectionChange)="search()">
+        <mat-option value="">Todos los departamentos</mat-option>
+        <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
+      </mat-select>
+      <mat-icon matPrefix>map</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Ciudad</mat-label>
+      <mat-select [(ngModel)]="filters.ciudad" (selectionChange)="search()">
+        <mat-option value="">Todas las ciudades</mat-option>
         <mat-option *ngFor="let city of cities" [value]="city">{{ city }}</mat-option>
-      </mat-autocomplete>
+      </mat-select>
+      <mat-icon matPrefix>location_on</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Desde COP/día</mat-label>
