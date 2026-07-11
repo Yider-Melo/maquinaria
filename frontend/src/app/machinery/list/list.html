@@ -82,6 +82,10 @@
     <div class="empty-state" *ngIf="items.length === 0">
       <mat-icon>search_off</mat-icon>
       <p>No se encontraron resultados</p>
+      <p class="suggestion-hint" *ngIf="sugerenciaCorreccion">
+        ¿Quizás quisiste decir
+        <a (click)="buscarSugerenciaClick(sugerenciaCorreccion)"><strong>{{ sugerenciaCorreccion }}</strong></a>?
+      </p>
     </div>
     <div class="pagination" *ngIf="total > size">
       <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>

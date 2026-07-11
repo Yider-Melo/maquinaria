@@ -9,6 +9,7 @@ import { Auth } from '../../core/services/auth';
 export class MachineryList implements OnInit {
   items: any[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20; error = '';
   suggestions: string[] = [];
+  sugerenciaCorreccion = '';
   filters: any = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora'];
   cities = ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Bucaramanga', 'Cartagena', 'Pereira', 'Cúcuta', 'Ibagué', 'Villavicencio', 'Santa Marta', 'Manizales', 'Pasto', 'Neiva', 'Armenia', 'Sincelejo', 'Popayán', 'Montería', 'Tunja', 'Riohacha'];
@@ -68,6 +69,7 @@ export class MachineryList implements OnInit {
 
   load(): void {
     this.loading = true; this.error = '';
+    this.sugerenciaCorreccion = '';
     const params: any = { ...this.cleanFilters(), page: this.page, size: this.size };
     if (this.auth.esTipo('propietario') && this.auth.getUser()?.id) {
       params.propietario_id = this.auth.getUser()!.id;
@@ -78,6 +80,9 @@ export class MachineryList implements OnInit {
         this.total = res.data?.pagination?.total || 0;
         this.totalPages = res.data?.pagination?.totalPages || 0;
         this.loading = false;
+        if (this.items.length === 0 && this.filters.q?.trim()) {
+          this.buscarSugerencia(this.filters.q.trim());
+        }
         this.cdr.markForCheck();
       },
       error: () => {
@@ -86,6 +91,24 @@ export class MachineryList implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  buscarSugerencia(q: string): void {
+    this.api.get<string[]>('/search/suggestions', { q }).subscribe({
+      next: (res) => {
+        const sugerencias = res.data || [];
+        const filtrada = sugerencias.filter(s => s.toLowerCase() !== q.toLowerCase());
+        if (filtrada.length > 0) {
+          this.sugerenciaCorreccion = filtrada[0];
+        }
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  buscarSugerenciaClick(sugerencia: string): void {
+    this.filters.q = sugerencia;
+    this.search();
   }
 
   search(): void { this.page = 1; this.load(); }

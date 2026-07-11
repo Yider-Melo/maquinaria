@@ -31,6 +31,8 @@
 .location { color: var(--rm-muted); font-size: 13px; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
 .rating { color: var(--rm-accent); font-size: 13px; display: flex; align-items: center; gap: 4px; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
+.suggestion-hint { margin-top: 8px; font-size: 14px; color: var(--rm-muted); }
+.suggestion-hint a { color: var(--rm-primary); text-decoration: underline; cursor: pointer; font-weight: 700; }
 .pagination span { color: #888; font-size: 14px; }
 @media (max-width: 1000px) { .filters-card mat-form-field { flex: 1 1 120px; } }
 @media (max-width: 640px) { .container { padding: 20px 14px; } .filters-card { flex-direction: column; } .filters-card mat-form-field { width: 100%; flex: none; } .filter-actions { width: 100%; } .search-btn, .clear-btn { flex: 1; } }
