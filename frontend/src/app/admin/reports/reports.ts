@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api';
-import { forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
@@ -16,7 +17,7 @@ export class AdminReports implements OnInit {
   payments: any[] = [];
   loading = true;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     forkJoin([
@@ -48,11 +49,40 @@ export class AdminReports implements OnInit {
     });
   }
 
+  private confirmAction(msg: string): Observable<boolean> {
+    const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: msg } });
+    return dialogRef.afterClosed();
+  }
+
   toggleUser(user: any): void {
-    this.api.put<any>(`/admin/users/${user.id}/status`, { activo: !user.activo }).subscribe(res => user.activo = res.data.activo);
+    const accion = user.activo ? 'desactivar' : 'activar';
+    this.confirmAction(`¿${accion} al usuario ${user.nombre} ${user.apellido}?`).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.api.put<any>(`/admin/users/${user.id}/status`, { activo: !user.activo }).subscribe(res => user.activo = res.data.activo);
+    });
   }
 
   toggleMachinery(item: any): void {
-    this.api.put<any>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe(res => item.activo = res.data.activo);
+    const accion = item.activo ? 'desactivar' : 'activar';
+    this.confirmAction(`¿${accion} la maquinaria "${item.titulo}"?`).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.api.put<any>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe(res => item.activo = res.data.activo);
+    });
   }
+}
+
+@Component({
+  selector: 'app-confirm-action-dialog',
+  template: `
+    <h2 mat-dialog-title>Confirmar</h2>
+    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancelar</button>
+      <button mat-raised-button color="primary" [mat-dialog-close]="true">Aceptar</button>
+    </mat-dialog-actions>
+  `,
+  standalone: false
+})
+export class ConfirmActionDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

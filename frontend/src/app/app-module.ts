@@ -2,11 +2,19 @@
 // principales (navegación, formularios, animaciones, HTTP) y configura
 // el manejador global de errores y el interceptor de autenticación.
 import { NgModule, ErrorHandler } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
@@ -29,7 +37,21 @@ export class GlobalErrorHandler implements ErrorHandler {
 
 @NgModule({
   declarations: [App],
-  imports: [BrowserModule, BrowserAnimationsModule, FormsModule, AppRoutingModule, SharedModule],
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatSelectModule,
+    AppRoutingModule,
+    SharedModule
+  ],
   providers: [
       { provide: ErrorHandler, useClass: GlobalErrorHandler, deps: [Router] },
       provideHttpClient(withInterceptors([authInterceptor]))

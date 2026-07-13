@@ -1,0 +1,35 @@
+<div class="skeleton-card" [ngClass]="variant">
+  <ng-container *ngIf="variant === 'card'">
+    <div class="skeleton-media"></div>
+    <div class="skeleton-body">
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line short"></div>
+      <div class="skeleton-line small"></div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="variant === 'list'">
+    <div class="skeleton-row" *ngFor="let _ of [1,2,3]">
+      <div class="skeleton-bullet"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="variant === 'table'">
+    <div class="skeleton-table">
+      <div class="skeleton-row header">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="skeleton-row" *ngFor="let _ of [1,2,3]">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+  </ng-container>
+</div>

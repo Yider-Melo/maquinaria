@@ -19,6 +19,7 @@ export class BookingsList implements OnInit {
   asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
   error = '';
   tabIndex = 0;
+  payingBookingId: string | null = null;
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
 
@@ -141,28 +142,42 @@ export class BookingsList implements OnInit {
   }
 
   cancelBooking(id: string): void {
-    this.confirmAction('¿Cancelar esta reserva?').subscribe(confirmed => {
+    this.confirmAction('¿Estás seguro de cancelar esta reserva?').subscribe(confirmed => {
       if (confirmed) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.loadBookings());
     });
   }
-  confirmBooking(id: string): void { this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.loadBookings()); }
+  confirmBooking(id: string): void {
+    this.confirmAction('¿Confirmar esta reserva?').subscribe(confirmed => {
+      if (confirmed) this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.loadBookings());
+    });
+  }
   rejectBooking(id: string): void {
     this.confirmAction('¿Rechazar esta reserva?').subscribe(confirmed => {
       if (confirmed) this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.loadBookings());
     });
   }
-  completeBooking(id: string): void { this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.loadBookings()); }
+  completeBooking(id: string): void {
+    this.confirmAction('¿Marcar esta reserva como completada?').subscribe(confirmed => {
+      if (confirmed) this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.loadBookings());
+    });
+  }
 
   payBooking(booking: any): void {
-    this.api.post<any>('/payments/checkout', { reserva_id: booking.id, metodo_pago: 'simulado' }).subscribe({
-      next: (res) => {
-        const paymentId = res.data?.pago_id;
-        if (!paymentId) return;
-        this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
-          this.snackBar.open('Pago simulado aprobado. Fondos retenidos hasta completar la reserva.', 'Cerrar', { duration: 4000 });
-        });
-      },
-      error: (err) => this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 })
+    this.confirmAction('¿Procesar pago de esta reserva?').subscribe(confirmed => {
+      if (!confirmed) return;
+      this.payingBookingId = booking.id;
+      this.api.post<any>('/payments/checkout', { reserva_id: booking.id, metodo_pago: 'simulado' }).pipe(
+        finalize(() => this.payingBookingId = null)
+      ).subscribe({
+        next: (res) => {
+          const paymentId = res.data?.pago_id;
+          if (!paymentId) return;
+          this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
+            this.snackBar.open('Pago simulado aprobado. Fondos retenidos hasta completar la reserva.', 'Cerrar', { duration: 4000 });
+          });
+        },
+        error: (err) => this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 })
+      });
     });
   }
 }

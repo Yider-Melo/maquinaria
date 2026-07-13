@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api';
@@ -133,7 +133,7 @@ export class MachineryDetail implements OnInit {
       fecha_inicio: this.booking.fecha_inicio,
       fecha_fin: this.booking.fecha_fin,
       modalidad: this.booking.modalidad,
-      cantidad_horas: this.booking.cantidad_horas
+      cantidad_unidades: this.booking.cantidad_horas
     }).subscribe({
       next: () => {
         this.bookingLoading = false;
@@ -315,7 +315,7 @@ export class MachineryDetail implements OnInit {
   }
 
   deleteItem(): void {
-    const dialogRef = this.dialog.open(ConfirmDialog);
+    const dialogRef = this.dialog.open(ConfirmDialog, { data: { message: '¿Estás seguro de eliminar esta maquinaria? Esta acción no se puede deshacer.' } });
     dialogRef.afterClosed().subscribe(confirmed => {
       if (confirmed) this.api.delete(`/machinery/${this.item.id}`).subscribe(() => this.router.navigate(['/machinery']));
     });
@@ -353,7 +353,7 @@ export class MachineryDetail implements OnInit {
   selector: 'app-confirm-dialog',
   template: `
     <h2 mat-dialog-title>Confirmar</h2>
-    <mat-dialog-content>¿Estás seguro de realizar esta acción?</mat-dialog-content>
+    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button [mat-dialog-close]="false">Cancelar</button>
       <button mat-raised-button color="warn" [mat-dialog-close]="true">Aceptar</button>
@@ -361,4 +361,6 @@ export class MachineryDetail implements OnInit {
   `,
   standalone: false
 })
-export class ConfirmDialog {}
+export class ConfirmDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
+}

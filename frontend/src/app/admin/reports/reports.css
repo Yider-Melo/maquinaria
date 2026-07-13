@@ -9,6 +9,8 @@
 .admin-table th, .admin-table td { padding: 12px; border-bottom: 1px solid var(--rm-border); text-align: left; vertical-align: middle; color: var(--rm-ink); }
 .admin-table th { color: var(--rm-secondary); background: #fff3df; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .admin-table small { display: block; color: var(--rm-muted); margin-top: 3px; }
+.admin-table button:hover { background: var(--rm-primary); color: white; }
+.admin-table tr:hover { background: rgba(0,0,0,0.03); }
 .status { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #fee2e2; color: #991b1b; font-weight: 800; font-size: 12px; }
 .status.ok { background: #d1fae5; color: #047857; }
 button[mat-stroked-button] { border-color: var(--rm-primary) !important; color: var(--rm-primary-dark) !important; }

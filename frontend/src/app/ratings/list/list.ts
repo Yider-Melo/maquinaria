@@ -21,8 +21,8 @@ export class RatingsList implements OnInit {
     const userId = this.auth.getUser()?.id;
     if (userId) {
       forkJoin([
-        this.api.get<any>(`/ratings/user/${userId}`).pipe(catchError(() => of({ data: [] }))),
-        this.api.get<any>('/bookings/my-bookings').pipe(catchError(() => of({ data: { data: [] } })))
+        this.api.get<any>('/ratings/my').pipe(catchError(() => of({ data: [] }))),
+        this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: { data: [] } })))
       ]).pipe(
         finalize(() => {
           this.loading = false;
@@ -31,7 +31,8 @@ export class RatingsList implements OnInit {
       ).subscribe({
         next: ([ratingsRes, bookingsRes]) => {
           this.ratings = ratingsRes?.data || [];
-          this.completedBookings = (bookingsRes?.data?.data || []).filter((b: any) => b.estado === 'completada');
+          const ratedBookingIds = new Set(this.ratings.map((r: any) => r.reserva_id));
+          this.completedBookings = (bookingsRes?.data?.data || []).filter((b: any) => b.estado === 'completada' && !ratedBookingIds.has(b.id));
           this.cdr.markForCheck();
         },
         error: (err) => {

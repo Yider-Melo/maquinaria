@@ -4,18 +4,19 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
 import { SharedModule } from '../shared/shared-module';
 import { AdminDashboard } from './dashboard/dashboard';
 import { AdminAccounting } from './accounting/accounting';
 import { AdminPerformance } from './performance/performance';
-import { AdminReports } from './reports/reports';
+import { AdminReports, ConfirmActionDialog } from './reports/reports';
 import { AdminRoutingModule } from './admin-routing-module';
 
 @NgModule({
-  declarations: [AdminDashboard, AdminAccounting, AdminPerformance, AdminReports],
+  declarations: [AdminDashboard, AdminAccounting, AdminPerformance, AdminReports, ConfirmActionDialog],
   imports: [
     CommonModule,
-    MatCardModule, MatIconModule, MatTabsModule, MatButtonModule,
+    MatCardModule, MatIconModule, MatTabsModule, MatButtonModule, MatDialogModule,
     SharedModule,
     AdminRoutingModule
   ]

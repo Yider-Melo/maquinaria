@@ -1,3 +1,9 @@
 mat-dialog-content { min-width: 380px; padding: 20px 24px 8px !important; }
 mat-dialog-content .full-width { margin-bottom: 16px; }
-.star-preview { text-align: center; font-size: 36px; letter-spacing: 4px; margin: 8px 0; }
+.star-preview { display: flex; justify-content: center; gap: 4px; margin: 8px 0 16px; }
+.star-btn { border: 0; background: transparent; color: #f5b041; cursor: pointer; padding: 2px; display: inline-flex; align-items: center; justify-content: center; }
+.star-btn:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 3px; }
+.star-btn mat-icon { font-size: 34px; width: 34px; height: 34px; }
+.star-btn.filled mat-icon { color: #f5b041; }
+.star-btn.empty mat-icon { color: #d1d5db; }
+.star-btn:hover mat-icon { transform: scale(1.08); }

@@ -3,9 +3,13 @@
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-tab-group animationDuration="300ms">
       <mat-tab label="Recibidas">
-        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]" style="cursor:pointer;">
+        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]">
           <mat-card-content>
-            <div class="stars">{{ '★'.repeat(r.puntuacion) }}{{ '☆'.repeat(5 - r.puntuacion) }}</div>
+            <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
+              <ng-container *ngFor="let star of [1,2,3,4,5]">
+                <span class="star" [class.half]="r.puntuacion >= star - 0.5 && r.puntuacion < star" [class.full]="r.puntuacion >= star"></span>
+              </ng-container>
+            </div>
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
             <div class="rating-details">
               <div><strong>Equipo:</strong> {{ r.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>

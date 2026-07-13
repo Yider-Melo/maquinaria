@@ -48,15 +48,8 @@ export class SocketService {
     });
   }
 
-  // Observable que emite valores cuando se recibe una nueva reserva.
+  // Observable que emite valores cuando se recibe notificaciones de booking
   onNewBooking(): Observable<any> {
-    return new Observable(observer => {
-      if (!this.socket) this.connect();
-      const handler = (data: any) => observer.next(data);
-      this.socket!.on('new_booking', handler);
-      return () => {
-        this.socket?.off('new_booking', handler);
-      };
-    });
+    return this.onNotification();
   }
 }

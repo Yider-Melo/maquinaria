@@ -1,16 +1,20 @@
 <h2 mat-dialog-title style="text-align:center;font-size:20px;">Calificar Experiencia</h2>
 <mat-dialog-content>
-  <div class="star-preview">{{ '★'.repeat(puntuacion) }}{{ '☆'.repeat(5 - puntuacion) }}</div>
-  <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Puntuación</mat-label>
-    <mat-select [(ngModel)]="puntuacion">
-      <mat-option [value]="1">1 - Muy malo</mat-option>
-      <mat-option [value]="2">2 - Malo</mat-option>
-      <mat-option [value]="3">3 - Regular</mat-option>
-      <mat-option [value]="4">4 - Bueno</mat-option>
-      <mat-option [value]="5">5 - Excelente</mat-option>
-    </mat-select>
-  </mat-form-field>
+  <div class="star-preview" role="radiogroup" aria-label="Puntuación">
+    <button
+      type="button"
+      *ngFor="let star of [1,2,3,4,5]; let i = index"
+      class="star-btn"
+      [class.filled]="star <= getDisplayRating()"
+      [class.half]="star === getDisplayRating() && isHalfStar(getDisplayRating())"
+      [class.empty]="star > getDisplayRating()"
+      (click)="setRating(star)"
+      (mouseenter)="hoverRating = star"
+      (mouseleave)="hoverRating = -1"
+      [attr.aria-label]="'Calificar con ' + star + ' estrellas'">
+      <mat-icon>{{ getStarIcon(star) }}</mat-icon>
+    </button>
+  </div>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Comentario</mat-label>
     <textarea matInput [(ngModel)]="comentario" rows="4" placeholder="Cuéntanos tu experiencia..."></textarea>

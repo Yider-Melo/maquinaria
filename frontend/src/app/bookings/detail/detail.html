@@ -1,6 +1,6 @@
 <div class="container" *ngIf="!loading; else loadingTmpl">
   <div class="page-header"><h1>Detalle de Reserva</h1></div>
-  <mat-card class="detail-card">
+  <mat-card [class]="'detail-card ' + (booking.estado || '')">
     <mat-card-content>
       <div class="detail-row"><span class="detail-label">Reserva</span><span class="detail-value">{{ formatId(booking.id, 'ID') }}</span></div>
       <div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="status-badge" [class]="booking.estado">{{ estadoLabel(booking.estado) }}</span></span></div>

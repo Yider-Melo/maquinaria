@@ -1,10 +1,10 @@
 <div class="container">
   <div class="page-header"><h1>Mis Reservas</h1></div>
-  <app-loading *ngIf="loading; else bookingsContent"></app-loading>
+  <app-skeleton-card *ngIf="loading; else bookingsContent" variant="list"></app-skeleton-card>
   <ng-template #bookingsContent>
   <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asArrendatario" class="booking-card" (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [class]="'booking-card ' + b.estado" (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>
@@ -30,8 +30,8 @@
             <button mat-button color="warn" (click)="cancelBooking(b.id)" *ngIf="b.estado!=='cancelada'&&b.estado!=='completada'">
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
-            <button mat-button color="primary" (click)="payBooking(b)" *ngIf="b.estado==='confirmada'">
-              <mat-icon>payments</mat-icon> Pagar demo
+            <button mat-button color="primary" (click)="payBooking(b)" *ngIf="b.estado==='confirmada'" [disabled]="payingBookingId === b.id">
+              <mat-icon>{{ payingBookingId === b.id ? 'hourglass_top' : 'payments' }}</mat-icon> {{ payingBookingId === b.id ? 'Procesando...' : 'Pagar demo' }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -41,7 +41,7 @@
         </div>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asPropietario" class="booking-card" (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of asPropietario" class="booking-card" [class]="'booking-card ' + b.estado" (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>

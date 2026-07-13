@@ -1,0 +1,66 @@
+.skeleton-card {
+  display: block;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+.skeleton-card.card {
+  display: grid;
+  gap: 12px;
+}
+.skeleton-card.list {
+  display: grid;
+  gap: 12px;
+}
+.skeleton-card.table {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.skeleton-media {
+  height: 120px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ececec 0%, #f5f5f5 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+.skeleton-body {
+  display: grid;
+  gap: 8px;
+}
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.skeleton-row.header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rm-border);
+}
+.skeleton-bullet {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #ececec 0%, #f5f5f5 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ececec 0%, #f5f5f5 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+.skeleton-line.short { width: 60%; }
+.skeleton-line.small { width: 40%; }
+.skeleton-table {
+  display: grid;
+  gap: 10px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

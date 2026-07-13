@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api';
 import { Auth } from '../../core/services/auth';
 
@@ -56,7 +57,7 @@ export class MachineryList implements OnInit {
     {"departamento":"Vichada","ciudades":["Puerto Carreño","Cumaribo","La Primavera","Santa Rosalía"]}
   ];
 
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -108,7 +109,11 @@ export class MachineryList implements OnInit {
   }
 
   search(): void { this.page = 1; this.load(); }
-  clearFilters(): void { this.filters = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' }; this.search(); }
+  clearFilters(): void {
+    this.filters = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
+    this.search();
+    this.snackBar.open('Filtros limpiados', 'Cerrar', { duration: 2000 });
+  }
   loadSuggestions(): void {
     const q = this.filters.q?.trim();
     if (!q || q.length < 2) { this.suggestions = []; return; }

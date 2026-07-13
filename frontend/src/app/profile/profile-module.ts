@@ -6,5 +6,5 @@ import { Profile } from './profile';
 
 const routes: Routes = [{ path: '', component: Profile, canActivate: [AuthGuard] }];
 
-@NgModule({ declarations: [Profile], imports: [SharedModule, RouterModule.forChild(routes)] })
+@NgModule({ imports: [SharedModule, Profile, RouterModule.forChild(routes)] })
 export class ProfileModule {}

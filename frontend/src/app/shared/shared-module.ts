@@ -24,16 +24,37 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Header } from './header/header';
 import { Footer } from './footer/footer';
 import { Loading } from './loading/loading';
+import { SkeletonCard } from './skeleton-card/skeleton-card';
 
 @NgModule({
-  declarations: [Header, Footer, Loading],
-  imports: [CommonModule, RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatMenuModule, MatDividerModule, MatIconModule, MatTooltipModule],
+  declarations: [Header, Footer, Loading, SkeletonCard],
+  imports: [
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatCardModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatAutocompleteModule,
+    MatMenuModule,
+    MatDividerModule,
+    MatIconModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    MatBadgeModule,
+    MatProgressSpinnerModule,
+    MatTabsModule,
+    MatTooltipModule
+  ],
   exports: [
     CommonModule, RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
     MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule, MatTooltipModule,
-    Header, Footer, Loading
+    Header, Footer, Loading, SkeletonCard
   ]
 })
 export class SharedModule {}

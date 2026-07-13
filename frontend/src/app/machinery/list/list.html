@@ -95,5 +95,7 @@
       <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
     </div>
   </ng-container>
-  <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
+  <ng-template #loadingTmpl>
+    <app-skeleton-card variant="card"></app-skeleton-card>
+  </ng-template>
 </div>

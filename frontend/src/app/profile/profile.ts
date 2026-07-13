@@ -1,10 +1,39 @@
-import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../core/services/api';
 import { Auth } from '../core/services/auth';
+import { SharedModule } from '../shared/shared-module';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
 
-@Component({ selector: 'app-profile', templateUrl: './profile.html', styleUrls: ['./profile.css'], standalone: false })
+@Component({
+  selector: 'app-profile',
+  templateUrl: './profile.html',
+  styleUrls: ['./profile.css'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    MatButtonModule,
+    MatCardModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatSelectModule,
+    SharedModule
+  ]
+})
 export class Profile implements OnInit {
   loading = true; saving = false; passwordSaving = false;
   profile: any = { nombre: '', apellido: '', telefono: '', departamento: '', foto_url: '' };
@@ -18,7 +47,7 @@ export class Profile implements OnInit {
   imageLoading = false;
   error = '';
 
-  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar) {}
+  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -150,13 +179,17 @@ export class Profile implements OnInit {
 
   deleteMachineImage(image: any): void {
     if (!this.selectedMachine || !image?.id) return;
-    this.imageLoading = true;
-    this.api.delete(`/machinery/${this.selectedMachine.id}/images/${image.id}`).subscribe({
-      next: () => {
-        this.snackBar.open('Foto eliminada.', 'Cerrar', { duration: 2500 });
-        this.loadMachineImages();
-      },
-      error: () => { this.error = 'No se pudo eliminar la foto.'; this.imageLoading = false; }
+    const dialogRef = this.dialog.open(ConfirmDeleteDialog, { data: { message: '¿Eliminar esta foto definitivamente?' } });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.imageLoading = true;
+      this.api.delete(`/machinery/${this.selectedMachine.id}/images/${image.id}`).subscribe({
+        next: () => {
+          this.snackBar.open('Foto eliminada.', 'Cerrar', { duration: 2500 });
+          this.loadMachineImages();
+        },
+        error: () => { this.error = 'No se pudo eliminar la foto.'; this.imageLoading = false; }
+      });
     });
   }
 
@@ -188,4 +221,21 @@ export class Profile implements OnInit {
       error: () => this.error = 'No se pudo verificar el correo.'
     });
   }
+}
+
+@Component({
+  selector: 'app-confirm-delete-dialog',
+  template: `
+    <h2 mat-dialog-title>Confirmar</h2>
+    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Cancelar</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="true">Eliminar</button>
+    </mat-dialog-actions>
+  `,
+  standalone: true,
+  imports: [MatButtonModule, MatDialogModule]
+})
+export class ConfirmDeleteDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

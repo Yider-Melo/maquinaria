@@ -24,6 +24,8 @@ body {
 }
 a { text-decoration: none; color: inherit; }
 img { max-width: 100%; height: auto; border-radius: 8px; }
+*:focus-visible { outline: 2px solid var(--rm-primary); outline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--rm-primary); outline-offset: 2px; }
 
 .container { padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
 
@@ -79,6 +81,8 @@ table.mat-mdc-table { background: var(--rm-surface) !important; color: var(--rm-
 .mat-mdc-cell { color: var(--rm-ink) !important; }
 .mat-mdc-paginator { background: var(--rm-surface) !important; color: var(--rm-muted) !important; }
 .mat-mdc-chip { background: #fff1d6 !important; color: var(--rm-secondary) !important; }
+*:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
+a:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 
 .error-box { color: var(--rm-danger) !important; background: #fff2e8 !important; border-color: #efc7a5 !important; }
 .hint, .muted, .subtitle { color: var(--rm-muted) !important; }

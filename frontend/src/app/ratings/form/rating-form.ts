@@ -10,6 +10,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 export class RatingForm {
   puntuacion = 5;
   comentario = '';
+  hoverRating = -1;
 
   constructor(
     public dialogRef: MatDialogRef<RatingForm>,
@@ -22,5 +23,26 @@ export class RatingForm {
 
   cancel(): void {
     this.dialogRef.close();
+  }
+
+  setRating(value: number): void {
+    this.puntuacion = value;
+    this.hoverRating = -1;
+  }
+
+  getDisplayRating(): number {
+    return this.hoverRating >= 0 ? this.hoverRating : this.puntuacion;
+  }
+
+  getStarIcon(star: number): string {
+    const displayRating = this.getDisplayRating();
+    if (star <= displayRating) {
+      return 'star';
+    }
+    return 'star_border';
+  }
+
+  isHalfStar(value: number): boolean {
+    return Number.isInteger(value) ? false : value > 0;
   }
 }

@@ -3,6 +3,7 @@
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
 .stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
 .stat-card.machinery, .stat-card.bookings, .stat-card.payments { cursor:pointer; transition:transform .2s; }
+.stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
 .stat-card mat-icon { font-size:40px; width:40px; height:40px; }
 .stat-card.users mat-icon { color:var(--rm-primary); }
@@ -31,6 +32,8 @@
 .admin-table { width:100%; border-collapse:collapse; }
 .admin-table th { text-align:left; padding:12px 8px; border-bottom:2px solid var(--rm-border); color:var(--rm-secondary); font-weight:800; font-size:13px; }
 .admin-table td { padding:10px 8px; border-bottom:1px solid var(--rm-border); font-size:14px; color:var(--rm-ink); }
+.admin-table button:hover { background: var(--rm-primary); color: white; }
+.admin-table tr:hover { background: rgba(0,0,0,0.03); }
 .status-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:500; text-transform:capitalize; }
 .status-badge.pendiente { background:#fff3e0; color:#e65100; }
 .status-badge.confirmada { background:#e3f2fd; color:#1565c0; }

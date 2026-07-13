@@ -4,5 +4,8 @@
 .detail-row:last-child { border-bottom: none; }
 .detail-label { color: #888; font-size: 14px; }
 .detail-value { font-weight: 500; color: #1a1a2e; text-align: right; }
-.stars { color: #f57f17; font-size: 18px; letter-spacing: 2px; }
+.stars { display: inline-flex; gap: 3px; font-size: 18px; letter-spacing: 2px; }
+.star { display: inline-block; width: 16px; height: 16px; background: gray; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.star.full { background: gold; }
+.star.half { background: linear-gradient(90deg, gold 50%, gray 50%); }
 .detail-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }

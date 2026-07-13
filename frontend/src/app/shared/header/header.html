@@ -4,18 +4,18 @@
     RentaMaq
     <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Arrendador' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
   </span>
-  <a mat-button class="nav-link home-btn" routerLink="/" *ngIf="auth.isLoggedIn()" matTooltip="Inicio" title="Inicio" aria-label="Inicio"><mat-icon>home</mat-icon></a>
+  <a mat-button class="nav-link home-btn" routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" *ngIf="auth.isLoggedIn()" matTooltip="Inicio" title="Inicio" aria-label="Inicio"><mat-icon>home</mat-icon></a>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
-    <a mat-button class="nav-link" routerLink="/machinery"><mat-icon>search</mat-icon> <span>Maquinaria</span></a>
-    <a mat-button class="nav-link" routerLink="/bookings"><mat-icon>book_online</mat-icon> <span>Reservas</span></a>
-    <a mat-button class="nav-link" routerLink="/payments"><mat-icon>payments</mat-icon> <span>Pagos</span></a>
-    <a mat-button class="nav-link" routerLink="/ratings"><mat-icon>star</mat-icon> <span>Calificaciones</span></a>
-    <a mat-button class="nav-link" routerLink="/notifications">
+    <a mat-button class="nav-link" routerLink="/machinery" routerLinkActive="active-link" matTooltip="Buscar Maquinaria"><mat-icon>search</mat-icon> <span>Maquinaria</span></a>
+    <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link" matTooltip="Mis Reservas"><mat-icon>book_online</mat-icon> <span>Reservas</span></a>
+    <a mat-button class="nav-link" routerLink="/payments" routerLinkActive="active-link" matTooltip="Pagos"><mat-icon>payments</mat-icon> <span>Pagos</span></a>
+    <a mat-button class="nav-link" routerLink="/ratings" routerLinkActive="active-link" matTooltip="Calificaciones"><mat-icon>star</mat-icon> <span>Calificaciones</span></a>
+    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link" matTooltip="Notificaciones">
       <mat-icon>notifications</mat-icon> <span>Notificaciones</span>
       <span *ngIf="unreadCount > 0" class="badge">{{ unreadCount }}</span>
     </a>
-    <a mat-button class="nav-link" routerLink="/admin" *ngIf="auth.esTipo('admin')">
+    <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" matTooltip="Panel de Administración" *ngIf="auth.esTipo('admin')">
       <mat-icon>admin_panel_settings</mat-icon> <span>Admin</span>
     </a>
     <button mat-button class="user-btn" [matMenuTriggerFor]="menu">

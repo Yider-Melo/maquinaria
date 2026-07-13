@@ -43,7 +43,7 @@
         </mat-form-field>
 
         <details class="rules-section" open>
-          <summary><mat-icon>info_outline</mat-icon> Reglas de reserva</summary>
+          <summary><mat-icon [class.details-open-icon]="true">info_outline</mat-icon> Reglas de reserva</summary>
           <ul>
             <li>Selecciona las fechas de inicio y fin en el calendario.</li>
             <li>Los días en <strong>rojo</strong> están ocupados por otra reserva.</li>
@@ -115,9 +115,10 @@
         <button mat-stroked-button class="availability-btn" [disabled]="checkingAvailability || loading" (click)="checkAvailability()">
           <mat-icon>{{ checkingAvailability ? 'hourglass_top' : 'event_available' }}</mat-icon> {{ checkingAvailability ? 'Verificando...' : 'Verificar disponibilidad' }}
         </button>
-        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading" (click)="reserve()">
+        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading || !availability.checked" (click)="reserve()">
           <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Reservar ahora' }}
         </button>
+        <p class="booking-hint" *ngIf="!availability.checked"><mat-icon>info</mat-icon> Verifique disponibilidad primero</p>
         <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>
       </div>
       <div class="actions" *ngIf="auth.isLoggedIn()">
