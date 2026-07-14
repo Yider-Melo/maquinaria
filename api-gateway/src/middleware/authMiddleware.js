@@ -1,12 +1,6 @@
-// Middleware de autenticacion y autorizacion.
-// Valida tokens JWT, verifica roles de usuario y extrae informacion
-// del token para ponerla disponible en req.user.
 const jwt = require('jsonwebtoken');
+const { getJwtSecret } = require('../../shared');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
-
-// Valida que la solicitud incluya un token JWT valido en el header Authorization.
-// Si es valido, decodifica el token y lo asigna a req.user.
 function validateToken(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -18,7 +12,8 @@ function validateToken(req, res, next) {
 
     const token = authHeader.split(' ')[1];
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const secret = getJwtSecret();
+        const decoded = jwt.verify(token, secret);
         req.user = decoded;
         next();
     } catch (err) {
@@ -29,7 +24,6 @@ function validateToken(req, res, next) {
     }
 }
 
-// Verifica que el usuario autenticado tenga al menos uno de los roles especificados.
 function requireRole(...roles) {
     return (req, res, next) => {
         if (!req.user || !roles.includes(req.user.tipo_usuario)) {
@@ -42,14 +36,13 @@ function requireRole(...roles) {
     };
 }
 
-// Extrae opcionalmente la informacion del usuario desde el token JWT
-// sin rechazar la solicitud si no hay token o es invalido.
 function extractUser(req, _res, next) {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
+            const secret = getJwtSecret();
             const token = authHeader.split(' ')[1];
-            req.user = jwt.verify(token, JWT_SECRET);
+            req.user = jwt.verify(token, secret);
         } catch (_) { }
     }
     next();

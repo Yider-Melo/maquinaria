@@ -1,17 +1,24 @@
-// Punto de entrada del API Gateway.
-// Unifica el acceso a todos los microservicios, implementa WebSocket para
-// notificaciones en tiempo real, rate limiting y enrutamiento por proxy.
 const express = require('express');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const routes = require('./routes');
 const { authLimiter, userLimiter } = require('./middleware/rateLimiter');
-const logger = require('./config/logger');
 const httpLogger = require('./middleware/httpLogger');
 const { cors, securityHeaders } = require('./config/security');
+const { errorHandler, getJwtSecret, correlationId } = require('../../shared/index');
+const createServiceLogger = require('../../shared/logger');
+
+const logger = createServiceLogger('api-gateway');
+
+process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled Rejection:', { reason: reason?.message || reason, stack: reason?.stack });
+});
 
 const app = express();
+app.locals.logger = logger;
 const server = http.createServer(app);
 const io = new Server(server, { 
   cors: { 
@@ -21,59 +28,35 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
 
-// CORS debe ir ANTES que cualquier otro middleware, incluyendo Helmet
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
-    const shouldAllowOrigin = !origin || isDevelopment || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
-
-    if (shouldAllowOrigin && origin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (!origin) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-    }
-
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(204);
-    }
-
-    next();
-});
-
+app.use(correlationId);
 app.use(cors);
 app.options('*', cors);
 
-// Security headers (después de CORS para no interferir con preflight)
 app.use(securityHeaders);
 
-// Logging y parseo
 app.use(httpLogger);
 // No usar body parsers globales aquí porque http-proxy-middleware necesita
 // el stream original del request para reenviar correctamente las peticiones
 // a los microservicios. El parsing se aplica solo a rutas locales que no pasan por proxy.
 
-// Endpoint de salud para el balanceador / healthcheck
 app.get('/health', (_req, res) => {
-    logger.info('Health check request');
     res.json({ success: true, service: 'api-gateway', status: 'running' });
 });
 
-// Endpoint interno para que el notification-service envie notificaciones
-// en tiempo real via WebSocket al usuario correspondiente
-app.post('/_ws/notify', express.json({ limit: '50mb' }), (req, res) => {
+function internalAuth(req, res, next) {
+    const apiKey = req.headers['x-api-key'];
+    const expectedKey = process.env.INTERNAL_API_KEY;
+    if (!expectedKey || apiKey !== expectedKey) {
+        return res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'Acceso denegado' } });
+    }
+    next();
+}
+
+app.post('/_ws/notify', internalAuth, express.json({ limit: '1mb' }), (req, res) => {
     const { userId, titulo, mensaje } = req.body;
-    if (!userId) {
-        return res.status(400).json({ success: false, error: 'userId requerido' });
+    if (!userId || !titulo) {
+        return res.status(400).json({ success: false, error: 'userId y titulo son requeridos' });
     }
     io.to(`user:${userId}`).emit('notification', { titulo, mensaje });
     logger.info('Notification sent', { userId, titulo });
@@ -93,7 +76,7 @@ io.use((socket, next) => {
         return next(new Error('Token requerido'));
     }
     try {
-        socket.user = jwt.verify(token, JWT_SECRET);
+        socket.user = jwt.verify(token, getJwtSecret());
         logger.info('WebSocket user authenticated', { userId: socket.user.id });
         next();
     } catch (err) {
@@ -118,31 +101,32 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
-// Manejo de errores global
-app.use((err, req, res, next) => {
-    logger.error('Unhandled error', {
-        message: err.message,
-        stack: err.stack,
-        url: req.url,
-        method: req.method
-    });
-    res.status(err.statusCode || 500).json({
-        success: false,
-        error: {
-            code: err.code || 'INTERNAL_ERROR',
-            message: process.env.NODE_ENV === 'production' ? 'Error interno del servidor' : err.message
-        }
-    });
-});
+app.use(errorHandler);
 
-server.listen(PORT, () => {
-    logger.info(`API Gateway iniciado`, {
-        port: PORT,
-        environment: process.env.NODE_ENV || 'development',
-        corsEnabled: true,
-        securityHeadersEnabled: true
+const CERT_PATH = process.env.SSL_CERT_PATH;
+const KEY_PATH = process.env.SSL_KEY_PATH;
+
+if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)) {
+    const httpsServer = https.createServer({
+        cert: fs.readFileSync(CERT_PATH),
+        key: fs.readFileSync(KEY_PATH)
+    }, app);
+    httpsServer.listen(PORT, () => {
+        logger.info(`API Gateway iniciado con HTTPS`, {
+            port: PORT,
+            environment: process.env.NODE_ENV || 'development'
+        });
     });
-});
+} else {
+    server.listen(PORT, () => {
+        logger.info(`API Gateway iniciado con HTTP`, {
+            port: PORT,
+            environment: process.env.NODE_ENV || 'development',
+            corsEnabled: true,
+            securityHeadersEnabled: true
+        });
+    });
+}
 
 process.on('SIGTERM', () => {
     logger.info('SIGTERM recibido, cerrando servidor');

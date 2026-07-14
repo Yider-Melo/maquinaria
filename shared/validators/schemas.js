@@ -150,6 +150,79 @@ const schemas = {
         metodo_pago: Joi.string().max(50).optional()
     }),
 
+    forgotPassword: Joi.object({
+        email: Joi.string().email().required().messages({
+            'string.email': 'El email no tiene un formato válido',
+            'any.required': 'El email es requerido'
+        })
+    }),
+
+    validateToken: Joi.object({
+        token: Joi.string().required().messages({
+            'any.required': 'El token es requerido'
+        })
+    }),
+
+    updateProfile: Joi.object({
+        nombre: Joi.string().min(2).max(100).optional().messages({
+            'string.min': 'El nombre debe tener al menos 2 caracteres'
+        }),
+        apellido: Joi.string().min(2).max(100).optional().messages({
+            'string.min': 'El apellido debe tener al menos 2 caracteres'
+        }),
+        telefono: Joi.string().max(20).optional()
+    }),
+
+    changePassword: Joi.object({
+        currentPassword: Joi.string().required().messages({
+            'any.required': 'La contraseña actual es requerida'
+        }),
+        newPassword: Joi.string()
+            .min(8).max(50)
+            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)
+            .required()
+            .messages({
+                'string.pattern.base': 'La contraseña debe incluir mayúscula, minúscula y número',
+                'string.min': 'La contraseña debe tener al menos 8 caracteres'
+            })
+    }),
+
+    verify2FA: Joi.object({
+        token: Joi.string().required().messages({
+            'any.required': 'El token 2FA es requerido'
+        })
+    }),
+
+    updateAvailability: Joi.object({
+        fechas: Joi.array().items(Joi.date().iso()).optional(),
+        disponible: Joi.boolean().optional()
+    }),
+
+    cancelBooking: Joi.object({
+        motivo: Joi.string().max(500).optional()
+    }),
+
+    createImage: Joi.object({
+        url: Joi.string().uri().required().messages({
+            'string.uri': 'La URL de la imagen no es válida',
+            'any.required': 'La URL de la imagen es requerida'
+        })
+    }),
+
+    nearbySearch: Joi.object({
+        lat: Joi.number().min(-90).max(90).required().messages({
+            'number.min': 'La latitud debe estar entre -90 y 90',
+            'number.max': 'La latitud debe estar entre -90 y 90',
+            'any.required': 'La latitud es requerida'
+        }),
+        lng: Joi.number().min(-180).max(180).required().messages({
+            'number.min': 'La longitud debe estar entre -180 y 180',
+            'number.max': 'La longitud debe estar entre -180 y 180',
+            'any.required': 'La longitud es requerida'
+        }),
+        radius: Joi.number().min(1).max(500).optional()
+    }),
+
     // Filtros de busqueda de maquinaria
     busqueda: Joi.object({
         q: Joi.string().max(200).optional(),

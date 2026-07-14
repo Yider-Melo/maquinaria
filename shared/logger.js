@@ -1,4 +1,3 @@
-// Logger para servicios individuales
 const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
@@ -9,7 +8,7 @@ const createServiceLogger = (serviceName) => {
     fs.mkdirSync(logsDir, { recursive: true });
   }
 
-  return winston.createLogger({
+  const logger = winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -31,25 +30,25 @@ const createServiceLogger = (serviceName) => {
       })
     ]
   });
-};
 
-// En desarrollo, agregar console output
-if (process.env.NODE_ENV !== 'production') {
-  const logger = createServiceLogger('auth-service');
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.printf(
-        ({ timestamp, level, message, service, ...metadata }) => {
-          let meta = '';
-          if (Object.keys(metadata).length > 0) {
-            meta = JSON.stringify(metadata, null, 2);
+  if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.printf(
+          ({ timestamp, level, message, service, ...metadata }) => {
+            let meta = '';
+            if (Object.keys(metadata).length > 0) {
+              meta = JSON.stringify(metadata, null, 2);
+            }
+            return `${timestamp} [${service}] ${level}: ${message} ${meta}`;
           }
-          return `${timestamp} [${service}] ${level}: ${message} ${meta}`;
-        }
+        )
       )
-    )
-  }));
-}
+    }));
+  }
+
+  return logger;
+};
 
 module.exports = createServiceLogger;

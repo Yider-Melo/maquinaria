@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bookingController = require('../controllers/bookingController');
-const { validate, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
 
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
 
@@ -17,14 +17,14 @@ router.get('/check-availability', bookingController.checkAvailability);
 router.get('/my-bookings', validateToken, bookingController.getMyBookings);
 router.get('/stats', validateToken, requireRole('admin'), bookingController.adminBookingStats);
 router.get('/recent', validateToken, requireRole('admin'), bookingController.adminRecentBookings);
-router.get('/machinery/:machineryId/occupied', bookingController.getOccupiedDates);
-router.get('/internal/:id', internalAuth, bookingController.getInternalById);
+router.get('/machinery/:machineryId/occupied', validateParams(uuidParam('machineryId')), bookingController.getOccupiedDates);
+router.get('/internal/:id', internalAuth, validateParams(uuidParam('id')), bookingController.getInternalById);
 router.get('/my-listings', validateToken, bookingController.getMyListings);
-router.get('/:id', validateToken, bookingController.getById);
-router.put('/:id/confirm', validateToken, bookingController.confirm);
-router.put('/:id/reject', validateToken, bookingController.reject);
-router.put('/:id/cancel', validateToken, bookingController.cancel);
-router.put('/:id/complete', validateToken, bookingController.complete);
+router.get('/:id', validateToken, validateParams(uuidParam('id')), bookingController.getById);
+router.put('/:id/confirm', validateToken, validateParams(uuidParam('id')), bookingController.confirm);
+router.put('/:id/reject', validateToken, validateParams(uuidParam('id')), bookingController.reject);
+router.put('/:id/cancel', validateToken, validateParams(uuidParam('id')), validate(schemas.cancelBooking), bookingController.cancel);
+router.put('/:id/complete', validateToken, validateParams(uuidParam('id')), bookingController.complete);
 
 router.use(errorHandler);
 

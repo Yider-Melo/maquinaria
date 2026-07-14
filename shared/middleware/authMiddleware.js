@@ -1,10 +1,13 @@
-// Middleware de autenticacion y autorizacion compartido entre microservicios.
-// Usa JWT para validar tokens y verificar roles de usuario.
-
 const jwt = require('jsonwebtoken');
 const { UnauthorizedError, ForbiddenError } = require('../errors/AppError');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
+function getJwtSecret() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET no configurado');
+    }
+    return secret || 'rentamaq-secret-key-dev';
+}
 
 // Valida que la request tenga un Bearer token valido.
 // Si es valido, deja los datos del usuario en req.user.
@@ -14,15 +17,14 @@ function validateToken(req, res, next) {
         return next(new UnauthorizedError('Token requerido'));
     }
     try {
-        req.user = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+        const secret = getJwtSecret();
+        req.user = jwt.verify(authHeader.split(' ')[1], secret);
         next();
     } catch {
         return next(new UnauthorizedError('Token inválido o expirado'));
     }
 }
 
-// Verifica que el usuario autenticado tenga uno de los roles especificados.
-// Ejemplo: requireRole('admin') o requireRole('propietario', 'admin')
 function requireRole(...roles) {
     return (req, res, next) => {
         if (!req.user || !roles.includes(req.user.tipo_usuario)) {
@@ -32,16 +34,15 @@ function requireRole(...roles) {
     };
 }
 
-// Version opcional de validateToken: si hay token lo decodifica, si no sigue sin error.
-// Util para rutas publicas donde el usuario puede o no estar autenticado.
 function extractUser(req, _res, next) {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
-            req.user = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+            const secret = getJwtSecret();
+            req.user = jwt.verify(authHeader.split(' ')[1], secret);
         } catch (_) { }
     }
     next();
 }
 
-module.exports = { validateToken, requireRole, extractUser };
+module.exports = { validateToken, requireRole, extractUser, getJwtSecret };

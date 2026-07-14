@@ -1,5 +1,6 @@
-// Middleware de validación de inputs
-const logger = require('../config/logger');
+function getLogger(req) {
+    return req.app?.locals?.logger;
+}
 
 // Sanitizar strings para prevenir inyecciones
 const sanitize = (str) => {
@@ -30,7 +31,7 @@ const validateAuthInputs = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    logger.warn('Invalid auth attempt - missing credentials', {
+    getLogger(req)?.warn('Invalid auth attempt - missing credentials', {
       ip: req.ip,
       hasEmail: !!email,
       hasPassword: !!password
@@ -43,7 +44,7 @@ const validateAuthInputs = (req, res, next) => {
 
   // Validar formato de email
   if (!validateEmail(email)) {
-    logger.warn('Invalid auth attempt - invalid email format', {
+    getLogger(req)?.warn('Invalid auth attempt - invalid email format', {
       ip: req.ip,
       email: email?.substring(0, 5) + '***'
     });
@@ -96,7 +97,7 @@ const validateRegisterInputs = (req, res, next) => {
   req.body.apellido = sanitize(apellido);
   req.body.telefono = sanitize(telefono);
 
-  logger.info('User registration attempt', {
+  getLogger(req)?.info('User registration attempt', {
     email: email?.substring(0, 5) + '***',
     ip: req.ip
   });

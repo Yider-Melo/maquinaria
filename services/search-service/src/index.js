@@ -1,33 +1,42 @@
-// Punto de entrada del servicio de busqueda.
-// Configura Express y se suscribe a eventos de maquinaria via RabbitMQ
-// para mantener sincronizado un indice local de busqueda en PostgreSQL.
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
-const morgan = require('morgan');
 const routes = require('./routes');
-const { eventBus, EVENT_TYPES } = require('shared');
+const { eventBus, EVENT_TYPES, errorHandler, correlationId, requestLogger } = require('shared');
 const pool = require('./db');
+const createServiceLogger = require('../../../shared/logger');
+
+const logger = createServiceLogger('search-service');
+
+eventBus.setLogger(logger);
+
+process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled Rejection:', { reason: reason?.message || reason, stack: reason?.stack });
+});
 
 const app = express();
 const PORT = process.env.PORT || 3003;
+app.locals.logger = logger;
 
-app.use(cors());
-app.use(morgan('dev'));
+app.use(helmet());
+app.use(cors({ origin: process.env.GATEWAY_URL || 'http://localhost:3000', credentials: true }));
+app.use(correlationId);
+app.use(requestLogger);
 app.use(express.json());
 
-// Endpoint de salud para el balanceador / healthcheck
 app.get('/health', (_req, res) => {
     res.json({ success: true, service: 'search-service', status: 'running' });
 });
 
 app.use('/', routes);
 
+app.use(errorHandler);
+
 app.listen(PORT, async () => {
     try {
         await eventBus.connect();
-        console.log('Conectado a RabbitMQ');
+        logger.info('Conectado a RabbitMQ');
 
-        // Suscripcion a eventos de maquinaria para mantener el indice actualizado
         eventBus.subscribeToEvent('machinery.*', async (event) => {
             const { data } = event;
             if (event.event === EVENT_TYPES.MACHINERY.CREATED || event.event === EVENT_TYPES.MACHINERY.UPDATED) {
@@ -46,15 +55,20 @@ app.listen(PORT, async () => {
                      data.precio_por_dia, data.ubicacion_lat, data.ubicacion_lng,
                      data.direccion, data.ciudad, data.departamento, true, true]
                 );
-                console.log('Índice actualizado vía evento:', data.id);
+                logger.info('Índice actualizado vía evento:', { id: data.id });
             } else if (event.event === EVENT_TYPES.MACHINERY.DELETED) {
                 await pool.query('UPDATE maquinaria SET activo = false WHERE id = $1', [data.id]);
-                console.log('Índice eliminado vía evento:', data.id);
+                logger.info('Índice eliminado vía evento:', { id: data.id });
             }
         }, 'search-machinery-queue');
 
     } catch (err) {
-        console.warn('RabbitMQ no disponible, usando endpoints HTTP directos:', err.message);
+        logger.warn('RabbitMQ no disponible, usando endpoints HTTP directos:', { message: err.message });
     }
-    console.log(`Search Service corriendo en puerto ${PORT}`);
+    logger.info('Search Service iniciado', { port: PORT });
+});
+
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM recibido, cerrando search-service');
+    process.exit(0);
 });

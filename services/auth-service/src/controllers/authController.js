@@ -91,9 +91,13 @@ async function resetPassword(req, res, next) {
     }
 }
 
-async function validateToken(req, res) {
-    const decoded = await authService.validateToken(req.body.token);
-    success(res, { valid: !!decoded, user: decoded });
+async function validateToken(req, res, next) {
+    try {
+        const decoded = await authService.validateToken(req.body.token);
+        success(res, { valid: !!decoded, user: decoded });
+    } catch (err) {
+        next(err);
+    }
 }
 
 async function adminListUsers(req, res, next) {

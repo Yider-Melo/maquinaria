@@ -1,7 +1,3 @@
-// Cliente RabbitMQ para comunicacion asincrona entre microservicios.
-// Usa un exchange tipo 'topic' para que los mensajes se filtren por patron.
-// Ejemplo: 'machinery.*' recibe todos los eventos de maquinaria.
-
 const amqp = require('amqplib');
 
 const EXCHANGE_NAME = 'rentamaq.events';
@@ -9,8 +5,12 @@ const EXCHANGE_TYPE = 'topic';
 
 let connection = null;
 let channel = null;
+let loggerInstance = null;
 
-// Conecta a RabbitMQ, crea el canal y declara el exchange si no existe.
+function setLogger(logger) {
+    loggerInstance = logger;
+}
+
 async function connect(rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost') {
     if (channel) return channel;
     connection = await amqp.connect(rabbitmqUrl);
@@ -19,8 +19,6 @@ async function connect(rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localho
     return channel;
 }
 
-// Publica un evento en el exchange con una routing key especifica.
-// Los mensajes son persistentes para no perderse si RabbitMQ se reinicia.
 async function publishEvent(routingKey, data) {
     if (!channel) await connect();
     const message = Buffer.from(JSON.stringify({
@@ -32,9 +30,6 @@ async function publishEvent(routingKey, data) {
     channel.publish(EXCHANGE_NAME, routingKey, message, { persistent: true });
 }
 
-// Se suscribe a eventos que coincidan con un patron de routing key.
-// El handler se ejecuta por cada mensaje recibido.
-// Los mensajes se confirman (ack) solo si el handler no lanza error.
 async function subscribeToEvent(routingKeyPattern, handler, queueName) {
     if (!channel) await connect();
     const q = await channel.assertQueue(queueName || '', { exclusive: !queueName, durable: true });
@@ -46,14 +41,18 @@ async function subscribeToEvent(routingKeyPattern, handler, queueName) {
                 handler(content);
                 channel.ack(msg);
             } catch (error) {
-                console.error(`Error processing event ${routingKeyPattern}:`, error);
+                if (loggerInstance) {
+                    loggerInstance.error(`Error processing event ${routingKeyPattern}:`, {
+                        error: error.message,
+                        stack: error.stack
+                    });
+                }
                 channel.nack(msg, false, false);
             }
         }
     });
 }
 
-// Cierra la conexion a RabbitMQ gracefulmente.
 async function close() {
     if (channel) await channel.close();
     if (connection) await connection.close();
@@ -63,5 +62,6 @@ module.exports = {
     connect,
     publishEvent,
     subscribeToEvent,
-    close
+    close,
+    setLogger
 };

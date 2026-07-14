@@ -1,22 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { validate, validateToken, requireRole, schemas, errorHandler } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler } = require('shared');
 
 router.post('/register', validate(schemas.register), authController.register);
 router.post('/login', validate(schemas.login), authController.login);
 router.get('/profile', validateToken, authController.getProfile);
-router.put('/profile', validateToken, authController.updateProfile);
-router.put('/profile/password', validateToken, authController.changePassword);
+router.put('/profile', validateToken, validate(schemas.updateProfile), authController.updateProfile);
+router.put('/profile/password', validateToken, validate(schemas.changePassword), authController.changePassword);
 router.post('/profile/verify-email', validateToken, authController.verifyEmail);
 router.post('/2fa/setup', validateToken, authController.setup2FA);
-router.post('/2fa/verify', validateToken, authController.verify2FA);
-router.post('/forgot-password', authController.forgotPassword);
+router.post('/2fa/verify', validateToken, validate(schemas.verify2FA), authController.verify2FA);
+router.post('/forgot-password', validate(schemas.forgotPassword), authController.forgotPassword);
 router.post('/reset-password', validate(schemas.resetPassword), authController.resetPassword);
-router.post('/validate-token', authController.validateToken);
+router.post('/validate-token', validate(schemas.validateToken), authController.validateToken);
 router.get('/users', validateToken, requireRole('admin'), authController.adminListUsers);
 router.get('/users/stats', validateToken, requireRole('admin'), authController.adminUserStats);
-router.put('/users/:id/status', validateToken, requireRole('admin'), authController.adminSetUserStatus);
+router.put('/users/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), authController.adminSetUserStatus);
 
 router.use(errorHandler);
 

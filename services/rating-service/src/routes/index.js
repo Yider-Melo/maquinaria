@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const ratingController = require('../controllers/ratingController');
-const { validateToken, requireRole, errorHandler } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, errorHandler, schemas } = require('shared');
 
-router.post('/', validateToken, ratingController.create);
-router.get('/user/:userId', ratingController.getByUser);
-router.get('/user/:userId/average', ratingController.getAverage);
+router.post('/', validateToken, validate(schemas.calificacion), ratingController.create);
+router.get('/user/:userId', validateParams(uuidParam('userId')), ratingController.getByUser);
+router.get('/user/:userId/average', validateParams(uuidParam('userId')), ratingController.getAverage);
+router.get('/my', validateToken, ratingController.getMyRatings);
 router.get('/stats', validateToken, requireRole('admin'), ratingController.adminRatingStats);
-router.get('/machinery/:machineryId', ratingController.getByMachinery);
-router.put('/:id', validateToken, ratingController.update);
-router.delete('/:id', validateToken, ratingController.remove);
-router.post('/:id/report', validateToken, ratingController.report);
+router.get('/machinery/:machineryId', validateParams(uuidParam('machineryId')), ratingController.getByMachinery);
+router.put('/:id', validateToken, validateParams(uuidParam('id')), ratingController.update);
+router.delete('/:id', validateToken, validateParams(uuidParam('id')), ratingController.remove);
+router.post('/:id/report', validateToken, validateParams(uuidParam('id')), ratingController.report);
 
 router.use(errorHandler);
 

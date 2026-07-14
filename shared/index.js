@@ -8,8 +8,10 @@ const {
 } = require('./errors/AppError');
 const { errorHandler } = require('./errors/errorHandler');
 const { success, paginated } = require('./utils/response');
-const { validate, validateQuery } = require('./utils/validate');
-const { validateToken, requireRole, extractUser } = require('./middleware/authMiddleware');
+const { validate, validateQuery, validateParams, uuidParam } = require('./utils/validate');
+const { validateToken, requireRole, extractUser, getJwtSecret } = require('./middleware/authMiddleware');
+const { correlationId } = require('./middleware/correlationId');
+const { requestLogger } = require('./middleware/requestLogger');
 const { schemas } = require('./validators/schemas');
 const eventBus = require('./events/eventBus');
 const EVENT_TYPES = require('./events/eventTypes');
@@ -19,9 +21,12 @@ module.exports = {
     UnauthorizedError, ForbiddenError, ConflictError,
     errorHandler,
     success, paginated,
-    validate, validateQuery,
-    validateToken, requireRole, extractUser,
+    validate, validateQuery, validateParams, uuidParam,
+    validateToken, requireRole, extractUser, getJwtSecret,
+    correlationId,
+    requestLogger,
     schemas,
     eventBus,
-    EVENT_TYPES
+    EVENT_TYPES,
+    setEventBusLogger: eventBus.setLogger
 };

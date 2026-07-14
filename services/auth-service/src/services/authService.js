@@ -3,10 +3,9 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
-const { ConflictError, NotFoundError, UnauthorizedError, ValidationError } = require('shared');
+const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, getJwtSecret } = require('shared');
 const usuarioRepository = require('../repositories/usuarioRepository');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'rentamaq-secret-key-dev';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 function ensureStrongPassword(password) {
@@ -45,8 +44,8 @@ async function login({ email, password }) {
     await usuarioRepository.updateLastAccess(user.id);
 
     const token = jwt.sign(
-        { id: user.id, email: user.email, tipo_usuario: user.tipo_usuario, nombre: user.nombre, apellido: user.apellido },
-        JWT_SECRET,
+        { id: user.id, email: user.email, tipo_usuario: user.tipo_usuario },
+        getJwtSecret(),
         { expiresIn: JWT_EXPIRES_IN }
     );
 
@@ -153,7 +152,7 @@ async function resetPassword(token, newPassword) {
 
 async function validateToken(token) {
     try {
-        return jwt.verify(token, JWT_SECRET);
+        return jwt.verify(token, getJwtSecret());
     } catch {
         return null;
     }
