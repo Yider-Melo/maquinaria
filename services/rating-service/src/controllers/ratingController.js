@@ -1,5 +1,5 @@
 const ratingService = require('../services/ratingService');
-const { success } = require('shared');
+const { success, paginated } = require('shared');
 
 async function create(req, res, next) {
     try {
@@ -10,8 +10,19 @@ async function create(req, res, next) {
 
 async function getByUser(req, res, next) {
     try {
-        const ratings = await ratingService.getByUser(req.params.userId);
-        success(res, ratings);
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const { data, total } = await ratingService.getByUser(req.params.userId, page, size);
+        paginated(res, data, total, page, size);
+    } catch (err) { next(err); }
+}
+
+async function getMyRatings(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const { data, total } = await ratingService.getMyRatings(req.user.id, page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -31,8 +42,10 @@ async function adminRatingStats(req, res, next) {
 
 async function getByMachinery(req, res, next) {
     try {
-        const ratings = await ratingService.getByMachinery(req.params.machineryId);
-        success(res, ratings);
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const { data, total } = await ratingService.getByMachinery(req.params.machineryId, page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -45,8 +58,8 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
     try {
-        const result = await ratingService.remove(req.params.id, req.user.id);
-        success(res, result);
+        await ratingService.remove(req.params.id, req.user.id);
+        res.status(204).end();
     } catch (err) { next(err); }
 }
 
@@ -60,6 +73,7 @@ async function report(req, res, next) {
 module.exports = {
     create,
     getByUser,
+    getMyRatings,
     getAverage,
     adminRatingStats,
     getByMachinery,

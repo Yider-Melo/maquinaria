@@ -18,7 +18,8 @@ function validateToken(req, res, next) {
     }
     try {
         const secret = getJwtSecret();
-        req.user = jwt.verify(authHeader.split(' ')[1], secret);
+        const decoded = jwt.verify(authHeader.split(' ')[1], secret);
+        req.user = decoded;
         next();
     } catch {
         return next(new UnauthorizedError('Token inválido o expirado'));

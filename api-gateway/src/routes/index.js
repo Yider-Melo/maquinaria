@@ -1,13 +1,11 @@
-// Rutas del API Gateway.
-// Redirige las peticiones a los microservicios correspondientes mediante proxy,
-// aplicando autenticacion y control de roles segun el endpoint.
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const { validateToken, requireRole, extractUser } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// URLs de los microservicios backend (configurables por entorno)
+const API_PREFIX = '/api/v1';
+
 const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const MACHINERY_SERVICE = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const SEARCH_SERVICE = process.env.SEARCH_SERVICE_URL || 'http://localhost:3003';
@@ -16,68 +14,60 @@ const PAYMENT_SERVICE = process.env.PAYMENT_SERVICE_URL || 'http://localhost:300
 const RATING_SERVICE = process.env.RATING_SERVICE_URL || 'http://localhost:3006';
 const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
 
-// Factory para crear proxies con rewrite de ruta
 const proxyWithTarget = (target, pathRewrite) => createProxyMiddleware({
     target,
     changeOrigin: true,
     pathRewrite
 });
 
-// Autenticacion (sin token, publico)
-router.use('/auth', proxyWithTarget(AUTH_SERVICE, { '^/auth': '' }));
+function api(path) {
+    return `${API_PREFIX}${path}`;
+}
 
-// Maquinaria: rutas publicas solo lectura, rutas de escritura requieren token
-router.get('/machinery', proxyWithTarget(MACHINERY_SERVICE, { '^/machinery': '' }));
-router.get('/machinery/*', proxyWithTarget(MACHINERY_SERVICE, { '^/machinery': '' }));
-router.use('/machinery', validateToken, proxyWithTarget(MACHINERY_SERVICE, { '^/machinery': '' }));
+router.use(api('/auth'), proxyWithTarget(AUTH_SERVICE, { [`^${API_PREFIX}/auth`]: '' }));
 
-// Busqueda (publico, no requiere token)
-router.use('/search', proxyWithTarget(SEARCH_SERVICE, { '^/search': '' }));
+router.get(api('/machinery'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/*'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.use(api('/machinery'), validateToken, proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 
-// Reservas (requiere autenticacion)
-router.get('/bookings/check-availability', proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
-router.get('/bookings/machinery/*', proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
-router.use('/bookings', validateToken, proxyWithTarget(BOOKING_SERVICE, { '^/bookings': '' }));
+router.use(api('/search'), proxyWithTarget(SEARCH_SERVICE, { [`^${API_PREFIX}/search`]: '' }));
 
-// Pagos (requiere autenticacion)
-router.use('/payments', validateToken, proxyWithTarget(PAYMENT_SERVICE, { '^/payments': '' }));
+router.get(api('/bookings/check-availability'), proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
+router.get(api('/bookings/machinery/*'), proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
+router.use(api('/bookings'), validateToken, proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
 
-// Calificaciones: rutas publicas solo lectura
-router.get('/ratings', proxyWithTarget(RATING_SERVICE, { '^/ratings': '' }));
-router.get('/ratings/*', proxyWithTarget(RATING_SERVICE, { '^/ratings': '' }));
-router.use('/ratings', validateToken, proxyWithTarget(RATING_SERVICE, { '^/ratings': '' }));
+router.use(api('/payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 
-// Notificaciones (requiere autenticacion)
-router.use('/notifications', validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { '^/notifications': '' }));
+router.get(api('/ratings'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
+router.get(api('/ratings/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
+router.use(api('/ratings'), validateToken, proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 
-// Admin (requiere autenticacion + rol admin)
-// Cada ruta /admin/<servicio>/* se redirige al servicio correspondiente
-// http-proxy-middleware recibe la ruta relativa (sin el prefijo del router.use)
-// pathRewrite transforma esa ruta relativa a lo que espera el servicio destino
-router.use('/admin/payments', validateToken, requireRole('admin'), createProxyMiddleware({
+router.use(api('/notifications'), validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { [`^${API_PREFIX}/notifications`]: '' }));
+
+router.use(api('/admin/payments'), validateToken, requireRole('admin'), createProxyMiddleware({
     target: PAYMENT_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => '/admin' + path
+    pathRewrite: (path) => path.replace(API_PREFIX, '')
 }));
-router.use('/admin/users', validateToken, requireRole('admin'), createProxyMiddleware({
+router.use(api('/admin/users'), validateToken, requireRole('admin'), createProxyMiddleware({
     target: AUTH_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => '/users' + path
+    pathRewrite: (path) => '/users' + path.replace(API_PREFIX, '')
 }));
-router.use('/admin/bookings', validateToken, requireRole('admin'), createProxyMiddleware({
+router.use(api('/admin/bookings'), validateToken, requireRole('admin'), createProxyMiddleware({
     target: BOOKING_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => path
+    pathRewrite: (path) => path.replace(API_PREFIX, '')
 }));
-router.use('/admin/machinery', validateToken, requireRole('admin'), createProxyMiddleware({
+router.use(api('/admin/machinery'), validateToken, requireRole('admin'), createProxyMiddleware({
     target: MACHINERY_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => path
+    pathRewrite: (path) => path.replace(API_PREFIX, '')
 }));
-router.use('/admin/ratings', validateToken, requireRole('admin'), createProxyMiddleware({
+router.use(api('/admin/ratings'), validateToken, requireRole('admin'), createProxyMiddleware({
     target: RATING_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => path
+    pathRewrite: (path) => path.replace(API_PREFIX, '')
 }));
 
 module.exports = router;

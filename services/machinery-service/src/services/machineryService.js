@@ -18,11 +18,13 @@ async function getById(id) {
 }
 
 async function getByOwner(ownerId, page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await maquinariaRepository.findByOwner(ownerId, page, size);
     return { data, total, page, size };
 }
 
 async function listActive(page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await maquinariaRepository.findActive(page, size);
     return { data, total, page, size };
 }
@@ -109,9 +111,7 @@ async function updateAvailability(machineryId, fechas, userId) {
         throw new ForbiddenError('No tienes permiso');
     }
 
-    for (const fecha of fechas) {
-        await maquinariaRepository.upsertAvailability(uuidv4(), machineryId, fecha.fecha, fecha.disponible);
-    }
+    await maquinariaRepository.batchUpsertAvailability(machineryId, fechas);
 
     return { message: 'Disponibilidad actualizada', fechas_actualizadas: fechas.length };
 }
@@ -126,6 +126,7 @@ async function adminMachineryStats() {
 }
 
 async function adminAllMachinery(page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await maquinariaRepository.findAllAdmin(page, size);
     return { data, total, page, size };
 }

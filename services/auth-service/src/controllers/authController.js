@@ -1,5 +1,5 @@
 const authService = require('../services/authService');
-const { success } = require('shared');
+const { success, paginated } = require('shared');
 
 async function register(req, res, next) {
     try {
@@ -17,6 +17,27 @@ async function login(req, res, next) {
     } catch (err) {
         next(err);
     }
+}
+
+async function refresh(req, res, next) {
+    try {
+        const result = await authService.refreshToken(req.body.refresh_token);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function logout(req, res, next) {
+    try {
+        const result = await authService.logout(req.body.refresh_token);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function logoutAll(req, res, next) {
+    try {
+        const result = await authService.logoutAll(req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
 }
 
 async function getProfile(req, res, next) {
@@ -104,8 +125,8 @@ async function adminListUsers(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await authService.adminListUsers(page, size);
-        success(res, result);
+        const { data, total } = await authService.adminListUsers(page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -126,6 +147,9 @@ async function adminSetUserStatus(req, res, next) {
 module.exports = {
     register,
     login,
+    refresh,
+    logout,
+    logoutAll,
     getProfile,
     updateProfile,
     changePassword,

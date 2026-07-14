@@ -1,5 +1,8 @@
 const pool = require('../db');
 
+const CALIFICACION_COLUMNS = `id, reserva_id, maquinaria_id, calificador_id, calificado_id,
+    puntuacion, comentario, activo, reportado, motivo_reporte, creado_en, actualizado_en`;
+
 async function findByReservaAndCalificador(reservaId, calificadorId) {
     const result = await pool.query(
         'SELECT id FROM calificacion WHERE reserva_id = $1 AND calificador_id = $2',
@@ -11,30 +14,55 @@ async function findByReservaAndCalificador(reservaId, calificadorId) {
 async function insert({ id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, comentario }) {
     const result = await pool.query(
         `INSERT INTO calificacion (id, reserva_id, maquinaria_id, calificador_id, calificado_id, puntuacion, comentario)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${CALIFICACION_COLUMNS}`,
         [id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, comentario]
     );
     return result.rows[0];
 }
 
-async function findByCalificado(userId) {
-    const result = await pool.query(
-        `SELECT c.* FROM calificacion c
-         WHERE c.calificado_id = $1 AND c.activo = true
-         ORDER BY c.creado_en DESC`,
-        [userId]
+async function findByCalificador(userId, page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        'SELECT COUNT(*) FROM calificacion WHERE calificador_id = $1 AND activo = true', [userId]
     );
-    return result.rows;
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT ${CALIFICACION_COLUMNS} FROM calificacion
+         WHERE calificador_id = $1 AND activo = true
+         ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        [userId, size, offset]
+    );
+    return { data: result.rows, total, page, size };
 }
 
-async function findByMaquinaria(machineryId) {
-    const result = await pool.query(
-        `SELECT c.* FROM calificacion c
-         WHERE c.maquinaria_id = $1 AND c.activo = true
-         ORDER BY c.creado_en DESC`,
-        [machineryId]
+async function findByCalificado(userId, page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        'SELECT COUNT(*) FROM calificacion WHERE calificado_id = $1 AND activo = true', [userId]
     );
-    return result.rows;
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT ${CALIFICACION_COLUMNS} FROM calificacion
+         WHERE calificado_id = $1 AND activo = true
+         ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        [userId, size, offset]
+    );
+    return { data: result.rows, total, page, size };
+}
+
+async function findByMaquinaria(machineryId, page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        'SELECT COUNT(*) FROM calificacion WHERE maquinaria_id = $1 AND activo = true', [machineryId]
+    );
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT ${CALIFICACION_COLUMNS} FROM calificacion
+         WHERE maquinaria_id = $1 AND activo = true
+         ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        [machineryId, size, offset]
+    );
+    return { data: result.rows, total, page, size };
 }
 
 async function getAverage(userId) {
@@ -47,7 +75,7 @@ async function getAverage(userId) {
 }
 
 async function findById(id) {
-    const result = await pool.query('SELECT * FROM calificacion WHERE id = $1', [id]);
+    const result = await pool.query(`SELECT ${CALIFICACION_COLUMNS} FROM calificacion WHERE id = $1`, [id]);
     return result.rows[0] || null;
 }
 
@@ -56,7 +84,7 @@ async function update(id, fields, values) {
     values.push(id);
     const idx = values.length;
     const result = await pool.query(
-        `UPDATE calificacion SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+        `UPDATE calificacion SET ${fields.join(', ')} WHERE id = $${idx} RETURNING ${CALIFICACION_COLUMNS}`,
         values
     );
     return result.rows[0];
@@ -72,7 +100,7 @@ async function softDelete(id) {
 async function report(id, motivo) {
     const result = await pool.query(
         `UPDATE calificacion SET reportado = true, motivo_reporte = $2, actualizado_en = CURRENT_TIMESTAMP
-         WHERE id = $1 RETURNING *`,
+         WHERE id = $1 RETURNING ${CALIFICACION_COLUMNS}`,
         [id, motivo]
     );
     return result.rows[0] || null;
@@ -88,13 +116,28 @@ async function getAdminStats() {
          FROM calificacion`
     );
     const reportadas = await pool.query(
-        `SELECT * FROM calificacion WHERE reportado = true AND activo = true ORDER BY creado_en DESC`
+        `SELECT ${CALIFICACION_COLUMNS} FROM calificacion WHERE reportado = true AND activo = true ORDER BY creado_en DESC`
     );
     return { resumen: result.rows[0], reportadas: reportadas.rows };
 }
 
+async function withTransaction(callback) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await callback(client);
+        await client.query('COMMIT');
+        return result;
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     findByReservaAndCalificador, insert,
-    findByCalificado, findByMaquinaria, getAverage,
-    findById, update, softDelete, report, getAdminStats
+    findByCalificado, findByCalificador, findByMaquinaria, getAverage,
+    findById, update, softDelete, report, getAdminStats, withTransaction
 };

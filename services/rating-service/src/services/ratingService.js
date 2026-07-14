@@ -23,12 +23,22 @@ async function create(data, userId) {
     });
 }
 
-async function getByUser(userId) {
-    return await calificacionRepository.findByCalificado(userId);
+async function getByUser(userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
+    const { data, total } = await calificacionRepository.findByCalificado(userId, page, size);
+    return { data, total, page, size };
 }
 
-async function getByMachinery(machineryId) {
-    return await calificacionRepository.findByMaquinaria(machineryId);
+async function getMyRatings(userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
+    const { data, total } = await calificacionRepository.findByCalificador(userId, page, size);
+    return { data, total, page, size };
+}
+
+async function getByMachinery(machineryId, page = 1, size = 20) {
+    size = Math.min(size, 100);
+    const { data, total } = await calificacionRepository.findByMaquinaria(machineryId, page, size);
+    return { data, total, page, size };
 }
 
 async function getAverage(userId) {
@@ -82,6 +92,6 @@ async function adminRatingStats() {
 }
 
 module.exports = {
-    create, getByUser, getByMachinery, getAverage,
+    create, getByUser, getMyRatings, getByMachinery, getAverage,
     update, remove, report, adminRatingStats
 };

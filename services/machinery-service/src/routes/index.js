@@ -11,6 +11,7 @@ router.get('/all', validateToken, requireRole('admin'), machineryController.admi
 router.put('/all/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), machineryController.adminSetMachineryStatus);
 router.get('/:id', validateParams(uuidParam('id')), machineryController.getById);
 router.put('/:id', validateToken, validateParams(uuidParam('id')), validate(schemas.maquinaria), machineryController.update);
+router.patch('/:id', validateToken, validateParams(uuidParam('id')), machineryController.update);
 router.delete('/:id', validateToken, validateParams(uuidParam('id')), machineryController.remove);
 router.post('/:id/images', validateToken, validateParams(uuidParam('id')), validate(schemas.createImage), machineryController.addImage);
 router.get('/:id/images', validateParams(uuidParam('id')), machineryController.getImages);

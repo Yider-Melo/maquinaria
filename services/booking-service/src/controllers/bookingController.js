@@ -1,5 +1,5 @@
 const bookingService = require('../services/bookingService');
-const { success } = require('shared');
+const { success, paginated } = require('shared');
 
 async function create(req, res, next) {
     try {
@@ -19,8 +19,8 @@ async function getMyBookings(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await bookingService.getByUser(req.user.id, page, size);
-        success(res, result);
+        const { data, total } = await bookingService.getByUser(req.user.id, page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -57,8 +57,8 @@ async function getMyListings(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await bookingService.getByOwner(req.user.id, page, size);
-        success(res, result);
+        const { data, total } = await bookingService.getByOwner(req.user.id, page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 

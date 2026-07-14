@@ -1,10 +1,16 @@
+const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
+
+const MAQUINARIA_COLUMNS = `id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio,
+    capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng,
+    direccion, ciudad, departamento, puntuacion_promedio, total_resenas,
+    disponible, activo, creado_en, actualizado_en`;
 
 async function insert({ id, propietarioId, data }) {
     const result = await pool.query(
         `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-         RETURNING *`,
+         RETURNING ${MAQUINARIA_COLUMNS}`,
         [id, propietarioId, data.titulo, data.descripcion, data.tipo, data.marca, data.modelo,
          data.anio, data.capacidad, data.estado, data.precio_por_dia, data.precio_por_hora,
          data.ubicacion_lat, data.ubicacion_lng, data.direccion, data.ciudad, data.departamento]
@@ -14,7 +20,7 @@ async function insert({ id, propietarioId, data }) {
 
 async function findActiveById(id) {
     const result = await pool.query(
-        'SELECT * FROM maquinaria WHERE id = $1 AND activo = true',
+        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria WHERE id = $1 AND activo = true`,
         [id]
     );
     return result.rows[0] || null;
@@ -28,7 +34,7 @@ async function findByOwner(ownerId, page, size) {
     );
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT * FROM maquinaria WHERE propietario_id = $1 AND activo = true
+        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria WHERE propietario_id = $1 AND activo = true
          ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
         [ownerId, size, offset]
     );
@@ -40,7 +46,7 @@ async function findActive(page, size) {
     const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria WHERE activo = true');
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT * FROM maquinaria WHERE activo = true
+        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria WHERE activo = true
          ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
         [size, offset]
     );
@@ -111,6 +117,24 @@ async function upsertAvailability(id, machineryId, fecha, disponible) {
     );
 }
 
+async function batchUpsertAvailability(machineryId, fechas) {
+    if (fechas.length === 0) return;
+    const values = [];
+    const params = [];
+    let idx = 1;
+    for (const f of fechas) {
+        values.push(uuidv4());
+        params.push(`($${idx++}, $${idx++}, $${idx++}, $${idx++})`);
+        values.push(machineryId, f.fecha, f.disponible);
+    }
+    await pool.query(
+        `INSERT INTO disponibilidad_maquinaria (id, maquinaria_id, fecha, disponible)
+         VALUES ${params.join(', ')}
+         ON CONFLICT (maquinaria_id, fecha) DO UPDATE SET disponible = EXCLUDED.disponible`,
+        values
+    );
+}
+
 async function findAvailability(machineryId, startDate, endDate) {
     const result = await pool.query(
         `SELECT fecha, disponible FROM disponibilidad_maquinaria
@@ -145,7 +169,7 @@ async function findAllAdmin(page, size) {
     const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria');
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT * FROM maquinaria ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
+        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
         [size, offset]
     );
     return { data: result.rows, total };
@@ -163,6 +187,6 @@ async function setActiveAdmin(id, active) {
 module.exports = {
     insert, findActiveById, findByOwner, findActive, update, softDelete,
     countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
-    upsertAvailability, findAvailability,
+    upsertAvailability, batchUpsertAvailability, findAvailability,
     getAdminStats, findAllAdmin, setActiveAdmin
 };

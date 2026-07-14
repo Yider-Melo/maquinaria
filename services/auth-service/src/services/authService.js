@@ -1,12 +1,15 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
 const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, getJwtSecret } = require('shared');
 const usuarioRepository = require('../repositories/usuarioRepository');
+const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
 
 function ensureStrongPassword(password) {
     if (!password || password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
@@ -43,14 +46,20 @@ async function login({ email, password }) {
 
     await usuarioRepository.updateLastAccess(user.id);
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
         { id: user.id, email: user.email, tipo_usuario: user.tipo_usuario },
         getJwtSecret(),
         { expiresIn: JWT_EXPIRES_IN }
     );
 
+    const refreshTokenValue = crypto.randomBytes(40).toString('hex');
+    const expiraEn = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
+    await refreshTokenRepository.create(user.id, refreshTokenValue, expiraEn);
+
     return {
-        token,
+        token: accessToken,
+        refresh_token: refreshTokenValue,
+        expires_in: JWT_EXPIRES_IN,
         usuario: {
             id: user.id, email: user.email, nombre: user.nombre,
             apellido: user.apellido, tipo_usuario: user.tipo_usuario, foto_url: user.foto_url
@@ -150,6 +159,44 @@ async function resetPassword(token, newPassword) {
     return { success: true };
 }
 
+async function refreshToken(refreshTokenValue) {
+    const stored = await refreshTokenRepository.findByToken(refreshTokenValue);
+    if (!stored) {
+        throw new UnauthorizedError('Refresh token inválido o expirado');
+    }
+    if (!stored.activo) {
+        throw new UnauthorizedError('Usuario desactivado');
+    }
+
+    await refreshTokenRepository.revoke(refreshTokenValue);
+
+    const accessToken = jwt.sign(
+        { id: stored.usuario_id },
+        getJwtSecret(),
+        { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const newRefreshTokenValue = crypto.randomBytes(40).toString('hex');
+    const expiraEn = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000);
+    await refreshTokenRepository.create(stored.usuario_id, newRefreshTokenValue, expiraEn);
+
+    return {
+        token: accessToken,
+        refresh_token: newRefreshTokenValue,
+        expires_in: JWT_EXPIRES_IN
+    };
+}
+
+async function logout(refreshTokenValue) {
+    await refreshTokenRepository.revoke(refreshTokenValue);
+    return { message: 'Sesión cerrada correctamente' };
+}
+
+async function logoutAll(userId) {
+    await refreshTokenRepository.revokeAllByUser(userId);
+    return { message: 'Todas las sesiones cerradas' };
+}
+
 async function validateToken(token) {
     try {
         return jwt.verify(token, getJwtSecret());
@@ -159,6 +206,7 @@ async function validateToken(token) {
 }
 
 async function adminListUsers(page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await usuarioRepository.findAll(page, size);
     return { data, total, page, size };
 }
@@ -176,5 +224,6 @@ async function adminSetUserStatus(userId, active) {
 module.exports = {
     register, login, getProfile, updateProfile, changePassword, verifyEmail,
     setup2FA, verify2FA, forgotPassword, resetPassword,
+    refreshToken, logout, logoutAll,
     validateToken, adminListUsers, adminUserStats, adminSetUserStatus
 };

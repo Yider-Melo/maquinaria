@@ -34,6 +34,7 @@ async function subscribeToEvent(routingKeyPattern, handler, queueName) {
     if (!channel) await connect();
     const q = await channel.assertQueue(queueName || '', { exclusive: !queueName, durable: true });
     await channel.bindQueue(q.queue, EXCHANGE_NAME, routingKeyPattern);
+    channel.prefetch(1);
     channel.consume(q.queue, (msg) => {
         if (msg) {
             try {

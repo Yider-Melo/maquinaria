@@ -38,7 +38,7 @@ const validateAuthInputs = (req, res, next) => {
     });
     return res.status(400).json({
       success: false,
-      error: { message: 'Email y contraseña son requeridos' }
+      error: { code: 'VALIDATION_ERROR', message: 'Email inválido' }
     });
   }
 
@@ -69,7 +69,7 @@ const validateRegisterInputs = (req, res, next) => {
   if (!email || !password || !nombre || !apellido || !telefono) {
     return res.status(400).json({
       success: false,
-      error: { message: 'Todos los campos son requeridos' }
+      error: { code: 'VALIDATION_ERROR', message: 'Todos los campos son requeridos' }
     });
   }
 
@@ -77,7 +77,7 @@ const validateRegisterInputs = (req, res, next) => {
   if (!validateEmail(email)) {
     return res.status(400).json({
       success: false,
-      error: { message: 'Email inválido' }
+      error: { code: 'VALIDATION_ERROR', message: 'Email inválido' }
     });
   }
 
@@ -86,6 +86,7 @@ const validateRegisterInputs = (req, res, next) => {
     return res.status(400).json({
       success: false,
       error: {
+        code: 'VALIDATION_ERROR',
         message: 'La contraseña debe tener: mínimo 8 caracteres, una mayúscula, una minúscula y un número'
       }
     });

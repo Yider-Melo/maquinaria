@@ -7,27 +7,22 @@
       </mat-card-title>
     </mat-card-header>
     <mat-card-content class="form-card-body">
-      <form (ngSubmit)="onSubmit()">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-section">
           <h3 class="form-section-title"><mat-icon>info</mat-icon> Información General</h3>
           <div class="grid2">
-            <mat-form-field appearance="outline"><mat-label>Título *</mat-label><input matInput [(ngModel)]="data.titulo" name="titulo" required placeholder="Excavadora CAT 320"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Título *</mat-label><input matInput formControlName="titulo" placeholder="Excavadora CAT 320"><mat-error *ngIf="fieldHasError('titulo', 'required')">El título es requerido</mat-error><mat-error *ngIf="fieldHasError('titulo', 'minlength')">Mínimo 3 caracteres</mat-error></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Tipo *</mat-label>
-              <mat-select [(ngModel)]="data.tipo" name="tipo" required>
+              <mat-select formControlName="tipo">
                 <mat-option value="">Seleccionar</mat-option>
                 <mat-option *ngFor="let t of machineryTypes" [value]="t.toLowerCase()">{{ t }}</mat-option>
               </mat-select>
+              <mat-error *ngIf="fieldHasError('tipo', 'required')">El tipo es requerido</mat-error>
             </mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Marca *</mat-label><input matInput [(ngModel)]="data.marca" name="marca" required placeholder="Caterpillar"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Modelo *</mat-label><input matInput [(ngModel)]="data.modelo" name="modelo" required placeholder="320D"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Año *</mat-label><input matInput type="number" [(ngModel)]="data.anio" name="anio" required placeholder="2020"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Capacidad *</mat-label><input matInput [(ngModel)]="data.capacidad" name="capacidad" required placeholder="20"></mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Unidad de capacidad *</mat-label>
-              <mat-select [(ngModel)]="data.capacidad_unidad" name="capacidad_unidad" required>
-                <mat-option *ngFor="let u of capacidadUnidades" [value]="u">{{ u }}</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Marca</mat-label><input matInput formControlName="marca" placeholder="Caterpillar"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Modelo</mat-label><input matInput formControlName="modelo" placeholder="320D"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Año</mat-label><input matInput type="number" formControlName="anio" placeholder="2020"><mat-error *ngIf="fieldHasError('anio', 'min')">Año mínimo 1900</mat-error><mat-error *ngIf="fieldHasError('anio', 'max')">Año máximo 2100</mat-error></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Capacidad</mat-label><input matInput formControlName="capacidad" placeholder="20"></mat-form-field>
           </div>
         </div>
 
@@ -36,32 +31,33 @@
           <div class="grid3">
             <mat-form-field appearance="outline">
               <mat-label>Estado *</mat-label>
-              <mat-select [(ngModel)]="data.estado" name="estado" required>
+              <mat-select formControlName="estado">
                 <mat-option value="nuevo">🆕 Nuevo</mat-option>
                 <mat-option value="excelente">⭐ Excelente</mat-option>
                 <mat-option value="bueno">👍 Bueno</mat-option>
                 <mat-option value="regular">👌 Regular</mat-option>
               </mat-select>
+              <mat-error *ngIf="fieldHasError('estado', 'required')">El estado es requerido</mat-error>
             </mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Precio/día *</mat-label><input matInput type="number" [(ngModel)]="data.precio_por_dia" name="precio_por_dia" required placeholder="500000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Precio/hora</mat-label><input matInput type="number" [(ngModel)]="data.precio_por_hora" name="precio_por_hora" placeholder="80000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Precio/día *</mat-label><input matInput type="number" formControlName="precio_por_dia" placeholder="500000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span><mat-error *ngIf="fieldHasError('precio_por_dia', 'required')">El precio es requerido</mat-error><mat-error *ngIf="fieldHasError('precio_por_dia', 'min')">Debe ser mayor a 0</mat-error></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Precio/hora</mat-label><input matInput type="number" formControlName="precio_por_hora" placeholder="80000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span><mat-error *ngIf="fieldHasError('precio_por_hora', 'min')">Debe ser mayor a 0</mat-error></mat-form-field>
           </div>
         </div>
 
         <div class="form-section">
-          <h3 class="form-section-title"><mat-icon>location_on</mat-icon> Ubicación *</h3>
+          <h3 class="form-section-title"><mat-icon>location_on</mat-icon> Ubicación</h3>
           <div class="grid2">
-            <mat-form-field appearance="outline"><mat-label>Dirección *</mat-label><input matInput [(ngModel)]="data.direccion" name="direccion" required placeholder="Calle 123 #45-67"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Dirección</mat-label><input matInput formControlName="direccion" placeholder="Calle 123 #45-67"></mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Departamento *</mat-label>
-              <mat-select [(ngModel)]="data.departamento" name="departamento" required (selectionChange)="onDepartamentoChange()">
+              <mat-label>Departamento</mat-label>
+              <mat-select formControlName="departamento" (selectionChange)="onDepartamentoChange()">
                 <mat-option value="">Seleccionar</mat-option>
-                <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
+                <mat-option *ngFor="let d of colombiaData" [value]="d.departamento">{{ d.departamento }}</mat-option>
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Ciudad *</mat-label>
-              <mat-select [(ngModel)]="data.ciudad" name="ciudad" required>
+              <mat-label>Ciudad</mat-label>
+              <mat-select formControlName="ciudad">
                 <mat-option value="">Seleccionar</mat-option>
                 <mat-option *ngFor="let c of ciudadesPorDepto" [value]="c">{{ c }}</mat-option>
               </mat-select>
@@ -71,7 +67,7 @@
 
         <div class="form-section">
           <h3 class="form-section-title"><mat-icon>description</mat-icon> Descripción</h3>
-          <mat-form-field appearance="outline" class="full"><textarea matInput [(ngModel)]="data.descripcion" name="descripcion" rows="4" placeholder="Describe tu maquinaria en detalle..."></textarea></mat-form-field>
+          <mat-form-field appearance="outline" class="full"><textarea matInput formControlName="descripcion" rows="4" placeholder="Describe tu maquinaria en detalle..."></textarea></mat-form-field>
         </div>
 
         <div class="form-section">
@@ -95,8 +91,13 @@
         <div class="form-section">
           <h3 class="form-section-title"><mat-icon>map</mat-icon> Ubicación en el mapa</h3>
           <div class="map-wrapper">
-            <app-machinery-map [lat]="data.ubicacion_lat" [lng]="data.ubicacion_lng" [direccion]="data.direccion" [ciudad]="data.ciudad" [departamento]="data.departamento" (locationChange)="onLocationChange($event)"></app-machinery-map>
+            <app-machinery-map [lat]="form.get('ubicacion_lat')?.value" [lng]="form.get('ubicacion_lng')?.value" [direccion]="form.get('direccion')?.value" [ciudad]="form.get('ciudad')?.value" [departamento]="form.get('departamento')?.value" (locationChange)="onLocationChange($event)"></app-machinery-map>
           </div>
+        </div>
+
+        <div class="error-box" *ngIf="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
         </div>
 
         <div class="form-actions">

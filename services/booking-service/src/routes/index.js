@@ -21,10 +21,10 @@ router.get('/machinery/:machineryId/occupied', validateParams(uuidParam('machine
 router.get('/internal/:id', internalAuth, validateParams(uuidParam('id')), bookingController.getInternalById);
 router.get('/my-listings', validateToken, bookingController.getMyListings);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), bookingController.getById);
-router.put('/:id/confirm', validateToken, validateParams(uuidParam('id')), bookingController.confirm);
-router.put('/:id/reject', validateToken, validateParams(uuidParam('id')), bookingController.reject);
-router.put('/:id/cancel', validateToken, validateParams(uuidParam('id')), validate(schemas.cancelBooking), bookingController.cancel);
-router.put('/:id/complete', validateToken, validateParams(uuidParam('id')), bookingController.complete);
+router.post('/:id/confirm', validateToken, validateParams(uuidParam('id')), bookingController.confirm);
+router.post('/:id/reject', validateToken, validateParams(uuidParam('id')), bookingController.reject);
+router.post('/:id/cancel', validateToken, validateParams(uuidParam('id')), validate(schemas.cancelBooking), bookingController.cancel);
+router.post('/:id/complete', validateToken, validateParams(uuidParam('id')), bookingController.complete);
 
 router.use(errorHandler);
 

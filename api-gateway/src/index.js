@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
+const compression = require('compression');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const routes = require('./routes');
@@ -30,6 +31,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(correlationId);
+app.use(compression({ level: 6 }));
 app.use(cors);
 app.options('*', cors);
 
@@ -56,7 +58,7 @@ function internalAuth(req, res, next) {
 app.post('/_ws/notify', internalAuth, express.json({ limit: '1mb' }), (req, res) => {
     const { userId, titulo, mensaje } = req.body;
     if (!userId || !titulo) {
-        return res.status(400).json({ success: false, error: 'userId y titulo son requeridos' });
+        return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'userId y titulo son requeridos' } });
     }
     io.to(`user:${userId}`).emit('notification', { titulo, mensaje });
     logger.info('Notification sent', { userId, titulo });
@@ -105,6 +107,12 @@ app.use(errorHandler);
 
 const CERT_PATH = process.env.SSL_CERT_PATH;
 const KEY_PATH = process.env.SSL_KEY_PATH;
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && (!CERT_PATH || !KEY_PATH || !fs.existsSync(CERT_PATH) || !fs.existsSync(KEY_PATH))) {
+    logger.error('HTTPS requerido en producción. Configure SSL_CERT_PATH y SSL_KEY_PATH');
+    process.exit(1);
+}
 
 if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)) {
     const httpsServer = https.createServer({

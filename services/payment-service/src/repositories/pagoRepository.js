@@ -1,5 +1,8 @@
 const pool = require('../db');
 
+const PAGO_COLUMNS = `id, reserva_id, usuario_id, propietario_id, monto, metodo_pago,
+    estado, referencia_pasarela, creado_en, actualizado_en`;
+
 async function findReservaById(bookingId) {
     const result = await pool.query(
         `SELECT id, precio_total, maquinaria_id, propietario_id, arrendatario_id, fecha_inicio, fecha_fin, estado
@@ -42,8 +45,8 @@ async function updateEstado(id, estado) {
 
 async function findByIdWithReserva(pagoId, userId) {
     const result = await pool.query(
-        `SELECT p.* FROM pago p
-         WHERE p.id = $1 AND (p.usuario_id = $2 OR p.propietario_id = $2)`,
+        `SELECT ${PAGO_COLUMNS} FROM pago
+         WHERE id = $1 AND (usuario_id = $2 OR propietario_id = $2)`,
         [pagoId, userId]
     );
     return result.rows[0] || null;
@@ -51,9 +54,9 @@ async function findByIdWithReserva(pagoId, userId) {
 
 async function findByBooking(bookingId, userId) {
     const result = await pool.query(
-        `SELECT p.* FROM pago p
-         WHERE p.reserva_id = $1 AND (p.usuario_id = $2 OR p.propietario_id = $2)
-         ORDER BY p.creado_en DESC`,
+        `SELECT ${PAGO_COLUMNS} FROM pago
+         WHERE reserva_id = $1 AND (usuario_id = $2 OR propietario_id = $2)
+         ORDER BY creado_en DESC`,
         [bookingId, userId]
     );
     return result.rows;
@@ -67,7 +70,7 @@ async function findByIdSimple(pagoId) {
 async function updateEstadoWhere(pagoId, estadoActual, nuevoEstado) {
     const result = await pool.query(
         `UPDATE pago SET estado = $1, actualizado_en = CURRENT_TIMESTAMP
-         WHERE id = $2 AND estado = $3 RETURNING *`,
+         WHERE id = $2 AND estado = $3 RETURNING ${PAGO_COLUMNS}`,
         [nuevoEstado, pagoId, estadoActual]
     );
     return result.rows[0] || null;
@@ -83,7 +86,7 @@ async function getDashboard() {
            COUNT(CASE WHEN estado = 'fallido' THEN 1 END) as total_fallidos
          FROM pago`
     );
-    const ultimosPagos = await pool.query('SELECT * FROM pago ORDER BY creado_en DESC LIMIT 10');
+    const ultimosPagos = await pool.query(`SELECT ${PAGO_COLUMNS} FROM pago ORDER BY creado_en DESC LIMIT 10`);
     return { resumen: totals.rows[0], ultimos_pagos: ultimosPagos.rows };
 }
 

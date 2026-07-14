@@ -81,23 +81,27 @@ async function create(data, userId) {
     let precioUnitario = parseFloat(precio_por_dia);
     if (modalidad === 'hora') {
         if (!precio_por_hora || precio_por_hora <= 0) throw new ValidationError('Esta maquinaria no tiene precio por hora configurado');
-        cantidadUnidades = Number(data.cantidad_horas || 0);
+        cantidadUnidades = Number(data.cantidad_unidades || data.cantidad_horas || 0);
         if (!Number.isFinite(cantidadUnidades) || cantidadUnidades <= 0) throw new ValidationError('La cantidad de horas debe ser mayor a cero');
         precioUnitario = precio_por_hora;
     }
     const precioTotal = cantidadUnidades * precioUnitario;
 
-    const booking = await reservaRepository.insert({
-        id: uuidv4(), maquinariaId: data.maquinaria_id, userId,
-        propietarioId: propietario_id, fechaInicio: start,
-        fechaFin: end, modalidad, cantidadUnidades, precioUnitario, precioTotal
-    });
+    const booking = await reservaRepository.withTransaction(async (client) => {
+        const b = await reservaRepository.insert({
+            id: uuidv4(), maquinariaId: data.maquinaria_id, userId,
+            propietarioId: propietario_id, fechaInicio: start,
+            fechaFin: end, modalidad, cantidadUnidades, precioUnitario, precioTotal
+        }, client);
 
-    await enviarNotificacion(
-        booking.propietario_id, EVENT_TYPES.BOOKING.CREATED, booking.id,
-        'Nueva solicitud de reserva',
-        `Has recibido una solicitud de reserva del ${booking.fecha_inicio} al ${booking.fecha_fin}`
-    );
+        await enviarNotificacion(
+            b.propietario_id, EVENT_TYPES.BOOKING.CREATED, b.id,
+            'Nueva solicitud de reserva',
+            `Has recibido una solicitud de reserva del ${b.fecha_inicio} al ${b.fecha_fin}`
+        );
+
+        return b;
+    });
 
     return booking;
 }
@@ -159,11 +163,13 @@ async function getInternalById(id) {
 }
 
 async function getByUser(userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await reservaRepository.findByUser(userId, page, size);
     return { data, total, page, size };
 }
 
 async function getByOwner(ownerId, page = 1, size = 20) {
+    size = Math.min(size, 100);
     const { data, total } = await reservaRepository.findByOwner(ownerId, page, size);
     return { data, total, page, size };
 }
@@ -177,15 +183,17 @@ async function confirm(id, userId) {
         throw new ValidationError('La reserva no está en estado pendiente');
     }
 
-    const booking = await reservaRepository.updateEstado(id, 'confirmada');
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.updateEstado(id, 'confirmada', client);
 
-    await enviarNotificacion(
-        booking.arrendatario_id, EVENT_TYPES.BOOKING.CONFIRMED, booking.id,
-        'Reserva confirmada',
-        `Tu reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido confirmada`
-    );
+        await enviarNotificacion(
+            booking.arrendatario_id, EVENT_TYPES.BOOKING.CONFIRMED, booking.id,
+            'Reserva confirmada',
+            `Tu reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido confirmada`
+        );
 
-    return booking;
+        return booking;
+    });
 }
 
 async function reject(id, userId) {
@@ -197,15 +205,17 @@ async function reject(id, userId) {
         throw new ValidationError('La reserva no está en estado pendiente');
     }
 
-    const booking = await reservaRepository.updateEstado(id, 'rechazada');
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.updateEstado(id, 'rechazada', client);
 
-    await enviarNotificacion(
-        booking.arrendatario_id, EVENT_TYPES.BOOKING.REJECTED, booking.id,
-        'Reserva rechazada',
-        `Tu solicitud de reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido rechazada`
-    );
+        await enviarNotificacion(
+            booking.arrendatario_id, EVENT_TYPES.BOOKING.REJECTED, booking.id,
+            'Reserva rechazada',
+            `Tu solicitud de reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido rechazada`
+        );
 
-    return booking;
+        return booking;
+    });
 }
 
 async function cancel(id, userId, motivo) {
@@ -214,16 +224,18 @@ async function cancel(id, userId, motivo) {
         throw new ValidationError('No se puede cancelar una reserva completada o ya cancelada');
     }
 
-    const booking = await reservaRepository.cancel(id, motivo);
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.cancel(id, motivo);
 
-    await enviarNotificacion(
-        booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
-        EVENT_TYPES.BOOKING.CANCELLED, booking.id,
-        'Reserva cancelada',
-        `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido cancelada. Motivo: ${booking.motivo_cancelacion}`
-    );
+        await enviarNotificacion(
+            booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
+            EVENT_TYPES.BOOKING.CANCELLED, booking.id,
+            'Reserva cancelada',
+            `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido cancelada. Motivo: ${booking.motivo_cancelacion}`
+        );
 
-    return booking;
+        return booking;
+    });
 }
 
 async function complete(id, userId) {
@@ -235,15 +247,17 @@ async function complete(id, userId) {
         throw new ValidationError('La reserva no se puede completar en su estado actual');
     }
 
-    const booking = await reservaRepository.updateEstado(id, 'completada');
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.updateEstado(id, 'completada', client);
 
-    await enviarNotificacion(
-        booking.arrendatario_id, EVENT_TYPES.BOOKING.COMPLETED, booking.id,
-        'Reserva completada',
-        `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido completada. ¡Califica tu experiencia!`
-    );
+        await enviarNotificacion(
+            booking.arrendatario_id, EVENT_TYPES.BOOKING.COMPLETED, booking.id,
+            'Reserva completada',
+            `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido completada. ¡Califica tu experiencia!`
+        );
 
-    return booking;
+        return booking;
+    });
 }
 
 async function adminBookingStats() {

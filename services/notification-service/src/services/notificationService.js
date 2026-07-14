@@ -76,6 +76,7 @@ async function createNotificationDirect(userId, tipo, titulo, mensaje, referenci
 }
 
 async function getNotificationsByUser(userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
     return await notificacionRepository.findByUser(userId, page, size);
 }
 

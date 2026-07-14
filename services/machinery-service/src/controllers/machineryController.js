@@ -1,5 +1,5 @@
 const machineryService = require('../services/machineryService');
-const { success } = require('shared');
+const { success, paginated } = require('shared');
 
 async function create(req, res, next) {
     try {
@@ -12,8 +12,8 @@ async function listActive(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await machineryService.listActive(page, size);
-        success(res, result);
+        const { data, total } = await machineryService.listActive(page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -21,8 +21,8 @@ async function getByOwner(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await machineryService.getByOwner(req.user.id, page, size);
-        success(res, result);
+        const { data, total } = await machineryService.getByOwner(req.user.id, page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -37,8 +37,8 @@ async function adminAllMachinery(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await machineryService.adminAllMachinery(page, size);
-        success(res, result);
+        const { data, total } = await machineryService.adminAllMachinery(page, size);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -66,8 +66,8 @@ async function update(req, res, next) {
 
 async function remove(req, res, next) {
     try {
-        const result = await machineryService.remove(req.params.id, req.user.id);
-        success(res, result);
+        await machineryService.remove(req.params.id, req.user.id);
+        res.status(204).end();
     } catch (err) { next(err); }
 }
 
@@ -87,8 +87,8 @@ async function getImages(req, res, next) {
 
 async function deleteImage(req, res, next) {
     try {
-        const result = await machineryService.deleteImage(req.params.id, req.params.imageId, req.user.id);
-        success(res, result);
+        await machineryService.deleteImage(req.params.id, req.params.imageId, req.user.id);
+        res.status(204).end();
     } catch (err) { next(err); }
 }
 

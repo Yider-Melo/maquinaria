@@ -9,8 +9,8 @@ router.post('/webhook', paymentController.handleWebhook);
 router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);
 router.post('/:id/simulate-approval', validateToken, validateParams(uuidParam('id')), paymentController.simulateApproval);
-router.post('/:id/release', validateToken, validateParams(uuidParam('id')), paymentController.releaseFunds);
-router.post('/:id/refund', validateToken, validateParams(uuidParam('id')), paymentController.refund);
+router.post('/:id/release', validateToken, requireRole('admin', 'propietario'), validateParams(uuidParam('id')), paymentController.releaseFunds);
+router.post('/:id/refund', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.refund);
 
 router.use(errorHandler);
 

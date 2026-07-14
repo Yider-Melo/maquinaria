@@ -1,5 +1,8 @@
 const pool = require('../db');
 
+const NOTIFICACION_COLUMNS = `id, usuario_id, tipo, titulo, mensaje, referencia_id, referencia_tipo,
+    leida, leida_en, creado_en`;
+
 async function insert({ id, userId, tipo, titulo, mensaje, referenciaId, referenciaTipo }) {
     await pool.query(
         `INSERT INTO notificacion (id, usuario_id, tipo, titulo, mensaje, referencia_id, referencia_tipo)
@@ -17,7 +20,7 @@ async function findByUser(userId, page, size) {
     const total = parseInt(countResult.rows[0].count);
 
     const result = await pool.query(
-        `SELECT * FROM notificacion WHERE usuario_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        `SELECT ${NOTIFICACION_COLUMNS} FROM notificacion WHERE usuario_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
         [userId, size, offset]
     );
 
