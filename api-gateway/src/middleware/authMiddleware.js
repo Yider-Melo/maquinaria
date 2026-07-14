@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { getJwtSecret } = require('../../shared');
+const { getJwtSecret } = require('shared');
 
 function validateToken(req, res, next) {
     const authHeader = req.headers.authorization;

@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 
 interface CalendarDay {
   date: string;
@@ -20,7 +21,8 @@ interface CalendarDay {
 
 @Component({
   selector: 'app-machinery-detail', templateUrl: './detail.html', styleUrls: ['./detail.css'],
-  standalone: false
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MachineryDetail implements OnInit {
   item: any = null; images: any[] = []; loading = true; error = '';
@@ -35,6 +37,8 @@ export class MachineryDetail implements OnInit {
   calendarWeeks: CalendarDay[][] = [];
   currentMonth: Date = new Date();
   calendarTitle = '';
+
+  trackById(_index: number, item: any): string { return item?.id || _index; }
 
   constructor(
     private route: ActivatedRoute, public router: Router,
@@ -315,7 +319,7 @@ export class MachineryDetail implements OnInit {
   }
 
   deleteItem(): void {
-    const dialogRef = this.dialog.open(ConfirmDialog, { data: { message: '¿Estás seguro de eliminar esta maquinaria? Esta acción no se puede deshacer.' } });
+    const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: '¿Estás seguro de eliminar esta maquinaria? Esta acción no se puede deshacer.', warn: true, confirmText: 'Eliminar' } });
     dialogRef.afterClosed().subscribe(confirmed => {
       if (confirmed) this.api.delete(`/machinery/${this.item.id}`).subscribe(() => this.router.navigate(['/machinery']));
     });
@@ -342,25 +346,11 @@ export class MachineryDetail implements OnInit {
   }
 
   deleteImage(imageId: string): void {
-    const dialogRef = this.dialog.open(ConfirmDialog);
+    const dialogRef = this.dialog.open(ConfirmActionDialog, {
+      data: { message: '¿Eliminar esta imagen definitivamente?', warn: true, confirmText: 'Eliminar' }
+    });
     dialogRef.afterClosed().subscribe(confirmed => {
       if (confirmed) this.removeImage(imageId);
     });
   }
-}
-
-@Component({
-  selector: 'app-confirm-dialog',
-  template: `
-    <h2 mat-dialog-title>Confirmar</h2>
-    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">Cancelar</button>
-      <button mat-raised-button color="warn" [mat-dialog-close]="true">Aceptar</button>
-    </mat-dialog-actions>
-  `,
-  standalone: false
-})
-export class ConfirmDialog {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

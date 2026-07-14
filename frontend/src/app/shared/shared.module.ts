@@ -19,17 +19,21 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { Header } from './header/header.component';
 import { Footer } from './footer/footer.component';
 import { Loading } from './loading/loading.component';
 import { SkeletonCard } from './skeleton-card/skeleton-card.component';
+import { FormatDatePipe } from './pipes/format-date.pipe';
+import { FormatDateTimePipe } from './pipes/format-datetime.pipe';
+import { EstadoLabelPipe } from './pipes/estado-label.pipe';
+import { FormatIdPipe } from './pipes/format-id.pipe';
 
 @NgModule({
   declarations: [Header, Footer, Loading, SkeletonCard],
   imports: [
     CommonModule,
+    FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
@@ -46,16 +50,14 @@ import { SkeletonCard } from './skeleton-card/skeleton-card.component';
     MatDialogModule,
     MatSnackBarModule,
     MatBadgeModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    MatTooltipModule
+    MatTabsModule
   ],
   exports: [
     CommonModule, RouterModule, FormsModule, ReactiveFormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
-    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatProgressSpinnerModule, MatDividerModule, MatTooltipModule,
-    Header, Footer, Loading, SkeletonCard
+    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatDividerModule,
+    Header, Footer, Loading, SkeletonCard, FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe
   ]
 })
 export class SharedModule {}

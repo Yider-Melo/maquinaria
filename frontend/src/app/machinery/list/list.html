@@ -64,12 +64,12 @@
       <button mat-button class="clear-btn" (click)="clearFilters()">Limpiar</button>
     </div>
   </div>
-  <div class="result-summary" *ngIf="!loading && !error">{{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}</div>
+  <div class="result-summary" *ngIf="!loading && !error" aria-live="polite">{{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}</div>
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
-      <mat-card *ngFor="let item of items" class="card" [routerLink]="['/machinery', item.id]">
-        <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}">
+      <mat-card *ngFor="let item of items; trackBy: trackById" class="card" tabindex="0" role="link" [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
+        <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
         <mat-card-content class="card-content">
           <h3>{{ item.titulo }}</h3>
           <p class="card-subtitle"><mat-icon style="font-size:16px;width:16px;height:16px;">category</mat-icon> {{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
@@ -81,7 +81,7 @@
     </div>
     <div class="empty-state" *ngIf="items.length === 0">
       <mat-icon>search_off</mat-icon>
-      <p>No se encontraron resultados</p>
+      <p aria-live="polite">No se encontraron resultados</p>
       <p class="suggestion-hint" *ngIf="sugerenciasCorreccion.length > 0">
         ¿Quizás quisiste decir
         <ng-container *ngFor="let s of sugerenciasCorreccion; let i = index">

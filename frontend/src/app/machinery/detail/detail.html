@@ -5,11 +5,11 @@
   <div class="detail-grid">
     <div class="images-section">
       <div class="main-image">
-        <img [src]="selectedImage || fallbackImage" alt="{{ item.titulo }}">
+        <img [src]="selectedImage || fallbackImage" alt="{{ item.titulo }}" loading="lazy">
       </div>
       <div class="thumbnails" *ngIf="images.length > 0">
         <div *ngFor="let img of images" class="thumb" [class.active]="selectedImage === img.url">
-          <img [src]="img.url" (click)="selectedImage = img.url" alt="Miniatura de {{ item.titulo }}">
+          <button type="button" class="thumb-btn" (click)="selectedImage = img.url" [attr.aria-label]="'Seleccionar imagen ' + img.url"><img [src]="img.url" alt="Miniatura de {{ item.titulo }}" loading="lazy"></button>
           <button *ngIf="isOwner()" mat-icon-button class="remove-img" (click)="deleteImage(img.id)"><mat-icon>close</mat-icon></button>
         </div>
       </div>
@@ -55,12 +55,12 @@
 
         <div class="calendar-section">
           <div class="calendar-header">
-            <button type="button" class="cal-nav" [disabled]="!canGoPrevMonth()" (click)="prevMonth()">
-              <mat-icon>chevron_left</mat-icon>
+            <button type="button" class="cal-nav" [disabled]="!canGoPrevMonth()" (click)="prevMonth()" aria-label="Mes anterior">
+              <mat-icon aria-hidden="true">chevron_left</mat-icon>
             </button>
             <span class="cal-title">{{ calendarTitle }}</span>
-            <button type="button" class="cal-nav" (click)="nextMonth()">
-              <mat-icon>chevron_right</mat-icon>
+            <button type="button" class="cal-nav" (click)="nextMonth()" aria-label="Mes siguiente">
+              <mat-icon aria-hidden="true">chevron_right</mat-icon>
             </button>
           </div>
           <div class="calendar-grid">

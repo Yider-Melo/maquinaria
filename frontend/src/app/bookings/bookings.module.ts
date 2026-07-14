@@ -3,8 +3,8 @@
 import { NgModule } from '@angular/core';
 import { BookingsRoutingModule } from './bookings-routing.module';
 import { SharedModule } from '../shared/shared.module';
-import { BookingsList, ConfirmActionDialog } from './list/list.component';
+import { BookingsList } from './list/list.component';
 import { BookingsDetail } from './detail/detail.component';
 
-@NgModule({ declarations: [BookingsList, ConfirmActionDialog, BookingsDetail], imports: [BookingsRoutingModule, SharedModule] })
+@NgModule({ declarations: [BookingsList, BookingsDetail], imports: [BookingsRoutingModule, SharedModule] })
 export class BookingsModule {}

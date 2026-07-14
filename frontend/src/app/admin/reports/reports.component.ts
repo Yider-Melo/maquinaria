@@ -1,8 +1,9 @@
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api.service';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 
 @Component({
   selector: 'app-admin-reports', templateUrl: './reports.html', styleUrls: ['./reports.css'],
@@ -69,20 +70,4 @@ export class AdminReports implements OnInit {
       this.api.put<any>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe(res => item.activo = res.data.activo);
     });
   }
-}
-
-@Component({
-  selector: 'app-confirm-action-dialog',
-  template: `
-    <h2 mat-dialog-title>Confirmar</h2>
-    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">Cancelar</button>
-      <button mat-raised-button color="primary" [mat-dialog-close]="true">Aceptar</button>
-    </mat-dialog-actions>
-  `,
-  standalone: false
-})
-export class ConfirmActionDialog {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

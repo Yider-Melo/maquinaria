@@ -1,25 +1,29 @@
 // Componente que lista las reservas del usuario, tanto las que hizo
 // como arrendatario como las que recibió como propietario. Permite
 // cancelar, confirmar, rechazar o completar reservas según el estado.
-import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
-import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { forkJoin, of, timeout } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
   standalone: false,
-  selector: 'app-bookings-list', templateUrl: './list.html', styleUrls: ['./list.css']
+  selector: 'app-bookings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingsList implements OnInit {
   asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
   error = '';
   tabIndex = 0;
   payingBookingId: string | null = null;
+
+  trackById(_index: number, item: any): string { return item?.id || _index; }
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
 
@@ -180,20 +184,4 @@ export class BookingsList implements OnInit {
       });
     });
   }
-}
-
-@Component({
-  selector: 'app-confirm-action-dialog',
-  template: `
-    <h2 mat-dialog-title>Confirmar</h2>
-    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">Cancelar</button>
-      <button mat-raised-button color="primary" [mat-dialog-close]="true">Aceptar</button>
-    </mat-dialog-actions>
-  `,
-  standalone: false
-})
-export class ConfirmActionDialog {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { message: string }) {}
 }

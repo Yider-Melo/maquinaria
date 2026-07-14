@@ -9,8 +9,8 @@ const routes = require('./routes');
 const { authLimiter, userLimiter } = require('./middleware/rateLimiter');
 const httpLogger = require('./middleware/httpLogger');
 const { cors, securityHeaders } = require('./config/security');
-const { errorHandler, getJwtSecret, correlationId } = require('../../shared/index');
-const createServiceLogger = require('../../shared/logger');
+const { errorHandler, getJwtSecret, correlationId } = require('shared');
+const createServiceLogger = require('shared/logger');
 
 const logger = createServiceLogger('api-gateway');
 

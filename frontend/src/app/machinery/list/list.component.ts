@@ -1,11 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 
 @Component({
   standalone: false,
-  selector: 'app-machinery-list', templateUrl: './list.html', styleUrls: ['./list.css']
+  selector: 'app-machinery-list', templateUrl: './list.html', styleUrls: ['./list.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MachineryList implements OnInit {
   items: any[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20; error = '';
@@ -57,7 +59,15 @@ export class MachineryList implements OnInit {
     {"departamento":"Vichada","ciudades":["Puerto Carreño","Cumaribo","La Primavera","Santa Rosalía"]}
   ];
 
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private router: Router) {}
+
+  onCardEnter(event: Event): void {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLElement;
+    target?.click();
+  }
+
+  trackById(_index: number, item: any): string { return item?.id || _index; }
 
   ngOnInit(): void { this.load(); }
 

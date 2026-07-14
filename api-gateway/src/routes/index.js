@@ -38,8 +38,9 @@ router.use(api('/bookings'), validateToken, proxyWithTarget(BOOKING_SERVICE, { [
 
 router.use(api('/payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 
+router.get(api('/ratings/user/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
+router.get(api('/ratings/machinery/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 router.get(api('/ratings'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
-router.get(api('/ratings/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 router.use(api('/ratings'), validateToken, proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 
 router.use(api('/notifications'), validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { [`^${API_PREFIX}/notifications`]: '' }));

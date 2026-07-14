@@ -1,4 +1,4 @@
-const createServiceLogger = require('../../../shared/logger');
+const createServiceLogger = require('shared/logger');
 
 const logger = createServiceLogger('api-gateway');
 

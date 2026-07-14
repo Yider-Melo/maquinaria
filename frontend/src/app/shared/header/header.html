@@ -1,46 +1,48 @@
-<mat-toolbar class="header-toolbar">
-  <span class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'">
-    <mat-icon class="brand-icon">precision_manufacturing</mat-icon>
+<mat-toolbar class="header-toolbar" role="banner">
+  <a class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'" aria-label="Ir al inicio">
+    <mat-icon class="brand-icon" aria-hidden="true">precision_manufacturing</mat-icon>
     RentaMaq
     <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Arrendador' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
-  </span>
-  <a mat-button class="nav-link home-btn" routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" *ngIf="auth.isLoggedIn()" matTooltip="Inicio" title="Inicio" aria-label="Inicio"><mat-icon>home</mat-icon></a>
+  </a>
+  <nav aria-label="Navegación principal" *ngIf="auth.isLoggedIn()">
+    <a mat-button class="nav-link" routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" aria-label="Inicio"><mat-icon aria-hidden="true">home</mat-icon></a>
+    <a mat-button class="nav-link" routerLink="/machinery" routerLinkActive="active-link"><mat-icon aria-hidden="true">search</mat-icon> <span>Maquinaria</span></a>
+    <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link"><mat-icon aria-hidden="true">book_online</mat-icon> <span>Reservas</span></a>
+    <a mat-button class="nav-link" routerLink="/payments" routerLinkActive="active-link"><mat-icon aria-hidden="true">payments</mat-icon> <span>Pagos</span></a>
+    <a mat-button class="nav-link" routerLink="/ratings" routerLinkActive="active-link"><mat-icon aria-hidden="true">star</mat-icon> <span>Calificaciones</span></a>
+    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link">
+      <mat-icon aria-hidden="true">notifications</mat-icon> <span>Notificaciones</span>
+      <span *ngIf="unreadCount > 0" class="badge" aria-live="polite" [attr.aria-label]="unreadCount + ' notificaciones sin leer'">{{ unreadCount }}</span>
+    </a>
+    <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" *ngIf="auth.esTipo('admin')">
+      <mat-icon aria-hidden="true">admin_panel_settings</mat-icon> <span>Admin</span>
+    </a>
+  </nav>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
-    <a mat-button class="nav-link" routerLink="/machinery" routerLinkActive="active-link" matTooltip="Buscar Maquinaria"><mat-icon>search</mat-icon> <span>Maquinaria</span></a>
-    <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link" matTooltip="Mis Reservas"><mat-icon>book_online</mat-icon> <span>Reservas</span></a>
-    <a mat-button class="nav-link" routerLink="/payments" routerLinkActive="active-link" matTooltip="Pagos"><mat-icon>payments</mat-icon> <span>Pagos</span></a>
-    <a mat-button class="nav-link" routerLink="/ratings" routerLinkActive="active-link" matTooltip="Calificaciones"><mat-icon>star</mat-icon> <span>Calificaciones</span></a>
-    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link" matTooltip="Notificaciones">
-      <mat-icon>notifications</mat-icon> <span>Notificaciones</span>
-      <span *ngIf="unreadCount > 0" class="badge">{{ unreadCount }}</span>
-    </a>
-    <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" matTooltip="Panel de Administración" *ngIf="auth.esTipo('admin')">
-      <mat-icon>admin_panel_settings</mat-icon> <span>Admin</span>
-    </a>
-    <button mat-button class="user-btn" [matMenuTriggerFor]="menu">
-      <mat-icon>account_circle</mat-icon> {{ auth.getUser()?.nombre }}
+    <button mat-button class="user-btn" [matMenuTriggerFor]="menu" [attr.aria-label]="'Menú de ' + (auth.getUser()?.nombre || 'usuario')">
+      <mat-icon aria-hidden="true">account_circle</mat-icon> {{ auth.getUser()?.nombre }}
     </button>
     <mat-menu #menu="matMenu">
       <button mat-menu-item disabled style="opacity:.7; cursor:default;">
-        <mat-icon>badge</mat-icon>
+        <mat-icon aria-hidden="true">badge</mat-icon>
         {{ auth.getUser()?.tipo_usuario === 'propietario' ? '👷 Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? '⚙️ Admin' : '🔧 Arrendatario' }}
       </button>
       <mat-divider></mat-divider>
       <button mat-menu-item routerLink="/profile">
-        <mat-icon>person</mat-icon>
+        <mat-icon aria-hidden="true">person</mat-icon>
         Mi perfil
       </button>
       <button mat-menu-item routerLink="/admin" *ngIf="auth.esTipo('admin')">
-        <mat-icon>admin_panel_settings</mat-icon>
+        <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
         Panel Admin
       </button>
       <button mat-menu-item routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-icon>add_circle</mat-icon>
+        <mat-icon aria-hidden="true">add_circle</mat-icon>
         Publicar Maquinaria
       </button>
       <button mat-menu-item (click)="logout()">
-        <mat-icon>exit_to_app</mat-icon>
+        <mat-icon aria-hidden="true">exit_to_app</mat-icon>
         Cerrar Sesión
       </button>
     </mat-menu>
