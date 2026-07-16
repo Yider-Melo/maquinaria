@@ -123,7 +123,10 @@ export class MachineryDetail implements OnInit {
   get bookingUnits(): number { return this.booking.modalidad === 'hora' ? Number(this.booking.cantidad_horas || 0) : this.bookingDays; }
   get unitPrice(): number { return this.booking.modalidad === 'hora' ? Number(this.item?.precio_por_hora || 0) : Number(this.item?.precio_por_dia || 0); }
   get estimatedTotal(): number { return this.bookingUnits * this.unitPrice; }
+  get ivaAmount(): number { return Math.round(this.estimatedTotal * 0.19); }
+  get appFee(): number { return 5000; }
   get estimatedTotalWithIVA(): number { return Math.round(this.estimatedTotal * 1.19); }
+  get grandTotal(): number { return this.estimatedTotalWithIVA + this.appFee; }
 
   canGoPrevMonth(): boolean {
     const min = new Date();
@@ -167,11 +170,10 @@ export class MachineryDetail implements OnInit {
       this.error = 'Verifica la disponibilidad antes de enviar la reserva.';
       return;
     }
-    const total = this.estimatedTotal;
     const modalidadLabel = this.booking.modalidad === 'hora' ? `${this.booking.cantidad_horas} hora(s)` : `${this.bookingDays} día(s)`;
     const dialogRef = this.dialog.open(ConfirmActionDialog, {
       data: {
-        message: `¿Confirmas la reserva por ${modalidadLabel} por $${total.toLocaleString('es-CO')}?`,
+        message: `¿Confirmas la reserva por ${modalidadLabel}? Total a pagar: $${this.grandTotal.toLocaleString('es-CO')} (incluye IVA y cuota de servicio)`,
         confirmText: 'Reservar'
       }
     });

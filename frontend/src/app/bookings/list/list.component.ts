@@ -94,8 +94,10 @@ export class BookingsList implements OnInit {
       })
     ).subscribe({
       next: (results: any[]) => {
-        const asArrendatario = results[0]?.data?.data || [];
-        const asPropietario = calls.length > 1 ? results[1]?.data?.data || [] : [];
+        const r0 = results[0]?.data;
+        const asArrendatario = Array.isArray(r0) ? r0 : (r0?.data || []);
+        const r1 = results[1]?.data;
+        const asPropietario = calls.length > 1 ? (Array.isArray(r1) ? r1 : (r1?.data || [])) : [];
         this.enrichBookingsWithMachinery(asArrendatario, asPropietario);
       },
       error: (err) => {
@@ -111,14 +113,17 @@ export class BookingsList implements OnInit {
       .filter((id: string | undefined): id is string => !!id))];
 
     if (uniqueIds.length === 0) {
+        console.log('No machinery IDs, showing raw bookings:', arrendatario.length, propietario.length);
       this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
       this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
       this.cdr.markForCheck();
       return;
     }
 
+    console.log('Fetching machinery for bookings:', uniqueIds.length, 'machines');
     forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
       next: (results: any[]) => {
+        console.log('Machinery data received:', results.length);
         const machinesById = new Map<string, any>();
         uniqueIds.forEach((id: string, index: number) => {
           const machine = results[index]?.data;
@@ -127,9 +132,11 @@ export class BookingsList implements OnInit {
 
         this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
         this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
+        console.log('asArrendatario length:', this.asArrendatario.length);
         this.cdr.markForCheck();
       },
       error: () => {
+        console.log('Error fetching machinery, showing raw bookings');
         this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
         this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
         this.cdr.markForCheck();
