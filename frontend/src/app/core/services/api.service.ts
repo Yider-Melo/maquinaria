@@ -19,7 +19,7 @@ interface CacheEntry {
 @Injectable({ providedIn: 'root' })
 export class Api {
   private baseUrl = environment.apiUrl;
-  private requestTimeoutMs = 5000;
+  private requestTimeoutMs = 30000;
   private cache = new Map<string, CacheEntry>();
 
   constructor(private http: HttpClient) {}
@@ -63,6 +63,9 @@ export class Api {
     );
 
     if (key) {
+      for (const [k, v] of this.cache.entries()) {
+        if (Date.now() - v.timestamp > CACHE_TTL) this.cache.delete(k);
+      }
       const shared = obs.pipe(shareReplay(1));
       this.cache.set(key, { observable: shared, timestamp: Date.now() });
       return shared;

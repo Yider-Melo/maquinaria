@@ -12,7 +12,7 @@
   <div class="filters-card">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Buscar máquina</mat-label>
-      <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="loadSuggestions()" (keyup.enter)="search()" placeholder="excavadora CAT 320">
+      <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="onQueryChange()" (keyup.enter)="search()" placeholder="excavadora CAT 320">
       <mat-icon matPrefix>search</mat-icon>
       <mat-autocomplete #machineSuggestions="matAutocomplete" (optionSelected)="search()">
         <mat-option *ngFor="let suggestion of suggestions" [value]="suggestion">{{ suggestion }}</mat-option>
@@ -42,6 +42,11 @@
       </mat-select>
       <mat-icon matPrefix>location_on</mat-icon>
     </mat-form-field>
+    <button mat-stroked-button class="nearby-btn" (click)="buscarCerca()" [disabled]="buscandoUbicacion" title="Buscar cerca de mi ubicación">
+      <mat-icon *ngIf="!buscandoUbicacion">my_location</mat-icon>
+      <mat-icon *ngIf="buscandoUbicacion" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
+      {{ buscandoUbicacion ? 'Obteniendo ubicación...' : 'Cerca de mí' }}
+    </button>
     <mat-form-field appearance="outline">
       <mat-label>Mín /día</mat-label>
       <input matInput type="number" min="0" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0">
@@ -63,8 +68,12 @@
       <button mat-raised-button class="search-btn" (click)="search()"><mat-icon>travel_explore</mat-icon> Buscar</button>
       <button mat-button class="clear-btn" (click)="clearFilters()">Limpiar</button>
     </div>
+    <p class="filter-hint">💡 Selecciona una maquinaria para ver disponibilidad por fechas y reservar.</p>
   </div>
-  <div class="result-summary" *ngIf="!loading && !error" aria-live="polite">{{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}</div>
+  <div class="result-summary" *ngIf="!loading && !error" aria-live="polite">
+    <span *ngIf="ubicacionActiva" class="location-badge"><mat-icon style="font-size:16px;width:16px;height:16px;">my_location</mat-icon> Cerca de ti · radio 50km</span>
+    {{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}
+  </div>
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">

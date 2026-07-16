@@ -4,6 +4,7 @@ const { NotFoundError, ForbiddenError, ConflictError, ValidationError, eventBus,
 const reservaRepository = require('../repositories/reservaRepository');
 
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
 function toDateOnly(value) {
     return new Date(value).toISOString().slice(0, 10);
@@ -50,20 +51,18 @@ async function create(data, userId) {
 
     const { start, end } = validateDateRange(data.fecha_inicio, data.fecha_fin);
 
-    const conflictos = await reservaRepository.findConflictingBookings(data.maquinaria_id, start, end);
-
-    if (conflictos.length > 0) {
-        throw new ConflictError('La maquinaria no está disponible en las fechas seleccionadas');
-    }
-
     let propietario_id, precio_por_dia, precio_por_hora;
     try {
         const res = await axios.get(`${MACHINERY_SERVICE_URL}/${data.maquinaria_id}`);
         const maq = res.data.data;
+        if (maq.disponible === false) {
+            throw new ValidationError('La maquinaria no está disponible actualmente');
+        }
         propietario_id = maq.propietario_id;
         precio_por_dia = parseFloat(maq.precio_por_dia);
         precio_por_hora = parseFloat(maq.precio_por_hora || 0);
-    } catch {
+    } catch (err) {
+        if (err instanceof ValidationError) throw err;
         throw new NotFoundError('Maquinaria no encontrada');
     }
 
@@ -88,6 +87,11 @@ async function create(data, userId) {
     const precioTotal = cantidadUnidades * precioUnitario;
 
     const booking = await reservaRepository.withTransaction(async (client) => {
+        const conflictos = await reservaRepository.findConflictingBookings(data.maquinaria_id, start, end, client);
+        if (conflictos.length > 0) {
+            throw new ConflictError('La maquinaria no está disponible en las fechas seleccionadas');
+        }
+
         const b = await reservaRepository.insert({
             id: uuidv4(), maquinariaId: data.maquinaria_id, userId,
             propietarioId: propietario_id, fechaInicio: start,
@@ -133,6 +137,26 @@ async function getById(id, userId) {
     if (reserva.arrendatario_id !== userId && reserva.propietario_id !== userId) {
         throw new ForbiddenError('No tienes acceso a esta reserva');
     }
+    try {
+        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' }
+        });
+        const user = res.data?.data;
+        if (user) {
+            reserva.arrendatario_nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim() || reserva.arrendatario_nombre;
+            reserva.arrendatario_telefono = user.telefono;
+            reserva.arrendatario_email = user.email;
+        }
+    } catch { }
+    try {
+        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.propietario_id}`, {
+            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' }
+        });
+        const user = res.data?.data;
+        if (user) {
+            reserva.propietario_nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim() || reserva.propietario_nombre;
+        }
+    } catch { }
     return reserva;
 }
 
@@ -165,13 +189,31 @@ async function getInternalById(id) {
 async function getByUser(userId, page = 1, size = 20) {
     size = Math.min(size, 100);
     const { data, total } = await reservaRepository.findByUser(userId, page, size);
-    return { data, total, page, size };
+    const enriched = await Promise.all(data.map(b => enrichBookingWithUsers(b)));
+    return { data: enriched, total, page, size };
 }
 
 async function getByOwner(ownerId, page = 1, size = 20) {
     size = Math.min(size, 100);
     const { data, total } = await reservaRepository.findByOwner(ownerId, page, size);
-    return { data, total, page, size };
+    const enriched = await Promise.all(data.map(b => enrichBookingWithUsers(b)));
+    return { data: enriched, total, page, size };
+}
+
+async function enrichBookingWithUsers(reserva) {
+    try {
+        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
+            timeout: 2000
+        });
+        const user = res.data?.data;
+        if (user) {
+            reserva.arrendatario_nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            reserva.arrendatario_telefono = user.telefono;
+            reserva.arrendatario_email = user.email;
+        }
+    } catch { }
+    return reserva;
 }
 
 async function confirm(id, userId) {
@@ -225,7 +267,7 @@ async function cancel(id, userId, motivo) {
     }
 
     return await reservaRepository.withTransaction(async (client) => {
-        const booking = await reservaRepository.cancel(id, motivo);
+        const booking = await reservaRepository.cancel(id, motivo, client);
 
         await enviarNotificacion(
             booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
@@ -245,6 +287,20 @@ async function complete(id, userId) {
     }
     if (reserva.estado !== 'confirmada' && reserva.estado !== 'en_curso') {
         throw new ValidationError('La reserva no se puede completar en su estado actual');
+    }
+
+    try {
+        const res = await axios.get(`${process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005'}/booking/${id}`, {
+            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
+            timeout: 3000
+        });
+        const payments = res.data?.data || [];
+        const hasPayment = payments.some((p) => p.estado === 'retenido' || p.estado === 'liberado');
+        if (!hasPayment) {
+            throw new ValidationError('La reserva no tiene un pago aprobado. El arrendatario debe pagar primero.');
+        }
+    } catch (err) {
+        if (err instanceof ValidationError) throw err;
     }
 
     return await reservaRepository.withTransaction(async (client) => {

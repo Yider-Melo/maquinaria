@@ -22,7 +22,12 @@
             <mat-form-field appearance="outline"><mat-label>Marca</mat-label><input matInput formControlName="marca" placeholder="Caterpillar"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Modelo</mat-label><input matInput formControlName="modelo" placeholder="320D"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Año</mat-label><input matInput type="number" formControlName="anio" placeholder="2020"><mat-error *ngIf="fieldHasError('anio', 'min')">Año mínimo 1900</mat-error><mat-error *ngIf="fieldHasError('anio', 'max')">Año máximo 2100</mat-error></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Capacidad</mat-label><input matInput formControlName="capacidad" placeholder="20"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Capacidad</mat-label>
+              <input matInput formControlName="capacidad" placeholder="20">
+              <mat-select matSuffix formControlName="capacidadUnidad" style="width:90px;margin-top:-2px;">
+                <mat-option *ngFor="let u of capacidadUnidades" [value]="u">{{ u }}</mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
 
@@ -79,13 +84,19 @@
             <button mat-stroked-button type="button" (click)="photoInput.click()">Subir fotos</button>
             <input #photoInput type="file" accept="image/*" multiple hidden (change)="onPhotoInput($event)">
           </div>
+          <div class="photo-preview" *ngIf="existingImages.length > 0">
+            <div class="photo-item existing" *ngFor="let img of existingImages; let i = index">
+              <img [src]="img.url" alt="Imagen existente">
+              <button mat-icon-button type="button" color="warn" (click)="removeExistingImage(img.id)" aria-label="Eliminar imagen"><mat-icon>close</mat-icon></button>
+            </div>
+          </div>
           <div class="photo-preview" *ngIf="photos.length > 0">
             <div class="photo-item" *ngFor="let photo of photos; let i = index">
               <img [src]="photo.preview" [alt]="photo.file.name">
               <button mat-icon-button type="button" color="warn" (click)="removePhoto(i)" aria-label="Eliminar foto"><mat-icon>close</mat-icon></button>
             </div>
           </div>
-          <p class="photo-count" [class.invalid]="!isEdit && photos.length < 4">{{ photos.length }} foto{{ photos.length === 1 ? '' : 's' }} seleccionada{{ photos.length === 1 ? '' : 's' }}{{ !isEdit ? ' · mínimo 4' : '' }}</p>
+          <p class="photo-count" [class.invalid]="!isEdit && photos.length < 4">{{ existingImages.length + photos.length }} foto{{ (existingImages.length + photos.length) === 1 ? '' : 's' }}{{ !isEdit ? ' · mínimo 4' : '' }}</p>
         </div>
 
         <div class="form-section">

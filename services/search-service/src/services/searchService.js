@@ -15,8 +15,8 @@ async function search(filters) {
     }
 
     if (filters.tipo) {
-        conditions.push(`LOWER(m.tipo) = $${idx++}`);
-        values.push(filters.tipo.toLowerCase());
+        conditions.push(`LOWER(m.tipo) LIKE $${idx++}`);
+        values.push(`%${filters.tipo.toLowerCase()}%`);
     }
 
     if (filters.minPrice !== undefined && filters.minPrice !== null) {
@@ -39,6 +39,7 @@ async function search(filters) {
         values.push(filters.departamento.trim().toLowerCase());
     }
 
+    let hasLocation = false;
     if (filters.lat !== undefined && filters.lng !== undefined && filters.radius) {
         const lat = Number(filters.lat);
         const lng = Number(filters.lng);
@@ -49,6 +50,7 @@ async function search(filters) {
         values.push(lat - latDiff, lat + latDiff);
         conditions.push(`m.ubicacion_lng BETWEEN $${idx++} AND $${idx++}`);
         values.push(lng - lngDiff, lng + lngDiff);
+        hasLocation = true;
     }
 
     conditions.push('m.disponible = true', 'm.activo = true');
@@ -59,8 +61,18 @@ async function search(filters) {
         price_asc: 'ORDER BY m.precio_por_dia ASC NULLS LAST',
         price_desc: 'ORDER BY m.precio_por_dia DESC NULLS LAST',
         rating: 'ORDER BY m.puntuacion_promedio DESC NULLS LAST, m.total_resenas DESC',
-        distance: 'ORDER BY m.precio_por_dia ASC NULLS LAST'
     };
+    if (hasLocation) {
+        const lat = Number(filters.lat);
+        const lng = Number(filters.lng);
+        values.push(lat, lng);
+        const latIdx = idx;
+        const lngIdx = idx + 1;
+        idx += 2;
+        allowedSorts.distance = `ORDER BY POWER(111.0 * (m.ubicacion_lat - $${latIdx}), 2) + POWER(111.0 * ($${lngIdx} - m.ubicacion_lng) * COS(m.ubicacion_lat / 57.3), 2) ASC NULLS LAST`;
+    } else {
+        allowedSorts.distance = 'ORDER BY m.precio_por_dia ASC NULLS LAST';
+    }
     const orderBy = allowedSorts[filters.sort] || allowedSorts.price_asc;
 
     const { data, total } = await searchRepository.searchWithFilters(whereClause, values, orderBy, size, offset);

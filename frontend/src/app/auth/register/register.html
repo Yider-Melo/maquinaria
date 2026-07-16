@@ -11,43 +11,52 @@
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Nombre</mat-label>
-              <input matInput [(ngModel)]="data.nombre" name="nombre" required placeholder="Juan">
+              <input matInput [(ngModel)]="data.nombre" name="nombre" #nombreRef="ngModel" required minlength="2" placeholder="Juan">
               <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="nombreRef.errors?.['required'] && nombreRef.touched">El nombre es requerido</mat-error>
+              <mat-error *ngIf="nombreRef.errors?.['minlength'] && nombreRef.touched">Mínimo 2 caracteres</mat-error>
             </mat-form-field>
           </div>
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Apellido</mat-label>
-              <input matInput [(ngModel)]="data.apellido" name="apellido" required placeholder="Pérez">
+              <input matInput [(ngModel)]="data.apellido" name="apellido" #apellidoRef="ngModel" required minlength="2" placeholder="Pérez">
+              <mat-error *ngIf="apellidoRef.errors?.['required'] && apellidoRef.touched">El apellido es requerido</mat-error>
+              <mat-error *ngIf="apellidoRef.errors?.['minlength'] && apellidoRef.touched">Mínimo 2 caracteres</mat-error>
             </mat-form-field>
           </div>
         </div>
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Email</mat-label>
-              <input matInput type="email" [(ngModel)]="data.email" name="email" required autocomplete="email" placeholder="tu@email.com">
+              <input matInput type="email" [(ngModel)]="data.email" name="email" #emailRef="ngModel" required email autocomplete="email" placeholder="tu@email.com">
             <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="emailRef.errors?.['required'] && emailRef.touched">El email es requerido</mat-error>
+            <mat-error *ngIf="emailRef.errors?.['email'] && emailRef.touched">El email no tiene un formato válido</mat-error>
           </mat-form-field>
         </div>
         <div class="form-row">
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Contraseña</mat-label>
-              <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="data.password" name="password" required minlength="8" autocomplete="new-password" placeholder="Crea una contraseña" (ngModelChange)="updatePasswordRules()">
+              <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="data.password" name="password" #passwordRef="ngModel" required minlength="8" autocomplete="new-password" placeholder="Crea una contraseña" (ngModelChange)="updatePasswordRules()">
               <mat-icon matPrefix>lock</mat-icon>
               <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
                 <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
+              <mat-error *ngIf="passwordRef.errors?.['required'] && passwordRef.touched">La contraseña es requerida</mat-error>
+              <mat-error *ngIf="passwordRef.errors?.['minlength'] && passwordRef.touched">Mínimo 8 caracteres</mat-error>
             </mat-form-field>
           </div>
           <div class="form-field">
             <mat-form-field appearance="outline" style="width:100%;">
               <mat-label>Confirmar</mat-label>
-              <input matInput [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="data.confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repite la contraseña">
+              <input matInput [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="data.confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repite la contraseña" (ngModelChange)="updatePasswordRules()">
               <mat-icon matPrefix>lock</mat-icon>
               <button mat-icon-button matSuffix type="button" (click)="showConfirmPassword = !showConfirmPassword" [attr.aria-label]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
                 <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
+              <mat-error *ngIf="data.confirmPassword && data.password !== data.confirmPassword">Las contraseñas no coinciden</mat-error>
             </mat-form-field>
           </div>
         </div>
@@ -75,6 +84,9 @@
             </mat-form-field>
           </div>
         </div>
+        <mat-checkbox [(ngModel)]="aceptaTerminos" name="aceptaTerminos" class="terms-checkbox" color="primary">
+          Acepto los <a (click)="openTerminos()">términos y condiciones</a> y las <a (click)="openPoliticas()">políticas de privacidad</a>
+        </mat-checkbox>
         <div class="error-box" *ngIf="error">
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>

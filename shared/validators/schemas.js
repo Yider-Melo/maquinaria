@@ -31,7 +31,9 @@ const schemas = {
             'any.required': 'El apellido es requerido',
             'string.empty': 'El apellido no puede estar vacío'
         }),
-        telefono: Joi.string().max(20).optional(),
+        telefono: Joi.string().max(20).pattern(/^[\d\s\+\(\)\-]{7,20}$/).optional().messages({
+            'string.pattern.base': 'El teléfono solo puede contener dígitos, espacios, +, -, ( y )'
+        }),
         tipo_usuario: Joi.string().valid('propietario', 'arrendatario').required().messages({
             'any.only': 'El tipo de usuario debe ser propietario o arrendatario',
             'any.required': 'El tipo de usuario es requerido'
@@ -88,11 +90,40 @@ const schemas = {
             'number.positive': 'El precio por día debe ser mayor a cero',
             'any.required': 'El precio por día es requerido'
         }),
-        precio_por_hora: Joi.number().positive().optional().messages({
+        precio_por_hora: Joi.number().positive().optional().allow(null).messages({
             'number.positive': 'El precio por hora debe ser mayor a cero'
         }),
-        ubicacion_lat: Joi.number().min(-90).max(90).optional(),
-        ubicacion_lng: Joi.number().min(-180).max(180).optional(),
+        ubicacion_lat: Joi.number().min(-90).max(90).optional().allow(null),
+        ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
+        direccion: Joi.string().max(500).optional(),
+        ciudad: Joi.string().max(100).optional(),
+        departamento: Joi.string().max(100).optional()
+    }),
+
+    maquinariaPatch: Joi.object({
+        titulo: Joi.string().min(3).max(200).optional().messages({
+            'string.min': 'El título debe tener al menos 3 caracteres',
+            'string.empty': 'El título no puede estar vacío'
+        }),
+        descripcion: Joi.string().max(2000).optional(),
+        tipo: Joi.string().max(50).optional().messages({
+            'string.empty': 'El tipo no puede estar vacío'
+        }),
+        marca: Joi.string().max(100).optional(),
+        modelo: Joi.string().max(100).optional(),
+        anio: Joi.number().integer().min(1900).max(2100).optional(),
+        capacidad: Joi.string().max(50).optional(),
+        estado: Joi.string().valid('nuevo', 'excelente', 'bueno', 'regular').optional().messages({
+            'any.only': 'El estado debe ser: nuevo, excelente, bueno o regular'
+        }),
+        precio_por_dia: Joi.number().positive().optional().messages({
+            'number.positive': 'El precio por día debe ser mayor a cero'
+        }),
+        precio_por_hora: Joi.number().positive().optional().allow(null).messages({
+            'number.positive': 'El precio por hora debe ser mayor a cero'
+        }),
+        ubicacion_lat: Joi.number().min(-90).max(90).optional().allow(null),
+        ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
         direccion: Joi.string().max(500).optional(),
         ciudad: Joi.string().max(100).optional(),
         departamento: Joi.string().max(100).optional()
@@ -104,8 +135,15 @@ const schemas = {
             'string.guid': 'El ID de maquinaria no es válido',
             'any.required': 'El ID de maquinaria es requerido'
         }),
-        fecha_inicio: Joi.date().iso().min('now').required().messages({
-            'date.min': 'La fecha de inicio debe ser posterior a hoy',
+        fecha_inicio: Joi.date().iso().min('now').custom((value, helpers) => {
+            const minDate = new Date();
+            minDate.setDate(minDate.getDate() + 2);
+            if (new Date(value) < minDate) {
+                return helpers.error('date.min', { limit: minDate.toISOString().slice(0, 10) });
+            }
+            return value;
+        }).required().messages({
+            'date.min': 'La fecha de inicio debe ser al menos 2 días después de hoy',
             'any.required': 'La fecha de inicio es requerida',
             'date.format': 'La fecha de inicio no tiene un formato válido'
         }),
@@ -141,6 +179,10 @@ const schemas = {
             'number.max': 'La puntuación máxima es 5',
             'any.required': 'La puntuación es requerida'
         }),
+        puntuacion_maquinaria: Joi.number().integer().min(1).max(5).optional().messages({
+            'number.min': 'La puntuación de maquinaria mínima es 1',
+            'number.max': 'La puntuación de maquinaria máxima es 5'
+        }),
         comentario: Joi.string().max(1000).optional()
     }),
 
@@ -160,6 +202,12 @@ const schemas = {
     validateToken: Joi.object({
         token: Joi.string().required().messages({
             'any.required': 'El token es requerido'
+        })
+    }),
+
+    refreshToken: Joi.object({
+        refresh_token: Joi.string().required().messages({
+            'any.required': 'El refresh token es requerido'
         })
     }),
 
@@ -202,10 +250,25 @@ const schemas = {
         motivo: Joi.string().max(500).optional()
     }),
 
+    checkAvailability: Joi.object({
+        machineryId: Joi.string().uuid().required().messages({
+            'string.guid': 'El ID de maquinaria no es válido',
+            'any.required': 'El ID de maquinaria es requerido'
+        }),
+        start: Joi.date().iso().required().messages({
+            'any.required': 'La fecha de inicio es requerida',
+            'date.format': 'La fecha de inicio no tiene un formato válido'
+        }),
+        end: Joi.date().iso().required().messages({
+            'any.required': 'La fecha de fin es requerida',
+            'date.format': 'La fecha de fin no tiene un formato válido'
+        })
+    }),
+
     createImage: Joi.object({
-        url: Joi.string().uri().required().messages({
-            'string.uri': 'La URL de la imagen no es válida',
-            'any.required': 'La URL de la imagen es requerida'
+        url: Joi.string().required().messages({
+            'any.required': 'La URL de la imagen es requerida',
+            'string.empty': 'La URL de la imagen no puede estar vacía'
         })
     }),
 
@@ -226,11 +289,14 @@ const schemas = {
     // Filtros de busqueda de maquinaria
     busqueda: Joi.object({
         q: Joi.string().max(200).optional(),
+        propietario_id: Joi.string().uuid().optional(),
         tipo: Joi.string().max(50).optional(),
         ciudad: Joi.string().max(100).optional(),
         departamento: Joi.string().max(100).optional(),
         minPrice: Joi.number().min(0).optional(),
-        maxPrice: Joi.number().positive().optional(),
+        maxPrice: Joi.number().positive().optional().min(Joi.ref('minPrice')).messages({
+            'number.min': 'El precio máximo no puede ser menor al precio mínimo'
+        }),
         lat: Joi.number().min(-90).max(90).optional(),
         lng: Joi.number().min(-180).max(180).optional(),
         radius: Joi.number().min(1).max(500).optional(),

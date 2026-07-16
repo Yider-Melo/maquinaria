@@ -74,7 +74,7 @@ export class Dashboard implements OnInit {
         
         if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
           this.ownerRequests = results[resultIndex]?.data?.data || [];
-          this.stats.misListados = this.ownerRequests.length;
+          this.stats.misListados = this.ownerRequests.filter((b: any) => ['pendiente', 'confirmada'].includes(b.estado)).length;
           this.ownerIncome = this.ownerRequests
             .filter((b: any) => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
             .reduce((sum: number, b: any) => sum + Number(b.precio_total || 0), 0);

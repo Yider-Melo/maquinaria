@@ -1,18 +1,27 @@
 const { v4: uuidv4 } = require('uuid');
-const { NotFoundError, ForbiddenError, ValidationError } = require('shared');
+const { NotFoundError, ForbiddenError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
 const pagoRepository = require('../repositories/pagoRepository');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (console.warn('⚠️ INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 async function findReservaById(bookingId) {
-    const response = await fetch(`${BOOKING_SERVICE_URL}/internal/${bookingId}`, {
-        headers: { 'x-api-key': INTERNAL_API_KEY }
-    });
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error('No se pudo consultar la reserva');
-    const body = await response.json();
-    return body.data;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`${BOOKING_SERVICE_URL}/internal/${bookingId}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error('No se pudo consultar la reserva');
+        const body = await response.json();
+        return body.data;
+    } catch (err) {
+        if (err.name === 'AbortError') throw new Error('Timeout al consultar la reserva');
+        throw new Error('Error de conexión al servicio de reservas');
+    }
 }
 
 async function createCheckout(bookingId, userId, metodoPago) {
@@ -78,11 +87,14 @@ async function handleWebhook(payload) {
     if (!pagoId) return { message: 'Payload invalido' };
 
     if (action === 'payment.created' || action === 'payment.updated' || action === 'payment') {
-        const pago = await pagoRepository.findByReferenciaPasarela(pagoId);
+        const pago = await pagoRepository.findByReferenciaPasarela(`RENTAMAQ-${pagoId}`);
         if (!pago) return { message: 'Pago no encontrado' };
 
         const nuevoEstado = determinarEstado(payload.data?.status || payload.status);
         await pagoRepository.updateEstado(pago.id, nuevoEstado);
+        try {
+            eventBus.publishEvent(EVENT_TYPES.PAYMENT.UPDATED, { pago_id: pago.id, estado: nuevoEstado, reserva_id: pago.reserva_id });
+        } catch { }
         return { message: 'Webhook procesado', estado: nuevoEstado };
     }
 }
@@ -99,17 +111,19 @@ async function getPaymentsByBooking(bookingId, userId) {
     return await pagoRepository.findByBooking(bookingId, userId);
 }
 
-async function releaseFunds(pagoId) {
+async function releaseFunds(pagoId, userId) {
     const pago = await pagoRepository.findByIdSimple(pagoId);
     if (!pago) throw new NotFoundError('Pago no encontrado');
+    if (pago.propietario_id !== userId) throw new ForbiddenError('Solo el propietario puede liberar fondos');
 
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'liberado');
     return result || { message: 'Pago no encontrado o no está en estado retenido' };
 }
 
-async function refund(pagoId) {
+async function refund(pagoId, userId) {
     const pago = await pagoRepository.findByIdSimple(pagoId);
     if (!pago) throw new NotFoundError('Pago no encontrado');
+    if (pago.usuario_id !== userId && pago.propietario_id !== userId) throw new ForbiddenError('No tienes permiso para reembolsar este pago');
 
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'reembolsado');
     return result || { message: 'Pago no encontrado o no reembolsable' };

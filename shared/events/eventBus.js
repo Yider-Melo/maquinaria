@@ -20,14 +20,22 @@ async function connect(rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localho
 }
 
 async function publishEvent(routingKey, data) {
-    if (!channel) await connect();
-    const message = Buffer.from(JSON.stringify({
-        event: routingKey,
-        data,
-        timestamp: new Date().toISOString(),
-        eventId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    }));
-    channel.publish(EXCHANGE_NAME, routingKey, message, { persistent: true });
+    try {
+        if (!channel) await connect();
+        const message = Buffer.from(JSON.stringify({
+            event: routingKey,
+            data,
+            timestamp: new Date().toISOString(),
+            eventId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }));
+        channel.publish(EXCHANGE_NAME, routingKey, message, { persistent: true });
+    } catch (err) {
+        if (loggerInstance) {
+            loggerInstance.warn('No se pudo publicar evento', { routingKey, error: err.message });
+        } else {
+            console.warn('No se pudo publicar evento:', routingKey, err.message);
+        }
+    }
 }
 
 async function subscribeToEvent(routingKeyPattern, handler, queueName) {

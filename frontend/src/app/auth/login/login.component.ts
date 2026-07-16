@@ -35,8 +35,9 @@ export class Login {
   }
 
   private getAuthError(err: any): string {
-    if (err.status === 0) return 'No se pudo conectar con el servidor. Verifica que Docker esté corriendo.';
+    if (err.status === 0) return 'No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.';
     if (err.status === 401) return 'Correo o contraseña incorrectos.';
+    if (err.status === 403) return err.error?.error?.message || 'Cuenta no verificada. Revisa tu email.';
     if (err.status === 429) return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
     return err.error?.error?.message || err.error?.message || 'No fue posible iniciar sesión.';
   }

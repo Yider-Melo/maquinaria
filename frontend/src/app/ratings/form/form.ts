@@ -8,17 +8,22 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
   styleUrls: ['./form.css']
 })
 export class RatingForm {
-  puntuacion = 5;
-  comentario = '';
+  puntuacion: number;
+  comentario: string;
   hoverRating = -1;
+  calificacionMaquinaria: number;
 
   constructor(
     public dialogRef: MatDialogRef<RatingForm>,
-    @Inject(MAT_DIALOG_DATA) public data: { reserva_id: string; calificado_id: string; maquinaria_id: string }
-  ) {}
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    this.puntuacion = data.puntuacion_existente || 5;
+    this.comentario = data.comentario_existente || '';
+    this.calificacionMaquinaria = data.puntuacion_maquinaria_existente || 5;
+  }
 
   submit(): void {
-    this.dialogRef.close({ puntuacion: this.puntuacion, comentario: this.comentario, ...this.data });
+    this.dialogRef.close({ puntuacion: this.puntuacion, comentario: this.comentario, puntuacion_maquinaria: this.calificacionMaquinaria, ...this.data });
   }
 
   cancel(): void {

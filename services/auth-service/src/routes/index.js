@@ -5,8 +5,8 @@ const { validate, validateParams, uuidParam, validateToken, requireRole, schemas
 
 router.post('/register', validate(schemas.register), authController.register);
 router.post('/login', validate(schemas.login), authController.login);
-router.post('/refresh', authController.refresh);
-router.post('/logout', authController.logout);
+router.post('/refresh', validate(schemas.refreshToken), authController.refresh);
+router.post('/logout', validate(schemas.refreshToken), authController.logout);
 router.post('/logout-all', validateToken, authController.logoutAll);
 router.get('/profile', validateToken, authController.getProfile);
 router.patch('/profile', validateToken, validate(schemas.updateProfile), authController.updateProfile);

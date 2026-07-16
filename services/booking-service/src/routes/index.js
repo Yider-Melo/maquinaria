@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const bookingController = require('../controllers/bookingController');
-const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
+const { validate, validateParams, validateQuery, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
 
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (console.warn('⚠️ INTERNAL_API_KEY no configurada en booking-service. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 function internalAuth(req, res, next) {
     if (req.headers['x-api-key'] !== INTERNAL_API_KEY) {
@@ -13,7 +13,7 @@ function internalAuth(req, res, next) {
 }
 
 router.post('/', validateToken, validate(schemas.reserva), bookingController.create);
-router.get('/check-availability', bookingController.checkAvailability);
+router.get('/check-availability', validateQuery(schemas.checkAvailability), bookingController.checkAvailability);
 router.get('/my-bookings', validateToken, bookingController.getMyBookings);
 router.get('/stats', validateToken, requireRole('admin'), bookingController.adminBookingStats);
 router.get('/recent', validateToken, requireRole('admin'), bookingController.adminRecentBookings);

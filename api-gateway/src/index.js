@@ -21,12 +21,13 @@ process.on('unhandledRejection', (reason) => {
 const app = express();
 app.locals.logger = logger;
 const server = http.createServer(app);
-const io = new Server(server, { 
-  cors: { 
-    origin: process.env.NODE_ENV === 'development' ? '*' : process.env.ALLOWED_ORIGINS?.split(','),
-    methods: ['GET', 'POST'] 
-  }
-});
+let httpsServer = null;
+
+const corsConfig = {
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : (process.env.NODE_ENV === 'development' ? 'http://localhost:4200' : false),
+    methods: ['GET', 'POST']
+};
+const io = new Server(server, { cors: corsConfig });
 
 const PORT = process.env.PORT || 3000;
 
@@ -66,7 +67,7 @@ app.post('/_ws/notify', internalAuth, express.json({ limit: '1mb' }), (req, res)
 });
 
 // Rate limiting aplicado a auth y otras rutas
-app.use('/auth', authLimiter);
+app.use('/api/v1/auth', authLimiter);
 app.use('/', userLimiter);
 app.use('/', routes);
 
@@ -115,7 +116,7 @@ if (isProduction && (!CERT_PATH || !KEY_PATH || !fs.existsSync(CERT_PATH) || !fs
 }
 
 if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)) {
-    const httpsServer = https.createServer({
+    httpsServer = https.createServer({
         cert: fs.readFileSync(CERT_PATH),
         key: fs.readFileSync(KEY_PATH)
     }, app);
@@ -136,12 +137,16 @@ if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)
     });
 }
 
-process.on('SIGTERM', () => {
+function shutdown() {
     logger.info('SIGTERM recibido, cerrando servidor');
-    server.close(() => {
+    const servers = [];
+    if (server) servers.push(server);
+    if (typeof httpsServer !== 'undefined' && httpsServer) servers.push(httpsServer);
+    Promise.all(servers.map(s => new Promise(resolve => s.close(resolve)))).then(() => {
         logger.info('API Gateway cerrado');
         process.exit(0);
     });
-});
+}
+process.on('SIGTERM', shutdown);
 
 module.exports = app;

@@ -1,26 +1,33 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { departamentos as deptos } from '../../shared/colombia-data';
 
 @Component({
   standalone: false,
   selector: 'app-machinery-list', templateUrl: './list.html', styleUrls: ['./list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MachineryList implements OnInit {
+export class MachineryList implements OnInit, OnDestroy {
   items: any[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20; error = '';
   suggestions: string[] = [];
   sugerenciasCorreccion: string[] = [];
+  buscandoUbicacion = false;
+  ubicacionActiva = false;
   filters: any = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
+  private suggestionSubject = new Subject<string>();
+  private suggestionSub: any;
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora'];
-  cities = ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Bucaramanga', 'Cartagena', 'Pereira', 'Cúcuta', 'Ibagué', 'Villavicencio', 'Santa Marta', 'Manizales', 'Pasto', 'Neiva', 'Armenia', 'Sincelejo', 'Popayán', 'Montería', 'Tunja', 'Riohacha'];
-  departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
+  departamentos = deptos;
   sortOptions = [
     { value: 'price_asc', label: 'Menor precio primero' },
     { value: 'price_desc', label: 'Mayor precio primero' },
-    { value: 'rating', label: 'Mejor calificación' }
+    { value: 'rating', label: 'Mejor calificación' },
+    { value: 'distance', label: 'Más cercanos primero' }
   ];
   ciudadesPorDepto: string[] = [];
 
@@ -69,7 +76,20 @@ export class MachineryList implements OnInit {
 
   trackById(_index: number, item: any): string { return item?.id || _index; }
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    this.suggestionSub = this.suggestionSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(q => {
+      if (q.length >= 2) this.loadSuggestions(q);
+      else this.suggestions = [];
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.suggestionSub?.unsubscribe();
+  }
 
   onDepartamentoChange(): void {
     this.filters.ciudad = '';
@@ -118,15 +138,52 @@ export class MachineryList implements OnInit {
     this.search();
   }
 
-  search(): void { this.page = 1; this.load(); }
+  search(): void {
+    if (this.filters.minPrice !== null && this.filters.maxPrice !== null && this.filters.maxPrice < this.filters.minPrice) {
+      this.snackBar.open('El precio máximo no puede ser menor al mínimo.', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    this.page = 1;
+    this.load();
+  }
+  buscarCerca(): void {
+    if (!navigator.geolocation) {
+      this.snackBar.open('La geolocalización no está disponible en este navegador.', 'Cerrar', { duration: 4000 });
+      return;
+    }
+    this.buscandoUbicacion = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.filters.lat = pos.coords.latitude;
+        this.filters.lng = pos.coords.longitude;
+        this.filters.radius = 50;
+        this.filters.sort = 'distance';
+        this.ubicacionActiva = true;
+        this.buscandoUbicacion = false;
+        this.snackBar.open('📍 Mostrando maquinaria cerca de tu ubicación (radio 50km)', 'Cerrar', { duration: 4000 });
+        this.search();
+      },
+      () => {
+        this.buscandoUbicacion = false;
+        this.snackBar.open('No se pudo obtener la ubicación. Verifica los permisos del navegador.', 'Cerrar', { duration: 4000 });
+        this.cdr.markForCheck();
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
   clearFilters(): void {
     this.filters = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
+    this.ciudadesPorDepto = [];
+    this.ubicacionActiva = false;
     this.search();
     this.snackBar.open('Filtros limpiados', 'Cerrar', { duration: 2000 });
   }
-  loadSuggestions(): void {
-    const q = this.filters.q?.trim();
-    if (!q || q.length < 2) { this.suggestions = []; return; }
+  onQueryChange(): void {
+    this.suggestionSubject.next(this.filters.q?.trim() || '');
+  }
+
+  private loadSuggestions(q: string): void {
     this.api.get<string[]>('/search/suggestions', { q }).subscribe({ 
       next: (res) => {
         this.suggestions = res.data || [];

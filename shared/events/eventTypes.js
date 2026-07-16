@@ -27,7 +27,8 @@ const EVENT_TYPES = {
         CONFIRMED: 'payment.confirmed',
         FAILED: 'payment.failed',
         REFUNDED: 'payment.refunded',
-        RELEASED: 'payment.released'
+        RELEASED: 'payment.released',
+        UPDATED: 'payment.updated'
     },
     RATING: {
         CREATED: 'rating.created',

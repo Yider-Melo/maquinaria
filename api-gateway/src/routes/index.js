@@ -27,7 +27,10 @@ function api(path) {
 router.use(api('/auth'), proxyWithTarget(AUTH_SERVICE, { [`^${API_PREFIX}/auth`]: '' }));
 
 router.get(api('/machinery'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
-router.get(api('/machinery/*'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/:id'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/:id/images'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/:id/availability'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/:id/images/:imageId'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.use(api('/machinery'), validateToken, proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 
 router.use(api('/search'), proxyWithTarget(SEARCH_SERVICE, { [`^${API_PREFIX}/search`]: '' }));
@@ -36,6 +39,7 @@ router.get(api('/bookings/check-availability'), proxyWithTarget(BOOKING_SERVICE,
 router.get(api('/bookings/machinery/*'), proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
 router.use(api('/bookings'), validateToken, proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
 
+router.post(api('/payments/webhook'), proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 router.use(api('/payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 
 router.get(api('/ratings/user/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
@@ -45,30 +49,17 @@ router.use(api('/ratings'), validateToken, proxyWithTarget(RATING_SERVICE, { [`^
 
 router.use(api('/notifications'), validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { [`^${API_PREFIX}/notifications`]: '' }));
 
-router.use(api('/admin/payments'), validateToken, requireRole('admin'), createProxyMiddleware({
-    target: PAYMENT_SERVICE,
-    changeOrigin: true,
-    pathRewrite: (path) => path.replace(API_PREFIX, '')
-}));
-router.use(api('/admin/users'), validateToken, requireRole('admin'), createProxyMiddleware({
-    target: AUTH_SERVICE,
-    changeOrigin: true,
-    pathRewrite: (path) => '/users' + path.replace(API_PREFIX, '')
-}));
-router.use(api('/admin/bookings'), validateToken, requireRole('admin'), createProxyMiddleware({
-    target: BOOKING_SERVICE,
-    changeOrigin: true,
-    pathRewrite: (path) => path.replace(API_PREFIX, '')
-}));
-router.use(api('/admin/machinery'), validateToken, requireRole('admin'), createProxyMiddleware({
-    target: MACHINERY_SERVICE,
-    changeOrigin: true,
-    pathRewrite: (path) => path.replace(API_PREFIX, '')
-}));
-router.use(api('/admin/ratings'), validateToken, requireRole('admin'), createProxyMiddleware({
-    target: RATING_SERVICE,
-    changeOrigin: true,
-    pathRewrite: (path) => path.replace(API_PREFIX, '')
-}));
+function adminProxy(target, prefix) {
+    return createProxyMiddleware({
+        target,
+        changeOrigin: true,
+        pathRewrite: (path) => path.replace(API_PREFIX + prefix, '')
+    });
+}
+router.use(api('/admin/payments'), validateToken, requireRole('admin'), adminProxy(PAYMENT_SERVICE, '/admin/payments'));
+router.use(api('/admin/users'), validateToken, requireRole('admin'), adminProxy(AUTH_SERVICE, '/admin/users'));
+router.use(api('/admin/bookings'), validateToken, requireRole('admin'), adminProxy(BOOKING_SERVICE, '/admin/bookings'));
+router.use(api('/admin/machinery'), validateToken, requireRole('admin'), adminProxy(MACHINERY_SERVICE, '/admin/machinery'));
+router.use(api('/admin/ratings'), validateToken, requireRole('admin'), adminProxy(RATING_SERVICE, '/admin/ratings'));
 
 module.exports = router;

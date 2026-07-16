@@ -21,9 +21,9 @@
             </div>
             <div class="booking-details">
               <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
-              <div><strong>Precio:</strong> ${{ (b.maquinaria_precio || b.precio_total || 0) | number }}</div>
+              <div><strong>Precio unitario:</strong> ${{ (b.maquinaria_precio || b.precio_unitario || 0) | number }}<small> {{ b.modalidad_label || 'por día' }}</small></div>
+              <div><strong>Total estimado:</strong> ${{ b.precio_total | number }}</div>
               <div><strong>Fechas:</strong> {{ getBookingDateLabel(b) }}</div>
-              <div><strong>Horario:</strong> {{ getBookingTimeLabel(b) }}</div>
             </div>
           </mat-card-content>
           <mat-card-actions (click)="$event.stopPropagation()">
@@ -31,7 +31,7 @@
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
             <button mat-button color="primary" (click)="payBooking(b)" *ngIf="b.estado==='confirmada'" [disabled]="payingBookingId === b.id">
-              <mat-icon>{{ payingBookingId === b.id ? 'hourglass_top' : 'payments' }}</mat-icon> {{ payingBookingId === b.id ? 'Procesando...' : 'Pagar demo' }}
+              <mat-icon>{{ payingBookingId === b.id ? 'hourglass_top' : 'payments' }}</mat-icon> {{ payingBookingId === b.id ? 'Procesando...' : 'Pagar (demo)' }}
             </button>
           </mat-card-actions>
         </mat-card>
@@ -72,6 +72,9 @@
             </button>
             <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'">
               <mat-icon>done_all</mat-icon> Completar
+            </button>
+            <button mat-button color="primary" (click)="cobrarBooking(b)" *ngIf="b.estado==='confirmada'">
+              <mat-icon>payments</mat-icon> Cobrar (demo)
             </button>
           </mat-card-actions>
         </mat-card>

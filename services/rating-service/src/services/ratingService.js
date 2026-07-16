@@ -19,7 +19,7 @@ async function create(data, userId) {
     return await calificacionRepository.insert({
         id: uuidv4(), reservaId: data.reserva_id, maquinariaId: data.maquinaria_id,
         calificadorId: userId, calificadoId: data.calificado_id,
-        puntuacion: data.puntuacion, comentario: data.comentario
+        puntuacion: data.puntuacion, puntuacion_maquinaria: data.puntuacion_maquinaria, comentario: data.comentario
     });
 }
 
@@ -59,6 +59,7 @@ async function update(id, data, userId) {
     let idx = 1;
 
     if (data.puntuacion) { fields.push(`puntuacion = $${idx++}`); values.push(data.puntuacion); }
+    if (data.puntuacion_maquinaria !== undefined) { fields.push(`puntuacion_maquinaria = $${idx++}`); values.push(data.puntuacion_maquinaria); }
     if (data.comentario !== undefined) { fields.push(`comentario = $${idx++}`); values.push(data.comentario); }
 
     if (fields.length === 0) return existing;

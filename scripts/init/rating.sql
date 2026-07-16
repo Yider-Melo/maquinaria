@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS calificacion (
     calificador_id UUID NOT NULL,
     calificado_id UUID NOT NULL,
     puntuacion INT NOT NULL CHECK (puntuacion >= 1 AND puntuacion <= 5),
+    puntuacion_maquinaria INT CHECK (puntuacion_maquinaria >= 1 AND puntuacion_maquinaria <= 5),
     comentario TEXT,
     reportado BOOLEAN DEFAULT FALSE,
     motivo_reporte TEXT,

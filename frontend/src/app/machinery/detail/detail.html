@@ -22,7 +22,10 @@
     </div>
     <div class="info">
       <h1>{{ item.titulo }}</h1>
-      <div class="availability-pill"><mat-icon>verified</mat-icon> Disponible para solicitud</div>
+      <div class="availability-pill" [class.unavailable]="item.disponible === false">
+        <mat-icon>{{ item.disponible !== false ? 'verified' : 'block' }}</mat-icon>
+        {{ item.disponible !== false ? 'Disponible para solicitud' : 'No disponible temporalmente' }}
+      </div>
       <p class="type"><mat-icon style="font-size:18px;width:18px;height:18px;">category</mat-icon> {{ item.tipo }} | {{ item.marca }} {{ item.modelo }} ({{ item.anio }})</p>
       <div class="detail-meta">
         <div class="meta-item"><mat-icon>handyman</mat-icon><span>Estado: <strong>{{ item.estado }}</strong></span></div>
@@ -93,11 +96,11 @@
         <div class="booking-fields">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Fecha inicio</mat-label>
-            <input matInput type="date" [(ngModel)]="booking.fecha_inicio" [min]="minDate" (ngModelChange)="resetAvailability()">
+            <input matInput type="date" [(ngModel)]="booking.fecha_inicio" [min]="minDate" (ngModelChange)="onDateInputChange()">
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Fecha fin</mat-label>
-            <input matInput type="date" [(ngModel)]="booking.fecha_fin" [min]="booking.fecha_inicio || minDate" (ngModelChange)="resetAvailability()">
+            <input matInput type="date" [(ngModel)]="booking.fecha_fin" [min]="booking.fecha_inicio || minDate" (ngModelChange)="onDateInputChange()">
           </mat-form-field>
         </div>
         <mat-form-field appearance="outline" class="full" *ngIf="booking.modalidad === 'hora'">
@@ -106,7 +109,9 @@
         </mat-form-field>
         <div class="booking-summary">
           <span>{{ bookingUnits || 0 }} {{ booking.modalidad === 'hora' ? 'hora' : 'día' }}{{ bookingUnits === 1 ? '' : 's' }} x ${{ unitPrice | number }}</span>
-          <strong>${{ estimatedTotal | number }}</strong>
+          <div class="total-row"><span>Subtotal:</span><span>${{ estimatedTotal | number }}</span></div>
+          <div class="total-row"><span>IVA 19%:</span><span>${{ (estimatedTotal * 0.19) | number }}</span></div>
+          <div class="total-row total-final"><strong>Total:</strong><strong>${{ estimatedTotalWithIVA | number }}</strong></div>
         </div>
         <div class="availability-status" *ngIf="availability.checked" [class.available]="availability.disponible" [class.unavailable]="!availability.disponible">
           <mat-icon>{{ availability.disponible ? 'event_available' : 'event_busy' }}</mat-icon><span>{{ availability.message }}</span>
@@ -115,13 +120,32 @@
         <button mat-stroked-button class="availability-btn" [disabled]="checkingAvailability || loading" (click)="checkAvailability()">
           <mat-icon>{{ checkingAvailability ? 'hourglass_top' : 'event_available' }}</mat-icon> {{ checkingAvailability ? 'Verificando...' : 'Verificar disponibilidad' }}
         </button>
-        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading || !availability.checked" (click)="reserve()">
-          <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Reservar ahora' }}
+        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading || !availability.checked || (booking.modalidad === 'hora' && !item.precio_por_hora)" (click)="reserve()">
+          <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Solicitar reserva' }}
         </button>
         <p class="booking-hint" *ngIf="!availability.checked"><mat-icon>info</mat-icon> Verifique disponibilidad primero</p>
         <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>
       </div>
+      <div class="bookings-section" *ngIf="isOwner() && machineBookings.length > 0">
+        <h3><mat-icon>book_online</mat-icon> Reservas de este equipo</h3>
+        <div class="booking-chip" *ngFor="let r of machineBookings">
+          {{ r.fecha_inicio }} → {{ r.fecha_fin }} <span class="status-badge mini" [class]="r.estado">{{ estadoLabel(r.estado) }}</span>
+        </div>
+        <button mat-button color="accent" [routerLink]="['/bookings']">Ver todas las reservas</button>
+      </div>
+      <div class="ratings-section" *ngIf="ratings.length > 0">
+        <h3><mat-icon>star</mat-icon> Calificaciones ({{ ratingCount }})</h3>
+        <div class="rating-average" *ngIf="ratingAverage > 0">★ {{ ratingAverage | number:'1.1-1' }} promedio</div>
+        <div class="rating-card" *ngFor="let r of ratings">
+          <div class="rating-stars">★ {{ r.puntuacion }}/5</div>
+          <p *ngIf="r.comentario" class="rating-comment">"{{ r.comentario }}"</p>
+          <small>{{ r.creado_en | date:'shortDate' }}</small>
+        </div>
+      </div>
       <div class="actions" *ngIf="auth.isLoggedIn()">
+        <button *ngIf="isOwner()" mat-stroked-button [color]="item.disponible !== false ? 'primary' : 'warn'" (click)="toggleDisponible()">
+          <mat-icon>{{ item.disponible !== false ? 'toggle_on' : 'toggle_off' }}</mat-icon> {{ item.disponible !== false ? 'Disponible' : 'No disponible' }}
+        </button>
         <button *ngIf="isOwner()" mat-raised-button color="accent" [routerLink]="['/machinery', item.id, 'edit']">
           <mat-icon>edit</mat-icon> Editar
         </button>

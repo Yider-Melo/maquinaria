@@ -30,7 +30,7 @@ async function insert({ id, bookingId, userId, propietarioId, monto, metodoPago,
 
 async function findByReferenciaPasarela(referencia) {
     const result = await pool.query(
-        'SELECT id, estado FROM pago WHERE referencia_pasarela = $1',
+        'SELECT id, estado, reserva_id FROM pago WHERE referencia_pasarela = $1',
         [referencia]
     );
     return result.rows[0] || null;
@@ -63,7 +63,7 @@ async function findByBooking(bookingId, userId) {
 }
 
 async function findByIdSimple(pagoId) {
-    const result = await pool.query('SELECT usuario_id FROM pago WHERE id = $1', [pagoId]);
+    const result = await pool.query('SELECT usuario_id, propietario_id FROM pago WHERE id = $1', [pagoId]);
     return result.rows[0] || null;
 }
 

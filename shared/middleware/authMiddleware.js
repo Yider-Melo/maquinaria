@@ -3,10 +3,11 @@ const { UnauthorizedError, ForbiddenError } = require('../errors/AppError');
 
 function getJwtSecret() {
     const secret = process.env.JWT_SECRET;
-    if (!secret && process.env.NODE_ENV === 'production') {
-        throw new Error('JWT_SECRET no configurado');
+    if (!secret) {
+        console.warn('⚠️ JWT_SECRET no configurado. Usando secreto por defecto (inseguro). Configura JWT_SECRET en producción.');
+        return 'rentamaq-secret-key-dev';
     }
-    return secret || 'rentamaq-secret-key-dev';
+    return secret;
 }
 
 // Valida que la request tenga un Bearer token valido.

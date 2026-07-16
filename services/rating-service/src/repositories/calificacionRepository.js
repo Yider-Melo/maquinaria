@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 const CALIFICACION_COLUMNS = `id, reserva_id, maquinaria_id, calificador_id, calificado_id,
-    puntuacion, comentario, activo, reportado, motivo_reporte, creado_en, actualizado_en`;
+    puntuacion, puntuacion_maquinaria, comentario, activo, reportado, motivo_reporte, creado_en, actualizado_en`;
 
 async function findByReservaAndCalificador(reservaId, calificadorId) {
     const result = await pool.query(
@@ -11,11 +11,11 @@ async function findByReservaAndCalificador(reservaId, calificadorId) {
     return result.rows[0] || null;
 }
 
-async function insert({ id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, comentario }) {
+async function insert({ id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, puntuacion_maquinaria, comentario }) {
     const result = await pool.query(
-        `INSERT INTO calificacion (id, reserva_id, maquinaria_id, calificador_id, calificado_id, puntuacion, comentario)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${CALIFICACION_COLUMNS}`,
-        [id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, comentario]
+        `INSERT INTO calificacion (id, reserva_id, maquinaria_id, calificador_id, calificado_id, puntuacion, puntuacion_maquinaria, comentario)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ${CALIFICACION_COLUMNS}`,
+        [id, reservaId, maquinariaId, calificadorId, calificadoId, puntuacion, puntuacion_maquinaria || null, comentario]
     );
     return result.rows[0];
 }

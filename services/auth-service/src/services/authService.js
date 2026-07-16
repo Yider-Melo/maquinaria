@@ -28,9 +28,9 @@ async function register({ email, password, nombre, apellido, telefono, tipo_usua
     const tokenVerificacion = uuidv4();
     const id = uuidv4();
 
-    await usuarioRepository.insert({ id, email, passwordHash, nombre, apellido, telefono, tipo_usuario, tokenVerificacion });
+    await usuarioRepository.insert({ id, email, passwordHash, nombre, apellido, telefono: telefono || null, tipo_usuario, tokenVerificacion });
 
-    return { id, email, nombre, apellido, tipo_usuario, token_verificacion: tokenVerificacion };
+    return { id, email, nombre, apellido, tipo_usuario };
 }
 
 async function login({ email, password }) {
@@ -82,7 +82,7 @@ async function updateProfile(userId, data) {
 
     if (data.nombre) { fields.push(`nombre = $${idx++}`); values.push(data.nombre); }
     if (data.apellido) { fields.push(`apellido = $${idx++}`); values.push(data.apellido); }
-    if (data.telefono) { fields.push(`telefono = $${idx++}`); values.push(data.telefono); }
+    if (data.telefono !== undefined) { fields.push(`telefono = $${idx++}`); values.push(data.telefono || null); }
     if (data.departamento !== undefined) { fields.push(`departamento = $${idx++}`); values.push(data.departamento); }
     if (data.foto_url) { fields.push(`foto_url = $${idx++}`); values.push(data.foto_url); }
 
@@ -100,7 +100,8 @@ async function changePassword(userId, currentPassword, newPassword) {
     if (!validPassword) throw new UnauthorizedError('Contraseña actual incorrecta');
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await usuarioRepository.updatePassword(userId, passwordHash);
-    return { message: 'Contraseña actualizada correctamente' };
+    await refreshTokenRepository.revokeAllByUser(userId);
+    return { message: 'Contraseña actualizada correctamente. Se han cerrado todas las sesiones activas.' };
 }
 
 async function verifyEmail(userId) {
@@ -137,7 +138,10 @@ async function verify2FA(userId, token) {
 
 async function forgotPassword(email) {
     const user = await usuarioRepository.findIdByEmail(email);
-    if (!user) return { success: true };
+    if (!user) {
+        await new Promise(r => setTimeout(r, Math.random() * 500 + 200));
+        return { success: true };
+    }
 
     const token = uuidv4();
     const expiracion = new Date(Date.now() + 60 * 60 * 1000);

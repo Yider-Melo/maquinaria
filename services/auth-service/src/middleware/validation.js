@@ -66,7 +66,7 @@ const validateRegisterInputs = (req, res, next) => {
   const { email, password, nombre, apellido, telefono } = req.body;
 
   // Validar campos requeridos
-  if (!email || !password || !nombre || !apellido || !telefono) {
+  if (!email || !password || !nombre || !apellido) {
     return res.status(400).json({
       success: false,
       error: { code: 'VALIDATION_ERROR', message: 'Todos los campos son requeridos' }

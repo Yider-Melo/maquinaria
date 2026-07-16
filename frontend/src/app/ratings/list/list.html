@@ -3,7 +3,7 @@
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-tab-group animationDuration="300ms">
       <mat-tab label="Recibidas">
-        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]">
+        <mat-card *ngFor="let r of receivedRatings" class="rating-card" [routerLink]="['/ratings', r.id]">
           <mat-card-content>
             <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
               <ng-container *ngFor="let star of [1,2,3,4,5]">
@@ -12,15 +12,44 @@
             </div>
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
             <div class="rating-details">
+              <div><strong>De:</strong> {{ r.calificador_nombre || 'Usuario' }}</div>
+              <div *ngIf="r.creado_en"><strong>Fecha:</strong> {{ formatDate(r.creado_en) }}</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        <div class="empty-state" *ngIf="receivedRatings.length===0">
+          <mat-icon>star_outline</mat-icon>
+          <p>Sin calificaciones recibidas</p>
+        </div>
+      </mat-tab>
+      <mat-tab label="Escritas por mí">
+        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]">
+          <mat-card-content>
+            <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
+              <ng-container *ngFor="let star of [1,2,3,4,5]">
+                <span class="star" [class.half]="r.puntuacion >= star - 0.5 && r.puntuacion < star" [class.full]="r.puntuacion >= star"></span>
+              </ng-container>
+            </div>
+            <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
+            <div *ngIf="r.puntuacion_maquinaria" class="machinery-rating">Equipo: ★ {{ r.puntuacion_maquinaria }}/5</div>
+            <div class="rating-details">
               <div><strong>Equipo:</strong> {{ r.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
               <div *ngIf="r.reserva_id"><strong>Reserva:</strong> {{ formatId(r.reserva_id, 'ID') }}</div>
               <div *ngIf="r.creado_en"><strong>Fecha:</strong> {{ formatDate(r.creado_en) }}</div>
             </div>
           </mat-card-content>
+          <mat-card-actions *ngIf="r.id">
+            <button mat-button color="primary" (click)="editarRating(r)">
+              <mat-icon>edit</mat-icon> Editar
+            </button>
+            <button mat-button color="warn" (click)="eliminarRating(r.id)">
+              <mat-icon>delete</mat-icon> Eliminar
+            </button>
+          </mat-card-actions>
         </mat-card>
         <div class="empty-state" *ngIf="ratings.length===0">
-          <mat-icon>star_outline</mat-icon>
-          <p>Sin calificaciones recibidas</p>
+          <mat-icon>rate_review</mat-icon>
+          <p>No has escrito ninguna calificación</p>
         </div>
       </mat-tab>
       <mat-tab label="Pendientes por calificar">

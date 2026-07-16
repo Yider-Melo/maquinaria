@@ -5,6 +5,7 @@ import { Auth } from '../../core/services/auth.service';
 import { RatingForm } from '../form/form';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
@@ -12,7 +13,7 @@ import { formatDate, formatId, estadoLabel } from '../../shared/utils';
   standalone: false
 })
 export class RatingsList implements OnInit {
-  ratings: any[] = []; completedBookings: any[] = []; loading = true; error = '';
+  ratings: any[] = []; receivedRatings: any[] = []; completedBookings: any[] = []; loading = true; error = '';
 
   constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
@@ -20,19 +21,30 @@ export class RatingsList implements OnInit {
     this.loading = true; this.error = '';
     const userId = this.auth.getUser()?.id;
     if (userId) {
+      const bookingCalls: any[] = [this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: { data: [] } })))];
+      if (this.auth.esTipo('propietario')) {
+        bookingCalls.push(this.api.get<any>('/bookings/my-listings?size=200').pipe(catchError(() => of({ data: { data: [] } }))));
+      }
       forkJoin([
         this.api.get<any>('/ratings/my').pipe(catchError(() => of({ data: [] }))),
-        this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: { data: [] } })))
+        this.api.get<any>('/ratings/user/' + userId).pipe(catchError(() => of({ data: [] }))),
+        ...bookingCalls
       ]).pipe(
         finalize(() => {
           this.loading = false;
           this.cdr.markForCheck();
         })
       ).subscribe({
-        next: ([ratingsRes, bookingsRes]) => {
-          this.ratings = ratingsRes?.data || [];
-          const ratedBookingIds = new Set(this.ratings.map((r: any) => r.reserva_id));
-          this.completedBookings = (bookingsRes?.data?.data || []).filter((b: any) => b.estado === 'completada' && !ratedBookingIds.has(b.id));
+        next: (results: any[]) => {
+          this.ratings = results[0]?.data || [];
+          this.receivedRatings = results[1]?.data || [];
+          const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: any) => r.reserva_id));
+          const asArrendatario = results[2]?.data?.data || [];
+          const asPropietario = results.length > 3 ? results[3]?.data?.data || [] : [];
+          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: any) => b.estado === 'completada' && !ratedBookingIds.has(b.id));
+          this.completedBookings = allCompleted;
+          this.enrichRatings(this.ratings);
+          this.enrichBookingsWithMachinery(this.completedBookings);
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -110,11 +122,41 @@ export class RatingsList implements OnInit {
     return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 
+  editarRating(rating: any): void {
+    const dialogRef = this.dialog.open(RatingForm, {
+      data: {
+        reserva_id: rating.reserva_id,
+        calificado_id: rating.calificado_id || rating.propietario_id,
+        maquinaria_id: rating.maquinaria_id,
+        editando: true,
+        puntuacion_existente: rating.puntuacion,
+        comentario_existente: rating.comentario,
+        puntuacion_maquinaria_existente: rating.puntuacion_maquinaria
+      }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.api.put(`/ratings/${rating.id}`, result).subscribe(() => this.ngOnInit());
+      }
+    });
+  }
+
+  eliminarRating(id: string): void {
+    const dialogRef = this.dialog.open(ConfirmActionDialog, {
+      data: { message: '¿Eliminar esta calificación definitivamente?', warn: true, confirmText: 'Eliminar' }
+    });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) this.api.delete(`/ratings/${id}`).subscribe(() => this.ngOnInit());
+    });
+  }
+
   openRatingDialog(booking: any): void {
+    const userId = this.auth.getUser()?.id;
+    const calificadoId = booking.propietario_id === userId ? booking.arrendatario_id : booking.propietario_id;
     const dialogRef = this.dialog.open(RatingForm, {
       data: {
         reserva_id: booking.id,
-        calificado_id: booking.propietario_id,
+        calificado_id: calificadoId,
         maquinaria_id: booking.maquinaria_id
       }
     });

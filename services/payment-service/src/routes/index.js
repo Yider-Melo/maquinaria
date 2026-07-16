@@ -5,7 +5,15 @@ const { validate, validateParams, uuidParam, validateToken, requireRole, errorHa
 
 router.get('/admin/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
 router.post('/checkout', validateToken, validate(schemas.pago), paymentController.createCheckout);
-router.post('/webhook', paymentController.handleWebhook);
+function webhookAuth(req, res, next) {
+    const signature = req.headers['x-webhook-signature'];
+    const allowedIps = (process.env.WEBHOOK_ALLOWED_IPS || '').split(',');
+    if (allowedIps.length > 0 && allowedIps[0] !== '' && !allowedIps.includes(req.ip)) {
+        return res.status(403).json({ success: false, error: { message: 'Acceso denegado' } });
+    }
+    next();
+}
+router.post('/webhook', webhookAuth, paymentController.handleWebhook);
 router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);
 router.post('/:id/simulate-approval', validateToken, validateParams(uuidParam('id')), paymentController.simulateApproval);

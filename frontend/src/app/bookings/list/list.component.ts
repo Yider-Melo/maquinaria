@@ -1,8 +1,11 @@
 // Componente que lista las reservas del usuario, tanto las que hizo
 // como arrendatario como las que recibió como propietario. Permite
 // cancelar, confirmar, rechazar o completar reservas según el estado.
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Inject } from '@angular/core';
+import { MatDialog, MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
@@ -11,6 +14,33 @@ import { forkJoin, of, timeout } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
+
+@Component({
+  standalone: true,
+  selector: 'app-cancel-dialog',
+  template: `
+    <h2 mat-dialog-title>Cancelar reserva</h2>
+    <mat-dialog-content>
+      <p>¿Estás seguro de cancelar esta reserva? Si ya realizaste el pago, el reembolso se procesará según la política de cancelación.</p>
+      <mat-form-field appearance="outline" style="width:100%;margin-top:12px;">
+        <mat-label>Motivo de cancelación (opcional)</mat-label>
+        <input matInput [(ngModel)]="motivo" placeholder="Ej: Cambié de planes, encontré mejor precio, etc.">
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button [mat-dialog-close]="false">Volver</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="{ motivo: motivo || 'Cancelado por el usuario' }">Sí, cancelar reserva</button>
+    </mat-dialog-actions>
+  `,
+  imports: [MatDialogModule, MatButtonModule, MatInputModule, FormsModule]
+})
+export class CancelDialog {
+  motivo = '';
+  constructor(
+    public dialogRef: MatDialogRef<CancelDialog>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {}
+}
 
 @Component({
   standalone: false,
@@ -146,28 +176,65 @@ export class BookingsList implements OnInit {
   }
 
   cancelBooking(id: string): void {
-    this.confirmAction('¿Estás seguro de cancelar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/cancel`, { motivo: 'Cancelado por el usuario' }).subscribe(() => this.loadBookings());
+    const dialogRef = this.dialog.open(CancelDialog);
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.api.post(`/bookings/${id}/cancel`, { motivo: result.motivo }).subscribe({
+        next: () => {
+          this.snackBar.open('Reserva cancelada correctamente', 'Cerrar', { duration: 3000 });
+          this.loadBookings();
+        },
+        error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al cancelar', 'Cerrar', { duration: 4000 })
+      });
     });
   }
   confirmBooking(id: string): void {
     this.confirmAction('¿Confirmar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/confirm`, {}).subscribe(() => this.loadBookings());
+      if (confirmed) this.api.post(`/bookings/${id}/confirm`, {}).subscribe({
+        next: () => { this.snackBar.open('Reserva confirmada correctamente', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
+        error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al confirmar', 'Cerrar', { duration: 4000 })
+      });
     });
   }
   rejectBooking(id: string): void {
     this.confirmAction('¿Rechazar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/reject`, {}).subscribe(() => this.loadBookings());
+      if (confirmed) this.api.post(`/bookings/${id}/reject`, {}).subscribe({
+        next: () => { this.snackBar.open('Reserva rechazada', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
+        error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al rechazar', 'Cerrar', { duration: 4000 })
+      });
     });
   }
+  cobrarBooking(booking: any): void {
+    this.confirmAction('¿Liberar fondos de esta reserva? (Demo - simulación de cobro)').subscribe(confirmed => {
+      if (!confirmed) return;
+      this.payingBookingId = booking.id;
+      this.api.get<any>(`/payments/booking/${booking.id}`).pipe(
+        finalize(() => this.payingBookingId = null)
+      ).subscribe({
+        next: (res) => {
+          const payments = res.data || [];
+          const pending = payments.find((p: any) => p.estado === 'retenido');
+          if (!pending) { this.snackBar.open('No hay pagos retenidos para liberar', 'Cerrar', { duration: 4000 }); return; }
+          this.api.post(`/payments/${pending.id}/release`, {}).subscribe(() => {
+            this.snackBar.open('Fondos liberados (demo). El pago se ha acreditado al propietario.', 'Cerrar', { duration: 5000 });
+            this.loadBookings();
+          });
+        },
+        error: (err: any) => this.snackBar.open(err.error?.error?.message || 'No se pudo procesar el cobro', 'Cerrar', { duration: 4000 })
+      });
+    });
+  }
+
   completeBooking(id: string): void {
     this.confirmAction('¿Marcar esta reserva como completada?').subscribe(confirmed => {
-      if (confirmed) this.api.put(`/bookings/${id}/complete`, {}).subscribe(() => this.loadBookings());
+      if (confirmed) this.api.post(`/bookings/${id}/complete`, {}).subscribe({
+        next: () => { this.snackBar.open('Reserva completada correctamente', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
+        error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al completar la reserva', 'Cerrar', { duration: 4000 })
+      });
     });
   }
 
   payBooking(booking: any): void {
-    this.confirmAction('¿Procesar pago de esta reserva?').subscribe(confirmed => {
+    this.confirmAction('¿Procesar pago de esta reserva? (Demo - no se realizará un cobro real)').subscribe(confirmed => {
       if (!confirmed) return;
       this.payingBookingId = booking.id;
       this.api.post<any>('/payments/checkout', { reserva_id: booking.id, metodo_pago: 'simulado' }).pipe(
@@ -177,7 +244,8 @@ export class BookingsList implements OnInit {
           const paymentId = res.data?.pago_id;
           if (!paymentId) return;
           this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
-            this.snackBar.open('Pago simulado aprobado. Fondos retenidos hasta completar la reserva.', 'Cerrar', { duration: 4000 });
+            this.snackBar.open('✅ Pago de prueba aprobado (modo demo). En producción se conectará con una pasarela real.', 'Cerrar', { duration: 6000 });
+            this.loadBookings();
           });
         },
         error: (err) => this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 })

@@ -15,14 +15,11 @@ async function createCheckout(req, res, next) {
     } catch (err) { next(err); }
 }
 
-async function handleWebhook(req, res) {
+async function handleWebhook(req, res, next) {
     try {
         const result = await paymentService.handleWebhook(req.body);
         success(res, result);
-    } catch (err) {
-        console.error('Error procesando webhook:', err);
-        res.status(500).json({ success: false, error: { message: 'Error procesando webhook' } });
-    }
+    } catch (err) { next(err); }
 }
 
 async function getPaymentsByBooking(req, res, next) {
@@ -48,14 +45,14 @@ async function simulateApproval(req, res, next) {
 
 async function releaseFunds(req, res, next) {
     try {
-        const result = await paymentService.releaseFunds(req.params.id);
+        const result = await paymentService.releaseFunds(req.params.id, req.user.id);
         success(res, result);
     } catch (err) { next(err); }
 }
 
 async function refund(req, res, next) {
     try {
-        const result = await paymentService.refund(req.params.id);
+        const result = await paymentService.refund(req.params.id, req.user.id);
         success(res, result);
     } catch (err) { next(err); }
 }

@@ -13,11 +13,12 @@ export interface Usuario {
 }
 
 // Interfaz para la respuesta del endpoint de login.
-export interface LoginResponse { token: string; usuario: Usuario; }
+export interface LoginResponse { token: string; refresh_token: string; usuario: Usuario; }
 
 @Injectable({ providedIn: 'root' })
 export class Auth {
   private tokenKey = 'rentamaq_token';
+  private refreshTokenKey = 'rentamaq_refresh_token';
   private userKey = 'rentamaq_user';
   private authState = new BehaviorSubject<boolean>(!!this.getToken());
 
@@ -27,26 +28,37 @@ export class Auth {
   login(email: string, password: string): Observable<any> {
     return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
       tap((res: any) => {
-        if (res.success) {
-          localStorage.setItem(this.tokenKey, res.data.token);
-          localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
-          this.authState.next(true);
+        if (!res.success || !res.data?.token) {
+          throw new Error('Respuesta inválida del servidor');
         }
+        localStorage.setItem(this.tokenKey, res.data.token);
+        if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
+        localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
+        this.authState.next(true);
       })
     );
   }
 
   // Registra un nuevo usuario.
   register(data: any): Observable<any> {
-    return this.api.post('/auth/register', data);
+    return this.api.post('/auth/register', data).pipe(
+      tap((res: any) => {
+        if (!res.success) {
+          throw new Error(res.error?.message || 'Error al registrarse');
+        }
+      })
+    );
   }
 
   // Cierra la sesión eliminando las credenciales almacenadas.
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.userKey);
     this.authState.next(false);
   }
+
+  getRefreshToken(): string | null { return localStorage.getItem(this.refreshTokenKey); }
 
   // Devuelve el token JWT almacenado o null si no hay sesión activa.
   getToken(): string | null { return localStorage.getItem(this.tokenKey); }

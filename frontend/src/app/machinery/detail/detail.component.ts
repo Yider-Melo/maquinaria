@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
+import { estadoLabel } from '../../shared/utils';
 
 interface CalendarDay {
   date: string;
@@ -27,6 +28,8 @@ interface CalendarDay {
 export class MachineryDetail implements OnInit {
   item: any = null; images: any[] = []; loading = true; error = '';
   selectedImage = this.fallbackImage;
+  ratings: any[] = []; ratingAverage = 0; ratingCount = 0; machineBookings: any[] = [];
+  estadoLabel = estadoLabel;
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia', cantidad_horas: 1 };
   bookingLoading = false; checkingAvailability = false;
   availability: { checked: boolean; disponible: boolean; message: string } = { checked: false, disponible: false, message: '' };
@@ -39,6 +42,30 @@ export class MachineryDetail implements OnInit {
   calendarTitle = '';
 
   trackById(_index: number, item: any): string { return item?.id || _index; }
+
+  private loadMachineBookings(): void {
+    if (!this.item?.id || !this.isOwner()) return;
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + 1);
+    this.api.get<any>('/bookings/machinery/' + this.item.id + '/occupied', { start: new Date().toISOString().slice(0, 10), end: endDate.toISOString().slice(0, 10) }).subscribe({
+      next: (res) => {
+        this.machineBookings = res.data?.ranges || [];
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private loadRatings(): void {
+    if (!this.item?.id) return;
+    this.api.get<any>(`/ratings/by-machinery/${this.item.id}`, { size: 10 }).subscribe({
+      next: (res) => {
+        this.ratings = res.data?.data || [];
+        this.ratingAverage = this.item.puntuacion_promedio || 0;
+        this.ratingCount = this.item.total_resenas || 0;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   constructor(
     private route: ActivatedRoute, public router: Router,
@@ -67,6 +94,8 @@ export class MachineryDetail implements OnInit {
         this.selectedImage = this.images[0]?.url || this.fallbackImage;
         this.buildCalendar();
         this.loadOccupiedDates();
+        this.loadRatings();
+        this.loadMachineBookings();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -94,6 +123,7 @@ export class MachineryDetail implements OnInit {
   get bookingUnits(): number { return this.booking.modalidad === 'hora' ? Number(this.booking.cantidad_horas || 0) : this.bookingDays; }
   get unitPrice(): number { return this.booking.modalidad === 'hora' ? Number(this.item?.precio_por_hora || 0) : Number(this.item?.precio_por_dia || 0); }
   get estimatedTotal(): number { return this.bookingUnits * this.unitPrice; }
+  get estimatedTotalWithIVA(): number { return Math.round(this.estimatedTotal * 1.19); }
 
   canGoPrevMonth(): boolean {
     const min = new Date();
@@ -123,6 +153,12 @@ export class MachineryDetail implements OnInit {
       return;
     }
     if (!this.validateBookableRange()) return;
+    const fechaVal = new Date(this.booking.fecha_inicio);
+    const minVal = new Date(this.minDate);
+    if (fechaVal < minVal) {
+      this.error = 'La fecha de inicio debe ser al menos 2 días después de hoy.';
+      return;
+    }
     if (this.booking.modalidad === 'hora' && (!this.item.precio_por_hora || this.booking.cantidad_horas <= 0)) {
       this.error = 'Selecciona una cantidad de horas válida para reservar por hora.';
       return;
@@ -131,29 +167,53 @@ export class MachineryDetail implements OnInit {
       this.error = 'Verifica la disponibilidad antes de enviar la reserva.';
       return;
     }
-    this.bookingLoading = true;
-    this.api.post('/bookings', {
-      maquinaria_id: this.item.id,
-      fecha_inicio: this.booking.fecha_inicio,
-      fecha_fin: this.booking.fecha_fin,
-      modalidad: this.booking.modalidad,
-      cantidad_unidades: this.booking.cantidad_horas
-    }).subscribe({
-      next: () => {
-        this.bookingLoading = false;
-        this.snackBar.open('Solicitud de reserva enviada al propietario.', 'Cerrar', { duration: 3500 });
-        this.router.navigate(['/bookings']);
-      },
-      error: (err) => {
-        this.bookingLoading = false;
-        this.error = err.error?.error?.message || err.error?.message || 'No se pudo crear la reserva.';
+    const total = this.estimatedTotal;
+    const modalidadLabel = this.booking.modalidad === 'hora' ? `${this.booking.cantidad_horas} hora(s)` : `${this.bookingDays} día(s)`;
+    const dialogRef = this.dialog.open(ConfirmActionDialog, {
+      data: {
+        message: `¿Confirmas la reserva por ${modalidadLabel} por $${total.toLocaleString('es-CO')}?`,
+        confirmText: 'Reservar'
       }
+    });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.bookingLoading = true;
+      this.checkAvailability(true);
     });
   }
 
-  checkAvailability(): void {
+  private reserveAfterRecheck(): void {
+    if (!this.availability.disponible) {
+      this.bookingLoading = false;
+      this.error = 'La disponibilidad cambió. Verifica nuevamente las fechas.';
+      this.cdr.detectChanges();
+      return;
+    }
+    this.api.post('/bookings', {
+        maquinaria_id: this.item.id,
+        fecha_inicio: this.booking.fecha_inicio,
+        fecha_fin: this.booking.fecha_fin,
+        modalidad: this.booking.modalidad,
+        cantidad_unidades: this.booking.cantidad_horas
+      }).subscribe({
+        next: () => {
+          this.bookingLoading = false;
+          this.snackBar.open('Solicitud de reserva enviada al propietario.', 'Cerrar', { duration: 3500 });
+          this.router.navigate(['/bookings']);
+        },
+        error: (err) => {
+          this.bookingLoading = false;
+          this.error = err.error?.error?.message || err.error?.message || 'No se pudo crear la reserva.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  checkAvailability(afterConfirm = false): void {
     this.error = '';
-    this.availability = { checked: false, disponible: false, message: '' };
+    if (!afterConfirm) {
+      this.availability = { checked: false, disponible: false, message: '' };
+    }
     if (!this.booking.fecha_inicio || !this.booking.fecha_fin) {
       this.error = 'Selecciona una fecha de inicio y fin para consultar disponibilidad.';
       return;
@@ -188,16 +248,25 @@ export class MachineryDetail implements OnInit {
             : 'No disponible. Hay conflictos con otras reservas en este rango.'
         };
         this.error = '';
+        if (afterConfirm) {
+          this.reserveAfterRecheck();
+        }
       },
       error: () => {
         this.error = 'No se pudo verificar la disponibilidad. Intenta nuevamente.';
+        if (afterConfirm) {
+          this.bookingLoading = false;
+        }
       }
     });
   }
 
-  resetAvailability(): void {
+  onDateInputChange(): void {
     this.availability = { checked: false, disponible: false, message: '' };
     this.markSelectedDays();
+    if (this.booking.fecha_inicio && this.booking.fecha_fin) {
+      this.checkAvailability();
+    }
   }
 
   selectCalendarDate(day: CalendarDay): void {
@@ -214,6 +283,9 @@ export class MachineryDetail implements OnInit {
     this.markSelectedDays();
     this.availability = { checked: false, disponible: false, message: '' };
     this.error = '';
+    if (this.booking.fecha_inicio && this.booking.fecha_fin) {
+      this.checkAvailability();
+    }
   }
 
   private validateBookableRange(): boolean {
@@ -255,11 +327,12 @@ export class MachineryDetail implements OnInit {
       const date = new Date(year, month, d);
       const iso = date.toISOString().slice(0, 10);
       const isToday = iso === today;
+      const isBeforeMin = new Date(iso) < new Date(this.minDate);
       allDays.push({
         date: iso, day: d,
         occupied: this.occupiedDates.has(iso),
         selected: false,
-        past: isToday || iso < this.minDate,
+        past: isToday || isBeforeMin,
         isPadding: false,
         isStart: false,
         isEnd: false,
@@ -316,6 +389,19 @@ export class MachineryDetail implements OnInit {
         day.isEnd = day.date === this.booking.fecha_fin;
       }
     }
+  }
+
+  toggleDisponible(): void {
+    if (!this.item) return;
+    const nuevoEstado = !this.item.disponible;
+    this.api.put(`/machinery/${this.item.id}/availability`, { disponible: nuevoEstado }).subscribe({
+      next: () => {
+        this.item.disponible = nuevoEstado;
+        this.snackBar.open(nuevoEstado ? 'Maquinaria disponible para reservas' : 'Maquinaria marcada como no disponible', 'Cerrar', { duration: 3000 });
+        this.cdr.detectChanges();
+      },
+      error: () => this.snackBar.open('No se pudo actualizar la disponibilidad', 'Cerrar', { duration: 3000 })
+    });
   }
 
   deleteItem(): void {

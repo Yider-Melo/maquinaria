@@ -20,11 +20,12 @@ async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fe
 
 async function findConflictingBookings(machineryId, startDate, endDate, client) {
     const db = client || pool;
+    const lockClause = client ? ' FOR NO KEY UPDATE' : '';
     const result = await db.query(
         `SELECT fecha_inicio, fecha_fin FROM reserva
          WHERE maquinaria_id = $1
            AND estado IN ('pendiente', 'confirmada', 'en_curso')
-           AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)`,
+           AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)${lockClause}`,
         [machineryId, startDate, endDate]
     );
     return result.rows;
@@ -78,8 +79,9 @@ async function updateEstado(id, estado, client) {
     return result.rows[0];
 }
 
-async function cancel(id, motivo) {
-    const result = await pool.query(
+async function cancel(id, motivo, client) {
+    const db = client || pool;
+    const result = await db.query(
         `UPDATE reserva SET estado = 'cancelada', motivo_cancelacion = $2, actualizado_en = CURRENT_TIMESTAMP WHERE id = $1 RETURNING ${RESERVA_COLUMNS}`,
         [id, motivo || 'Cancelado por el usuario']
     );
@@ -112,7 +114,12 @@ async function findRecent(limit) {
 }
 
 async function withTransaction(callback) {
-    const client = await pool.connect();
+    let client;
+    try {
+        client = await pool.connect();
+    } catch (err) {
+        throw new Error('No se pudo conectar a la base de datos');
+    }
     try {
         await client.query('BEGIN');
         const result = await callback(client);
@@ -122,7 +129,7 @@ async function withTransaction(callback) {
         await client.query('ROLLBACK');
         throw err;
     } finally {
-        client.release();
+        if (client) client.release();
     }
 }
 
