@@ -50,6 +50,9 @@ export class Api {
       case 'PUT':
         obs = this.http.put<ApiResponse<T>>(url, options?.body);
         break;
+      case 'PATCH':
+        obs = this.http.patch<ApiResponse<T>>(url, options?.body);
+        break;
       case 'DELETE':
         obs = this.http.delete<ApiResponse<T>>(url);
         break;
@@ -90,6 +93,10 @@ export class Api {
 
   put<T>(path: string, body?: any): Observable<ApiResponse<T>> {
     return this.request<T>('PUT', path, { body });
+  }
+
+  patch<T>(path: string, body?: any): Observable<ApiResponse<T>> {
+    return this.request<T>('PATCH', path, { body });
   }
 
   delete<T>(path: string): Observable<ApiResponse<T>> {

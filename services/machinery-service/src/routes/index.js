@@ -10,9 +10,9 @@ router.get('/stats', validateToken, requireRole('admin'), machineryController.ad
 router.get('/all', validateToken, requireRole('admin'), machineryController.adminAllMachinery);
 router.put('/all/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), machineryController.adminSetMachineryStatus);
 router.get('/:id', validateParams(uuidParam('id')), machineryController.getById);
-router.put('/:id', validateToken, validateParams(uuidParam('id')), validate(schemas.maquinaria), machineryController.update);
+router.put('/:id', validateToken, requireRole('propietario'), validateParams(uuidParam('id')), validate(schemas.maquinaria), machineryController.update);
 router.patch('/:id', validateToken, requireRole('propietario'), validateParams(uuidParam('id')), validate(schemas.maquinariaPatch), machineryController.update);
-router.delete('/:id', validateToken, validateParams(uuidParam('id')), machineryController.remove);
+router.delete('/:id', validateToken, requireRole('propietario'), validateParams(uuidParam('id')), machineryController.remove);
 router.post('/:id/images', validateToken, validateParams(uuidParam('id')), validate(schemas.createImage), machineryController.addImage);
 router.get('/:id/images', validateParams(uuidParam('id')), machineryController.getImages);
 router.delete('/:id/images/:imageId', validateToken, validateParams(uuidParam('id')), machineryController.deleteImage);

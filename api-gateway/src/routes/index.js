@@ -27,10 +27,12 @@ function api(path) {
 router.use(api('/auth'), proxyWithTarget(AUTH_SERVICE, { [`^${API_PREFIX}/auth`]: '' }));
 
 router.get(api('/machinery'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
-router.get(api('/machinery/:id'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/stats'), validateToken, requireRole('admin'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/all'), validateToken, requireRole('admin'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/owner'), validateToken, requireRole('propietario'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.get(api('/machinery/:id/images'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.get(api('/machinery/:id/availability'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
-router.get(api('/machinery/:id/images/:imageId'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/:id'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.use(api('/machinery'), validateToken, proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 
 router.use(api('/search'), proxyWithTarget(SEARCH_SERVICE, { [`^${API_PREFIX}/search`]: '' }));
@@ -42,6 +44,7 @@ router.use(api('/bookings'), validateToken, proxyWithTarget(BOOKING_SERVICE, { [
 router.post(api('/payments/webhook'), proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 router.use(api('/payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 
+router.get(api('/ratings/by-machinery/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 router.get(api('/ratings/user/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 router.get(api('/ratings/machinery/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));
 router.get(api('/ratings'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));

@@ -97,7 +97,8 @@ const schemas = {
         ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
         direccion: Joi.string().max(500).optional(),
         ciudad: Joi.string().max(100).optional(),
-        departamento: Joi.string().max(100).optional()
+        departamento: Joi.string().max(100).optional(),
+        disponible: Joi.boolean().optional()
     }),
 
     maquinariaPatch: Joi.object({
@@ -126,7 +127,8 @@ const schemas = {
         ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
         direccion: Joi.string().max(500).optional(),
         ciudad: Joi.string().max(100).optional(),
-        departamento: Joi.string().max(100).optional()
+        departamento: Joi.string().max(100).optional(),
+        disponible: Joi.boolean().optional()
     }),
 
     // Creacion de reserva

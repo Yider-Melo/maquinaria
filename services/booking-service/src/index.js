@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3004;
 app.locals.logger = logger;
 
 app.use(helmet());
-app.use(cors({ origin: process.env.GATEWAY_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : (process.env.NODE_ENV === 'development' ? ['http://localhost:4200', 'http://127.0.0.1:4200'] : ['http://localhost:3000']), credentials: true }));
 app.use(correlationId);
 app.use(requestLogger);
 app.use(express.json());

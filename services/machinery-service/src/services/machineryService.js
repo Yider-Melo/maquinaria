@@ -40,7 +40,7 @@ async function update(id, data, userId) {
     let idx = 1;
     const allowedFields = ['titulo', 'descripcion', 'tipo', 'marca', 'modelo', 'anio', 'capacidad',
         'estado', 'precio_por_dia', 'precio_por_hora', 'ubicacion_lat', 'ubicacion_lng',
-        'direccion', 'ciudad', 'departamento'];
+        'direccion', 'ciudad', 'departamento', 'disponible'];
 
     for (const field of allowedFields) {
         if (data[field] !== undefined) {

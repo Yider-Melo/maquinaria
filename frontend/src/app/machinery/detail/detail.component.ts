@@ -57,7 +57,7 @@ export class MachineryDetail implements OnInit {
 
   private loadRatings(): void {
     if (!this.item?.id) return;
-    this.api.get<any>(`/ratings/by-machinery/${this.item.id}`, { size: 10 }).subscribe({
+    this.api.get<any>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
       next: (res) => {
         this.ratings = res.data?.data || [];
         this.ratingAverage = this.item.puntuacion_promedio || 0;
@@ -394,7 +394,7 @@ export class MachineryDetail implements OnInit {
   toggleDisponible(): void {
     if (!this.item) return;
     const nuevoEstado = !this.item.disponible;
-    this.api.put(`/machinery/${this.item.id}/availability`, { disponible: nuevoEstado }).subscribe({
+    this.api.patch(`/machinery/${this.item.id}`, { disponible: nuevoEstado }).subscribe({
       next: () => {
         this.item.disponible = nuevoEstado;
         this.snackBar.open(nuevoEstado ? 'Maquinaria disponible para reservas' : 'Maquinaria marcada como no disponible', 'Cerrar', { duration: 3000 });

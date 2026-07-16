@@ -3,7 +3,7 @@ const { ValidationError } = require('../errors/AppError');
 
 function uuidParam(name) {
     return Joi.object({
-        [name]: Joi.string().guid({ version: 'uuidv4' }).required().messages({
+        [name]: Joi.string().uuid().required().messages({
             'string.guid': `El parámetro ${name} no tiene un formato UUID válido`,
             'any.required': `El parámetro ${name} es requerido`
         })
