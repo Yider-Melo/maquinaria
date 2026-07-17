@@ -30,6 +30,7 @@ export class MachineryDetail implements OnInit {
   selectedImage = this.fallbackImage;
   ratings: any[] = []; ratingAverage = 0; ratingCount = 0; machineBookings: any[] = [];
   estadoLabel = estadoLabel;
+  propietarioNombre = '';
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia', cantidad_horas: 1 };
   bookingLoading = false; checkingAvailability = false;
   availability: { checked: boolean; disponible: boolean; message: string } = { checked: false, disponible: false, message: '' };
@@ -92,6 +93,15 @@ export class MachineryDetail implements OnInit {
         this.item = res.data;
         this.images = res.data?.imagenes || [];
         this.selectedImage = this.images[0]?.url || this.fallbackImage;
+        if (this.item?.propietario_id) {
+          this.api.get<any>(`/auth/users/${this.item.propietario_id}`).subscribe({
+            next: (userRes) => {
+              const user = userRes?.data;
+              if (user) this.propietarioNombre = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            },
+            error: () => {}
+          });
+        }
         this.buildCalendar();
         this.loadOccupiedDates();
         this.loadRatings();
@@ -159,7 +169,7 @@ export class MachineryDetail implements OnInit {
     const fechaVal = new Date(this.booking.fecha_inicio);
     const minVal = new Date(this.minDate);
     if (fechaVal < minVal) {
-      this.error = 'La fecha de inicio debe ser al menos 2 días después de hoy.';
+      this.error = 'La fecha de inicio debe ser al menos 1 día después de hoy.';
       return;
     }
     if (this.booking.modalidad === 'hora' && (!this.item.precio_por_hora || this.booking.cantidad_horas <= 0)) {

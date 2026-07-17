@@ -31,6 +31,7 @@
         <div class="meta-item"><mat-icon>handyman</mat-icon><span>Estado: <strong>{{ item.estado }}</strong></span></div>
         <div class="meta-item" *ngIf="item.capacidad"><mat-icon>speed</mat-icon><span>Capacidad: <strong>{{ item.capacidad }}</strong></span></div>
         <div class="meta-item" *ngIf="item.precio_por_hora"><mat-icon>schedule</mat-icon><span>${{ item.precio_por_hora }} <strong>/hora</strong></span></div>
+        <div class="meta-item" *ngIf="propietarioNombre"><mat-icon>person</mat-icon><span>Propietario: <strong>{{ propietarioNombre }}</strong></span></div>
       </div>
       <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
       <p class="location"><mat-icon>location_on</mat-icon> {{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>
@@ -50,7 +51,7 @@
           <ul>
             <li>Selecciona las fechas de inicio y fin en el calendario.</li>
             <li>Los días en <strong>rojo</strong> están ocupados por otra reserva.</li>
-            <li>La fecha de inicio debe ser al menos <strong>2 días después de hoy</strong>.</li>
+            <li>La fecha de inicio debe ser al menos <strong>1 día después de hoy</strong>.</li>
             <li>Debes verificar la disponibilidad antes de reservar.</li>
             <li>El propietario deberá confirmar tu solicitud para que sea válida.</li>
           </ul>

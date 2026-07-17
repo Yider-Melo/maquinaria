@@ -139,13 +139,13 @@ const schemas = {
         }),
         fecha_inicio: Joi.date().iso().min('now').custom((value, helpers) => {
             const minDate = new Date();
-            minDate.setDate(minDate.getDate() + 2);
+            minDate.setDate(minDate.getDate() + 1);
             if (new Date(value) < minDate) {
                 return helpers.error('date.min', { limit: minDate.toISOString().slice(0, 10) });
             }
             return value;
         }).required().messages({
-            'date.min': 'La fecha de inicio debe ser al menos 2 días después de hoy',
+            'date.min': 'La fecha de inicio debe ser al menos 1 día después de hoy',
             'any.required': 'La fecha de inicio es requerida',
             'date.format': 'La fecha de inicio no tiene un formato válido'
         }),

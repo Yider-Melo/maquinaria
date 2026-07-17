@@ -144,6 +144,13 @@ async function adminSetUserStatus(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getUserById(req, res, next) {
+    try {
+        const user = await authService.getProfile(req.params.id);
+        success(res, user);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     register,
     login,
@@ -162,4 +169,5 @@ module.exports = {
     adminListUsers,
     adminUserStats,
     adminSetUserStatus,
+    getUserById,
 };

@@ -17,6 +17,7 @@ router.post('/2fa/verify', validateToken, validate(schemas.verify2FA), authContr
 router.post('/forgot-password', validate(schemas.forgotPassword), authController.forgotPassword);
 router.post('/reset-password', validate(schemas.resetPassword), authController.resetPassword);
 router.post('/validate-token', validate(schemas.validateToken), authController.validateToken);
+router.get('/users/:id', validateParams(uuidParam('id')), authController.getUserById);
 router.get('/users', validateToken, requireRole('admin'), authController.adminListUsers);
 router.get('/users/stats', validateToken, requireRole('admin'), authController.adminUserStats);
 router.put('/users/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), authController.adminSetUserStatus);
