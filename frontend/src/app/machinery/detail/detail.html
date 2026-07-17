@@ -35,7 +35,10 @@
       </div>
       <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
       <p class="location"><mat-icon>location_on</mat-icon> {{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>
-      <p class="desc">{{ item.descripcion }}</p>
+      <div class="desc-box">
+        <div class="desc-header"><mat-icon>description</mat-icon> <span>Descripción</span></div>
+        <p class="desc">{{ item.descripcion }}</p>
+      </div>
       <div class="booking-panel" *ngIf="!isOwner() && (!auth.isLoggedIn() || auth.esTipo('arrendatario'))">
         <h2>Solicitar reserva</h2>
         <mat-form-field appearance="outline" class="full">

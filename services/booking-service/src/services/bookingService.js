@@ -164,7 +164,8 @@ async function getOccupiedDates(machineryId, startDate, endDate) {
     if (!machineryId || !startDate || !endDate) {
         throw new ValidationError('machineryId, start y end son requeridos');
     }
-    const { start, end } = validateDateRange(startDate, endDate);
+    const start = toDateOnly(startDate);
+    const end = toDateOnly(endDate);
     const ranges = await reservaRepository.findOccupiedRanges(machineryId, start, end);
     const dates = new Set();
     for (const range of ranges) {

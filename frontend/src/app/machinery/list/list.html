@@ -68,7 +68,7 @@
       <button mat-raised-button class="search-btn" (click)="search()"><mat-icon>travel_explore</mat-icon> Buscar</button>
       <button mat-button class="clear-btn" (click)="clearFilters()">Limpiar</button>
     </div>
-    <p class="filter-hint">💡 Selecciona una maquinaria para ver disponibilidad por fechas y reservar.</p>
+    <p class="filter-hint" *ngIf="!auth.esTipo('propietario')">💡 Selecciona una maquinaria para ver disponibilidad por fechas y reservar.</p>
   </div>
   <div class="result-summary" *ngIf="!loading && !error" aria-live="polite">
     <span *ngIf="ubicacionActiva" class="location-badge"><mat-icon style="font-size:16px;width:16px;height:16px;">my_location</mat-icon> Cerca de ti · radio 50km</span>

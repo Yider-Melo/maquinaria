@@ -17,7 +17,10 @@
 .info .price { font-size: 34px; font-weight: 900; color: var(--rm-primary-dark); margin: 16px 0; }
 .info .price small { font-size: 16px; font-weight: 400; color: var(--rm-muted); }
 .info .location { color: var(--rm-muted); font-size: 14px; display: flex; align-items: center; gap: 6px; margin: 8px 0; }
-.info .desc { margin: 20px 0; line-height: 1.8; color: var(--rm-ink); font-size: 15px; }
+.desc-box { background: #fffcf5; border: 1px solid #e8dccc; border-radius: 12px; padding: 16px; margin: 20px 0; }
+.desc-header { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: var(--rm-ink); margin-bottom: 8px; }
+.desc-header mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--rm-primary); }
+.desc-box .desc { margin: 0; line-height: 1.8; color: var(--rm-ink); font-size: 15px; }
 .info .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 .info .actions button { border-radius: 8px !important; padding: 6px 24px !important; }
 .detail-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
