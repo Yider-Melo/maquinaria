@@ -8,6 +8,11 @@ async function search(filters) {
     const page = Number(filters.page) || 1;
     const size = Math.min(Number(filters.size) || 20, 100);
 
+    if (filters.propietario_id) {
+        conditions.push(`m.propietario_id = $${idx++}`);
+        values.push(filters.propietario_id);
+    }
+
     if (filters.q) {
         conditions.push(`(m.titulo ILIKE $${idx} OR COALESCE(m.descripcion, '') ILIKE $${idx} OR COALESCE(m.marca, '') ILIKE $${idx} OR COALESCE(m.modelo, '') ILIKE $${idx})`);
         values.push(`%${filters.q.trim()}%`);

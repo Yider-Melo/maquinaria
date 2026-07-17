@@ -49,6 +49,14 @@ export class Dashboard implements OnInit {
         )
       );
     }
+
+    if (this.auth.isLoggedIn()) {
+      calls.push(
+        this.api.get<any>('/notifications/unread-count').pipe(
+          catchError(() => of({ data: { no_leidas: 0 } }))
+        )
+      );
+    }
     
     if (this.auth.esTipo('admin')) {
       calls.push(
@@ -73,24 +81,32 @@ export class Dashboard implements OnInit {
         let resultIndex = 0;
         
         if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
-          this.ownerRequests = results[resultIndex]?.data?.data || [];
+          let r = results[resultIndex]?.data;
+          this.ownerRequests = Array.isArray(r) ? r : (r?.data || []);
           this.stats.misListados = this.ownerRequests.filter((b: any) => ['pendiente', 'confirmada'].includes(b.estado)).length;
           this.ownerIncome = this.ownerRequests
             .filter((b: any) => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
             .reduce((sum: number, b: any) => sum + Number(b.precio_total || 0), 0);
           resultIndex++;
           
-          this.ownerMachines = results[resultIndex]?.data?.data || [];
+          r = results[resultIndex]?.data;
+          this.ownerMachines = Array.isArray(r) ? r : (r?.data || []);
           resultIndex++;
         }
         
         if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
-          this.stats.misReservas = (results[resultIndex]?.data?.data?.length) || 0;
+          const r = results[resultIndex]?.data;
+          this.stats.misReservas = Array.isArray(r) ? r.length : (r?.data?.length || 0);
           resultIndex++;
         }
         
         if (this.auth.esTipo('admin')) {
           this.stats.totalMaquinaria = (results[resultIndex]?.data?.pagination?.total) || 0;
+        }
+        
+        const lastIdx = results.length - 1;
+        if (this.auth.isLoggedIn()) {
+          this.stats.noLeidas = results[lastIdx]?.data?.no_leidas || 0;
         }
         
         this.cdr.markForCheck();
