@@ -2,8 +2,14 @@
 .back-btn { margin-bottom: 16px; border-radius: 8px !important; }
 .detail-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 34px; margin-top: 8px; }
 @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; gap: 24px; } }
-.main-image { border-radius: 22px; overflow: hidden; box-shadow: 0 20px 46px rgba(17,24,39,0.14); background: #111827; }
+.main-image { position: relative; border-radius: 22px; overflow: hidden; box-shadow: 0 20px 46px rgba(17,24,39,0.14); background: #111827; }
 .main-image img { width: 100%; height: 430px; object-fit: cover; display: block; }
+.main-image.no-images img { opacity: 0.6; }
+.nav-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(255,255,255,0.9); color: #333; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all .2s; }
+.nav-btn:hover { background: #fff; transform: translateY(-50%) scale(1.1); box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+.nav-btn mat-icon { font-size: 28px; width: 28px; height: 28px; }
+.nav-prev { left: 12px; }
+.nav-next { right: 12px; }
 .thumbnails { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .thumb { position: relative; border-radius: 8px; overflow: hidden; }
 .thumb img { width: 92px; height: 70px; object-fit: cover; border-radius: 10px; cursor: pointer; transition: transform .2s; border: 2px solid transparent; }

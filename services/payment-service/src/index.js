@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3005;
 app.locals.logger = logger;
 
 app.use(helmet());
-app.use(cors({ origin: process.env.GATEWAY_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(correlationId);
 app.use(requestLogger);
 app.use(express.json());

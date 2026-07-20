@@ -24,10 +24,10 @@ export class MachineryList implements OnInit, OnDestroy {
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora'];
   departamentos = deptos;
   sortOptions = [
-    { value: 'price_asc', label: 'Menor precio primero' },
-    { value: 'price_desc', label: 'Mayor precio primero' },
+    { value: 'price_asc', label: 'Menor precio' },
+    { value: 'price_desc', label: 'Mayor precio' },
     { value: 'rating', label: 'Mejor calificación' },
-    { value: 'distance', label: 'Más cercanos primero' }
+    { value: 'distance', label: 'Más cercanos' }
   ];
   ciudadesPorDepto: string[] = [];
 

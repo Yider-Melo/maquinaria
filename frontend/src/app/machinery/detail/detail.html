@@ -4,8 +4,13 @@
   </button>
   <div class="detail-grid">
     <div class="images-section">
-      <div class="main-image">
+      <div class="main-image" *ngIf="images.length > 0">
+        <button class="nav-btn nav-prev" (click)="prevImage()" *ngIf="images.length > 1" aria-label="Imagen anterior"><mat-icon>chevron_left</mat-icon></button>
         <img [src]="selectedImage || fallbackImage" alt="{{ item.titulo }}" loading="lazy">
+        <button class="nav-btn nav-next" (click)="nextImage()" *ngIf="images.length > 1" aria-label="Imagen siguiente"><mat-icon>chevron_right</mat-icon></button>
+      </div>
+      <div class="main-image no-images" *ngIf="images.length === 0">
+        <img [src]="fallbackImage" alt="{{ item.titulo }}" loading="lazy">
       </div>
       <div class="thumbnails" *ngIf="images.length > 0">
         <div *ngFor="let img of images" class="thumb" [class.active]="selectedImage === img.url">

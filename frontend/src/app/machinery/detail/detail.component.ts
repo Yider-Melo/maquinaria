@@ -44,6 +44,20 @@ export class MachineryDetail implements OnInit {
 
   trackById(_index: number, item: any): string { return item?.id || _index; }
 
+  prevImage(): void {
+    if (this.images.length < 2) return;
+    const idx = this.images.findIndex(i => i.url === this.selectedImage);
+    const prev = (idx - 1 + this.images.length) % this.images.length;
+    this.selectedImage = this.images[prev].url;
+  }
+
+  nextImage(): void {
+    if (this.images.length < 2) return;
+    const idx = this.images.findIndex(i => i.url === this.selectedImage);
+    const next = (idx + 1) % this.images.length;
+    this.selectedImage = this.images[next].url;
+  }
+
   private loadMachineBookings(): void {
     if (!this.item?.id || !this.isOwner()) return;
     const endDate = new Date();

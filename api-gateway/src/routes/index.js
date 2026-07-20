@@ -17,7 +17,11 @@ const NOTIFICATION_SERVICE = process.env.NOTIFICATION_SERVICE_URL || 'http://loc
 const proxyWithTarget = (target, pathRewrite) => createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite
+    pathRewrite,
+    onProxyRes: (proxyRes, req, res) => {
+        proxyRes.headers['access-control-allow-origin'] = req.headers.origin || '*';
+        proxyRes.headers['access-control-allow-credentials'] = 'true';
+    }
 });
 
 function api(path) {
