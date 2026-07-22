@@ -70,10 +70,10 @@
             <button mat-button color="warn" (click)="rejectBooking(b.id)" *ngIf="b.estado==='pendiente'">
               <mat-icon>block</mat-icon> Rechazar
             </button>
-            <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'">
+            <button mat-button color="accent" (click)="completeBooking(b.id)" *ngIf="b.estado==='confirmada'||b.estado==='pagada'">
               <mat-icon>done_all</mat-icon> Completar
             </button>
-            <button mat-button color="primary" (click)="cobrarBooking(b)" *ngIf="b.estado==='confirmada'">
+            <button mat-button color="primary" (click)="cobrarBooking(b)" *ngIf="b.estado==='confirmada'||b.estado==='pagada'">
               <mat-icon>payments</mat-icon> Cobrar (demo)
             </button>
           </mat-card-actions>

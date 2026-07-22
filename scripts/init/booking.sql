@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS reserva (
     cantidad_unidades DECIMAL(10, 2) DEFAULT 1,
     precio_unitario DECIMAL(12, 2),
     precio_total DECIMAL(12, 2) NOT NULL,
-    estado VARCHAR(20) NOT NULL CHECK (estado IN ('pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'rechazada')),
+    estado VARCHAR(20) NOT NULL CHECK (estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso', 'completada', 'cancelada', 'rechazada')),
     motivo_cancelacion TEXT,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP

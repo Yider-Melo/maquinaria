@@ -2,6 +2,9 @@ const { v4: uuidv4 } = require('uuid');
 const { ConflictError, ValidationError, NotFoundError, ForbiddenError } = require('shared');
 const calificacionRepository = require('../repositories/calificacionRepository');
 
+const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
 async function create(data, userId) {
     if (!data.reserva_id || !data.maquinaria_id || !data.calificado_id || !data.puntuacion) {
         throw new ValidationError('reserva_id, maquinaria_id, calificado_id y puntuacion son requeridos');
@@ -14,6 +17,26 @@ async function create(data, userId) {
 
     if (data.calificado_id === userId) {
         throw new ValidationError('No puedes calificarte a ti mismo');
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(`${BOOKING_SERVICE_URL}/internal/${data.reserva_id}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response.status === 404) throw new NotFoundError('Reserva no encontrada');
+        if (!response.ok) throw new Error('Error al verificar la reserva');
+        const body = await response.json();
+        const reserva = body.data;
+        if (reserva.estado !== 'completada') {
+            throw new ValidationError('Solo se pueden calificar reservas completadas');
+        }
+    } catch (err) {
+        if (err instanceof ValidationError || err instanceof NotFoundError) throw err;
+        throw new Error('Error de conexión al servicio de reservas');
     }
 
     return await calificacionRepository.insert({

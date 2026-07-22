@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const routes = require('./routes');
+const pool = require('./db');
 const { eventBus, errorHandler, correlationId, requestLogger } = require('shared');
 const createServiceLogger = require('../../../shared/logger');
 
@@ -37,6 +38,13 @@ app.listen(PORT, async () => {
         logger.info('Conectado a RabbitMQ');
     } catch (err) {
         logger.warn('RabbitMQ no disponible, eventos no se publicarán:', { message: err.message });
+    }
+    try {
+        await pool.query(`ALTER TABLE reserva DROP CONSTRAINT IF EXISTS reserva_estado_check`);
+        await pool.query(`ALTER TABLE reserva ADD CONSTRAINT reserva_estado_check CHECK (estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso', 'completada', 'cancelada', 'rechazada'))`);
+        logger.info('Migración: estado pagada agregado al CHECK de reserva');
+    } catch (err) {
+        logger.warn('No se pudo migrar el CHECK de estado:', { message: err.message });
     }
     logger.info('Booking Service iniciado', { port: PORT });
 });

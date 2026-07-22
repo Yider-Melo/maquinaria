@@ -3,6 +3,7 @@
 .detail-card.cancelada { border-left-color: var(--rm-danger) !important; }
 .detail-card.pendiente { border-left-color: var(--rm-accent) !important; }
 .detail-card.confirmada { border-left-color: var(--rm-primary) !important; }
+.detail-card.pagada { border-left-color: #26a69a !important; }
 .detail-card.completada { border-left-color: var(--rm-success) !important; }
 .detail-card.en_curso { border-left-color: #7b1fa2 !important; }
 .detail-card.rechazada { border-left-color: #9e9e9e !important; }

@@ -3,6 +3,7 @@
 .booking-card.cancelada { border-left-color: var(--rm-danger) !important; background: #fff5f5 !important; }
 .booking-card.pendiente { border-left-color: var(--rm-accent) !important; }
 .booking-card.confirmada { border-left-color: var(--rm-primary) !important; }
+.booking-card.pagada { border-left-color: #26a69a !important; background: #f0faf9 !important; }
 .booking-card.completada { border-left-color: var(--rm-success) !important; }
 .booking-card.en_curso { border-left-color: #7b1fa2 !important; }
 .booking-card.rechazada { border-left-color: #9e9e9e !important; }

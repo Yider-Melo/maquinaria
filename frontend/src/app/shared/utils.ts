@@ -31,7 +31,7 @@ export function estadoLabel(state: string): string {
   const labels: Record<string, string> = {
     pendiente: 'Pendiente', confirmada: 'Aprobada', en_curso: 'En curso',
     completada: 'Finalizada', cancelada: 'Cancelada', rechazada: 'Rechazada',
-    pagado: 'Pagado', pendiente_pago: 'Pendiente de pago', fallido: 'Fallido', reembolsado: 'Reembolsado'
+    pagada: 'Pagada', pagado: 'Pagado', pendiente_pago: 'Pendiente de pago', fallido: 'Fallido', reembolsado: 'Reembolsado'
   };
   return labels[state] || state;
 }

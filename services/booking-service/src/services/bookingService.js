@@ -18,11 +18,11 @@ function todayDateOnly() {
 }
 
 function minStartDate() {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${date.getFullYear()}-${month}-${day}`;
+    const now = new Date();
+    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${date.getUTCFullYear()}-${month}-${day}`;
 }
 
 function validateDateRange(startDate, endDate) {
@@ -33,14 +33,22 @@ function validateDateRange(startDate, endDate) {
     return { start, end };
 }
 
+const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
 async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
+    const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'reserva' };
     try {
-        eventBus.publishEvent(tipo, {
-            usuario_id: userId, tipo, titulo, mensaje,
-            referencia_id: referenciaId, referencia_tipo: 'reserva'
-        });
+        await eventBus.publishEvent(tipo, payload);
     } catch {
-        console.warn('No se pudo enviar notificacion:', tipo);
+        try {
+            await axios.post(`${NOTIFICATION_SERVICE_URL}/internal`, payload, {
+                headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+                timeout: 3000
+            });
+        } catch (err) {
+            console.warn('No se pudo enviar notificacion por HTTP:', tipo, err.message);
+        }
     }
 }
 
@@ -286,7 +294,7 @@ async function complete(id, userId) {
     if (reserva.propietario_id !== userId) {
         throw new ForbiddenError('Solo el propietario puede completar la reserva');
     }
-    if (reserva.estado !== 'confirmada' && reserva.estado !== 'en_curso') {
+    if (reserva.estado !== 'confirmada' && reserva.estado !== 'pagada' && reserva.estado !== 'en_curso') {
         throw new ValidationError('La reserva no se puede completar en su estado actual');
     }
 
@@ -317,6 +325,23 @@ async function complete(id, userId) {
     });
 }
 
+async function markAsPaid(id) {
+    const reserva = await reservaRepository.findById(id);
+    if (!reserva) throw new NotFoundError('Reserva no encontrada');
+    if (reserva.estado !== 'confirmada') {
+        throw new ValidationError('La reserva debe estar confirmada para marcarla como pagada');
+    }
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.updateEstado(id, 'pagada', client);
+        await enviarNotificacion(
+            booking.propietario_id, EVENT_TYPES.PAYMENT.CONFIRMED, booking.id,
+            'Pago recibido',
+            `El arrendatario ha pagado la reserva del ${booking.fecha_inicio} al ${booking.fecha_fin}`
+        );
+        return booking;
+    });
+}
+
 async function adminBookingStats() {
     return await reservaRepository.getAdminStats();
 }
@@ -327,6 +352,6 @@ async function adminRecentBookings(limit = 10) {
 
 module.exports = {
     create, checkAvailability, getOccupiedDates, getById, getInternalById, getByUser, getByOwner,
-    confirm, reject, cancel, complete,
+    confirm, reject, cancel, complete, markAsPaid,
     adminBookingStats, adminRecentBookings
 };

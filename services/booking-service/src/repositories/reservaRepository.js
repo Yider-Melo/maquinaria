@@ -24,7 +24,7 @@ async function findConflictingBookings(machineryId, startDate, endDate, client) 
     const result = await db.query(
         `SELECT fecha_inicio, fecha_fin FROM reserva
          WHERE maquinaria_id = $1
-           AND estado IN ('pendiente', 'confirmada', 'en_curso')
+           AND estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso')
            AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)${lockClause}`,
         [machineryId, startDate, endDate]
     );
