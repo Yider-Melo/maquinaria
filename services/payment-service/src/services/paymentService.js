@@ -134,6 +134,10 @@ async function getPaymentsByBooking(bookingId, userId) {
     return await pagoRepository.findByBooking(bookingId, userId);
 }
 
+async function getMyPayments(userId) {
+    return await pagoRepository.findByUser(userId);
+}
+
 async function releaseFunds(pagoId, userId) {
     const pago = await pagoRepository.findByIdSimple(pagoId);
     if (!pago) throw new NotFoundError('Pago no encontrado');
@@ -158,6 +162,6 @@ async function getDashboard() {
 
 module.exports = {
     createCheckout, handleWebhook, determinarEstado,
-    getPaymentById, getPaymentsByBooking,
+    getPaymentById, getPaymentsByBooking, getMyPayments,
     simulateApproval, releaseFunds, refund, getDashboard
 };

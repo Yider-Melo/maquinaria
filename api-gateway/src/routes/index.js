@@ -46,6 +46,7 @@ router.get(api('/bookings/machinery/*'), proxyWithTarget(BOOKING_SERVICE, { [`^$
 router.use(api('/bookings'), validateToken, proxyWithTarget(BOOKING_SERVICE, { [`^${API_PREFIX}/bookings`]: '' }));
 
 router.post(api('/payments/webhook'), proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
+router.get(api('/payments/my-payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 router.use(api('/payments'), validateToken, proxyWithTarget(PAYMENT_SERVICE, { [`^${API_PREFIX}/payments`]: '' }));
 
 router.get(api('/ratings/by-machinery/*'), proxyWithTarget(RATING_SERVICE, { [`^${API_PREFIX}/ratings`]: '' }));

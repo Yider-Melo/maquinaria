@@ -29,6 +29,13 @@ async function getPaymentsByBooking(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getMyPayments(req, res, next) {
+    try {
+        const payments = await paymentService.getMyPayments(req.user.id);
+        success(res, payments);
+    } catch (err) { next(err); }
+}
+
 async function getPaymentById(req, res, next) {
     try {
         const payment = await paymentService.getPaymentById(req.params.id, req.user.id);
@@ -62,6 +69,7 @@ module.exports = {
     createCheckout,
     handleWebhook,
     getPaymentsByBooking,
+    getMyPayments,
     getPaymentById,
     simulateApproval,
     releaseFunds,

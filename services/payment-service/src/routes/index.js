@@ -21,6 +21,7 @@ function internalAuth(req, res, next) {
     }
     next();
 }
+router.get('/my-payments', validateToken, paymentController.getMyPayments);
 router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);
 router.post('/:id/simulate-approval', validateToken, validateParams(uuidParam('id')), paymentController.simulateApproval);

@@ -62,6 +62,16 @@ async function findByBooking(bookingId, userId) {
     return result.rows;
 }
 
+async function findByUser(userId) {
+    const result = await pool.query(
+        `SELECT ${PAGO_COLUMNS} FROM pago
+         WHERE usuario_id = $1 OR propietario_id = $1
+         ORDER BY creado_en DESC`,
+        [userId]
+    );
+    return result.rows;
+}
+
 async function findByIdSimple(pagoId) {
     const result = await pool.query('SELECT usuario_id, propietario_id FROM pago WHERE id = $1', [pagoId]);
     return result.rows[0] || null;
@@ -93,6 +103,6 @@ async function getDashboard() {
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
     findByReferenciaPasarela, updateEstado,
-    findByIdWithReserva, findByBooking, findByIdSimple, updateEstadoWhere,
+    findByIdWithReserva, findByBooking, findByUser, findByIdSimple, updateEstadoWhere,
     getDashboard
 };
