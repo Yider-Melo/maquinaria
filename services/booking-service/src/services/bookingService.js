@@ -291,34 +291,40 @@ async function cancel(id, userId, motivo) {
 
 async function complete(id, userId) {
     const reserva = await getById(id, userId);
-    if (reserva.propietario_id !== userId) {
-        throw new ForbiddenError('Solo el propietario puede completar la reserva');
-    }
-    if (reserva.estado !== 'confirmada' && reserva.estado !== 'pagada' && reserva.estado !== 'en_curso') {
-        throw new ValidationError('La reserva no se puede completar en su estado actual');
-    }
-
-    try {
-        const res = await axios.get(`${process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005'}/booking/${id}`, {
-            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
-            timeout: 3000
-        });
-        const payments = res.data?.data || [];
-        const hasPayment = payments.some((p) => p.estado === 'retenido' || p.estado === 'liberado');
-        if (!hasPayment) {
-            throw new ValidationError('La reserva no tiene un pago aprobado. El arrendatario debe pagar primero.');
-        }
-    } catch (err) {
-        if (err instanceof ValidationError) throw err;
+    if (reserva.estado !== 'pagada' && reserva.estado !== 'en_curso') {
+        throw new ValidationError('La reserva debe estar pagada o en curso para completarse');
     }
 
     return await reservaRepository.withTransaction(async (client) => {
         const booking = await reservaRepository.updateEstado(id, 'completada', client);
 
         await enviarNotificacion(
-            booking.arrendatario_id, EVENT_TYPES.BOOKING.COMPLETED, booking.id,
+            booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
+            EVENT_TYPES.BOOKING.COMPLETED, booking.id,
             'Reserva completada',
             `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido completada. ¡Califica tu experiencia!`
+        );
+
+        return booking;
+    });
+}
+
+async function startRental(id, userId) {
+    const reserva = await getById(id, userId);
+    if (reserva.propietario_id !== userId) {
+        throw new ForbiddenError('Solo el propietario puede iniciar el periodo de alquiler');
+    }
+    if (reserva.estado !== 'pagada') {
+        throw new ValidationError('La reserva debe estar pagada para iniciar el periodo de alquiler');
+    }
+
+    return await reservaRepository.withTransaction(async (client) => {
+        const booking = await reservaRepository.updateEstado(id, 'en_curso', client);
+
+        await enviarNotificacion(
+            booking.arrendatario_id, EVENT_TYPES.BOOKING.STARTED, booking.id,
+            'Alquiler en curso',
+            `El periodo de alquiler del ${booking.fecha_inicio} al ${booking.fecha_fin} ha comenzado`
         );
 
         return booking;
@@ -352,6 +358,6 @@ async function adminRecentBookings(limit = 10) {
 
 module.exports = {
     create, checkAvailability, getOccupiedDates, getById, getInternalById, getByUser, getByOwner,
-    confirm, reject, cancel, complete, markAsPaid,
+    confirm, reject, cancel, startRental, complete, markAsPaid,
     adminBookingStats, adminRecentBookings
 };

@@ -16,6 +16,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 const app = express();
 const PORT = process.env.PORT || 3007;
@@ -39,7 +40,11 @@ function notifyGatewayViaHttp(userId, titulo, mensaje) {
     const body = JSON.stringify({ userId, titulo, mensaje });
     const req = http.request(`${GATEWAY_URL}/_ws/notify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(body),
+            'x-api-key': INTERNAL_API_KEY
+        }
     });
     req.write(body);
     req.end();

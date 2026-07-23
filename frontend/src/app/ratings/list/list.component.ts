@@ -41,7 +41,7 @@ export class RatingsList implements OnInit {
           const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: any) => r.reserva_id));
           const asArrendatario = results[2]?.data?.data || [];
           const asPropietario = results.length > 3 ? results[3]?.data?.data || [] : [];
-          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: any) => b.estado === 'completada' && !ratedBookingIds.has(b.id));
+          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: any) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
           this.completedBookings = allCompleted;
           this.enrichRatings(this.ratings);
           this.enrichBookingsWithMachinery(this.completedBookings);

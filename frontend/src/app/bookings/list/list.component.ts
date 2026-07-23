@@ -62,9 +62,6 @@ export class BookingsList implements OnInit {
   private loadBookings(showLoading = false): void {
     if (showLoading) this.loading = true;
     this.error = '';
-    this.asArrendatario = [];
-    this.asPropietario = [];
-    this.tabIndex = this.auth.esTipo('propietario') ? 1 : 0;
 
     const calls: any[] = [
       this.api.get<any>('/bookings/my-bookings').pipe(
@@ -98,11 +95,15 @@ export class BookingsList implements OnInit {
         const asArrendatario = Array.isArray(r0) ? r0 : (r0?.data || []);
         const r1 = results[1]?.data;
         const asPropietario = calls.length > 1 ? (Array.isArray(r1) ? r1 : (r1?.data || [])) : [];
+        this.asArrendatario = asArrendatario.map((b: any) => this.attachMachineDetails(b, null));
+        this.asPropietario = asPropietario.map((b: any) => this.attachMachineDetails(b, null));
+        this.cdr.markForCheck();
         this.enrichBookingsWithMachinery(asArrendatario, asPropietario);
       },
       error: (err) => {
         console.error('Error loading bookings:', err);
         this.error = 'No se pudieron cargar las reservas.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -249,13 +250,26 @@ export class BookingsList implements OnInit {
       ).subscribe({
         next: (res) => {
           const paymentId = res.data?.pago_id;
-          if (!paymentId) return;
-          this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
-            this.snackBar.open('✅ Pago de prueba aprobado (modo demo). En producción se conectará con una pasarela real.', 'Cerrar', { duration: 6000 });
-            this.loadBookings();
+          if (!paymentId) {
+            console.error('payBooking: no paymentId in response', res);
+            this.snackBar.open('Error: no se obtuvo ID de pago', 'Cerrar', { duration: 4000 });
+            return;
+          }
+          this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe({
+            next: () => {
+              this.snackBar.open('✅ Pago de prueba aprobado.', 'Cerrar', { duration: 6000 });
+              this.loadBookings();
+            },
+            error: (err2) => {
+              console.error('simulate-approval failed', err2);
+              this.snackBar.open('Error al aprobar el pago: ' + (err2.error?.error?.message || err2.message), 'Cerrar', { duration: 6000 });
+            }
           });
         },
-        error: (err) => this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 })
+        error: (err) => {
+          console.error('checkout failed', err);
+          this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 });
+        }
       });
     });
   }

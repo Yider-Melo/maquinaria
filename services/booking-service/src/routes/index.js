@@ -25,6 +25,7 @@ router.get('/:id', validateToken, validateParams(uuidParam('id')), bookingContro
 router.post('/:id/confirm', validateToken, validateParams(uuidParam('id')), bookingController.confirm);
 router.post('/:id/reject', validateToken, validateParams(uuidParam('id')), bookingController.reject);
 router.post('/:id/cancel', validateToken, validateParams(uuidParam('id')), validate(schemas.cancelBooking), bookingController.cancel);
+router.post('/:id/start', validateToken, validateParams(uuidParam('id')), bookingController.startRental);
 router.post('/:id/complete', validateToken, validateParams(uuidParam('id')), bookingController.complete);
 
 router.use(errorHandler);

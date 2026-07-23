@@ -15,6 +15,7 @@ const { requestLogger } = require('./middleware/requestLogger');
 const { schemas } = require('./validators/schemas');
 const eventBus = require('./events/eventBus');
 const EVENT_TYPES = require('./events/eventTypes');
+const { buildPool } = require('./config/db');
 
 module.exports = {
     AppError, NotFoundError, ValidationError,
@@ -28,5 +29,6 @@ module.exports = {
     schemas,
     eventBus,
     EVENT_TYPES,
+    buildPool,
     setEventBusLogger: eventBus.setLogger
 };

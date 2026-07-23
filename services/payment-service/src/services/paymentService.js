@@ -1,26 +1,29 @@
 const { v4: uuidv4 } = require('uuid');
 const { NotFoundError, ForbiddenError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
 const pagoRepository = require('../repositories/pagoRepository');
+const createServiceLogger = require('../../../../shared/logger');
+
+const logger = createServiceLogger('payment-service');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (console.warn('⚠️ INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 async function markBookingAsPaid(bookingId) {
     const url = `${BOOKING_SERVICE_URL}/internal/${bookingId}/mark-paid`;
-    console.log('📤 markBookingAsPaid llamando a:', url);
+    logger.info('markBookingAsPaid llamando a:', { url });
     try {
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' }
         });
         const body = await response.text();
-        console.log('📥 markBookingAsPaid respuesta:', response.status, body);
+        logger.info('markBookingAsPaid respuesta:', { status: response.status, body });
         if (!response.ok) {
-            console.warn('No se pudo marcar reserva como pagada:', response.status, body);
+            logger.warn('No se pudo marcar reserva como pagada:', { status: response.status, body });
         }
     } catch (err) {
-        console.warn('Error al notificar al booking-service:', err.message);
+        logger.warn('Error al notificar al booking-service:', { message: err.message });
     }
 }
 

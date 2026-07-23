@@ -97,6 +97,13 @@ async function markAsPaid(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function startRental(req, res, next) {
+    try {
+        const booking = await bookingService.startRental(req.params.id, req.user.id);
+        success(res, booking);
+    } catch (err) { next(err); }
+}
+
 async function complete(req, res, next) {
     try {
         const booking = await bookingService.complete(req.params.id, req.user.id);
@@ -118,5 +125,6 @@ module.exports = {
     reject,
     cancel,
     markAsPaid,
+    startRental,
     complete,
 };

@@ -21,7 +21,7 @@ function internalAuth(req, res, next) {
     }
     next();
 }
-router.get('/booking/:bookingId', internalAuth, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
+router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);
 router.post('/:id/simulate-approval', validateToken, validateParams(uuidParam('id')), paymentController.simulateApproval);
 router.post('/:id/release', validateToken, requireRole('admin', 'propietario'), validateParams(uuidParam('id')), paymentController.releaseFunds);

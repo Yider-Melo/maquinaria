@@ -18,6 +18,7 @@ const EVENT_TYPES = {
     BOOKING: {
         CREATED: 'booking.created',
         CONFIRMED: 'booking.confirmed',
+        STARTED: 'booking.started',
         CANCELLED: 'booking.cancelled',
         COMPLETED: 'booking.completed',
         REJECTED: 'booking.rejected'

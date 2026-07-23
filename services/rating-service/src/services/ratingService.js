@@ -31,11 +31,14 @@ async function create(data, userId) {
         if (!response.ok) throw new Error('Error al verificar la reserva');
         const body = await response.json();
         const reserva = body.data;
-        if (reserva.estado !== 'completada') {
+        if (reserva.estado !== 'completada' && reserva.estado !== 'pagada') {
             throw new ValidationError('Solo se pueden calificar reservas completadas');
         }
+        if (reserva.arrendatario_id !== userId && reserva.propietario_id !== userId) {
+            throw new ForbiddenError('Solo los participantes de la reserva pueden calificar');
+        }
     } catch (err) {
-        if (err instanceof ValidationError || err instanceof NotFoundError) throw err;
+        if (err instanceof ValidationError || err instanceof NotFoundError || err instanceof ForbiddenError) throw err;
         throw new Error('Error de conexión al servicio de reservas');
     }
 
