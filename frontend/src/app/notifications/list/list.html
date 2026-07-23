@@ -5,16 +5,20 @@
       <mat-icon>done_all</mat-icon> Marcar todas leídas
     </button>
   </div>
+
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" (click)="markAsRead(n.id)">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon *ngIf="!n.leida" style="font-size:18px;width:18px;height:18px;color:#1976d2;vertical-align:middle;margin-right:6px;">circle</mat-icon>
-          {{ n.titulo }}
-        </mat-card-title>
-        <mat-card-subtitle class="notif-time">{{ formatDateTime(n.creado_en) }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content><p>{{ n.mensaje }}</p></mat-card-content>
+      <mat-card-content style="padding:16px;">
+        <div class="notif-header">
+          <mat-icon class="notif-icon" [class]="getIconClase(n.tipo)">{{ getIcon(n.tipo) }}</mat-icon>
+          <div style="flex:1;min-width:0;">
+            <strong [style.color]="n.leida ? '#333' : '#000'">{{ n.titulo }}</strong>
+          </div>
+          <span class="notif-time">{{ formatDateRelative(n.creado_en) }}</span>
+        </div>
+        <p class="notif-mensaje">{{ n.mensaje }}</p>
+        <div class="notif-tipo">{{ getTipoLabel(n.tipo) }}</div>
+      </mat-card-content>
     </mat-card>
     <div class="empty-state" *ngIf="notifications.length===0">
       <mat-icon>notifications_none</mat-icon>

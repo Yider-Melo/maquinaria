@@ -230,6 +230,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
       - BOOKING_SERVICE_URL=http://booking-service:3004
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - MACHINERY_SERVICE_URL=http://machinery-service:3002
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
       - GATEWAY_URL=http://api-gateway:3000
     depends_on:

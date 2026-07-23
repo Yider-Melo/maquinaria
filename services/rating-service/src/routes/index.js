@@ -9,6 +9,7 @@ router.get('/user/:userId/average', validateParams(uuidParam('userId')), ratingC
 router.get('/my', validateToken, ratingController.getMyRatings);
 router.get('/stats', validateToken, requireRole('admin'), ratingController.adminRatingStats);
 router.get('/machinery/:machineryId', validateParams(uuidParam('machineryId')), ratingController.getByMachinery);
+router.get('/:id', validateToken, validateParams(uuidParam('id')), ratingController.getById);
 router.put('/:id', validateToken, validateParams(uuidParam('id')), ratingController.update);
 router.delete('/:id', validateToken, validateParams(uuidParam('id')), ratingController.remove);
 router.post('/:id/report', validateToken, validateParams(uuidParam('id')), ratingController.report);

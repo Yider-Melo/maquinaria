@@ -21,9 +21,9 @@ export class RatingsList implements OnInit {
     this.loading = true; this.error = '';
     const userId = this.auth.getUser()?.id;
     if (userId) {
-      const bookingCalls: any[] = [this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: { data: [] } })))];
+      const bookingCalls: any[] = [this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: [] })))];
       if (this.auth.esTipo('propietario')) {
-        bookingCalls.push(this.api.get<any>('/bookings/my-listings?size=200').pipe(catchError(() => of({ data: { data: [] } }))));
+        bookingCalls.push(this.api.get<any>('/bookings/my-listings?size=200').pipe(catchError(() => of({ data: [] }))));
       }
       forkJoin([
         this.api.get<any>('/ratings/my').pipe(catchError(() => of({ data: [] }))),
@@ -39,8 +39,8 @@ export class RatingsList implements OnInit {
           this.ratings = results[0]?.data || [];
           this.receivedRatings = results[1]?.data || [];
           const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: any) => r.reserva_id));
-          const asArrendatario = results[2]?.data?.data || [];
-          const asPropietario = results.length > 3 ? results[3]?.data?.data || [] : [];
+          const asArrendatario = results[2]?.data || [];
+          const asPropietario = results.length > 3 ? results[3]?.data || [] : [];
           const allCompleted = [...asArrendatario, ...asPropietario].filter((b: any) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
           this.completedBookings = allCompleted;
           this.enrichRatings(this.ratings);
@@ -162,7 +162,8 @@ export class RatingsList implements OnInit {
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.api.post('/ratings', result).subscribe(() => {
+        const { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario } = result;
+        this.api.post('/ratings', { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe(() => {
           this.ngOnInit();
         });
       }

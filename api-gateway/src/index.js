@@ -39,6 +39,16 @@ app.options('*', cors);
 app.use(securityHeaders);
 
 app.use(httpLogger);
+
+const publicPath = '/app/api-gateway/public';
+if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+    app.get('*', (_req, res, next) => {
+        if (_req.path.startsWith('/api/') || _req.path === '/health' || _req.path.startsWith('/_ws/')) return next();
+        res.sendFile(publicPath + '/index.html');
+    });
+}
+
 // No usar body parsers globales aquí porque http-proxy-middleware necesita
 // el stream original del request para reenviar correctamente las peticiones
 // a los microservicios. El parsing se aplica solo a rutas locales que no pasan por proxy.

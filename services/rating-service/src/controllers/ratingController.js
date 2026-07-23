@@ -49,6 +49,13 @@ async function getByMachinery(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getById(req, res, next) {
+    try {
+        const rating = await ratingService.getById(req.params.id);
+        success(res, rating);
+    } catch (err) { next(err); }
+}
+
 async function update(req, res, next) {
     try {
         const rating = await ratingService.update(req.params.id, req.body, req.user.id);
@@ -72,6 +79,7 @@ async function report(req, res, next) {
 
 module.exports = {
     create,
+    getById,
     getByUser,
     getMyRatings,
     getAverage,

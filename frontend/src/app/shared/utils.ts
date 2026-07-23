@@ -1,23 +1,46 @@
-const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+function parseDate(iso: string): Date | null {
+  if (!iso) return null;
+  if (iso.length === 10) return new Date(iso + 'T12:00:00');
+  return new Date(iso);
+}
 
 export function formatDate(iso: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso + (iso.length === 10 ? 'T12:00:00' : ''));
-  return `${d.getDate()} de ${MONTHS[d.getMonth()]}, ${d.getFullYear()}`;
+  const d = parseDate(iso);
+  if (!d) return '—';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export function formatDateShort(iso: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso + (iso.length === 10 ? 'T12:00:00' : ''));
-  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+  const d = parseDate(iso);
+  if (!d) return '—';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
 export function formatDateTime(iso: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso + (iso.length === 10 ? 'T12:00:00' : ''));
+  const d = parseDate(iso);
+  if (!d) return '—';
   const hrs = String(d.getHours()).padStart(2, '0');
   const min = String(d.getMinutes()).padStart(2, '0');
-  return `${d.getDate()} de ${MONTHS[d.getMonth()]}, ${d.getFullYear()} — ${hrs}:${min}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${hrs}:${min}`;
+}
+
+export function formatDateRelative(iso: string): string {
+  if (!iso) return '—';
+  const d = parseDate(iso);
+  if (!d) return '—';
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'ahora';
+  if (diffMin < 60) return `hace ${diffMin} min`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `hace ${diffHr} h`;
+  const diffDays = Math.floor(diffHr / 24);
+  if (diffDays === 1) return 'ayer';
+  if (diffDays < 7) return `hace ${diffDays} días`;
+  return formatDate(iso);
 }
 
 export function formatId(id: string, prefix = ''): string {

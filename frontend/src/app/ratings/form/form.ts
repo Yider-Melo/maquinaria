@@ -11,7 +11,6 @@ export class RatingForm {
   puntuacion: number;
   comentario: string;
   hoverRating = -1;
-  calificacionMaquinaria: number;
 
   constructor(
     public dialogRef: MatDialogRef<RatingForm>,
@@ -19,11 +18,10 @@ export class RatingForm {
   ) {
     this.puntuacion = data.puntuacion_existente || 5;
     this.comentario = data.comentario_existente || '';
-    this.calificacionMaquinaria = data.puntuacion_maquinaria_existente || 5;
   }
 
   submit(): void {
-    this.dialogRef.close({ puntuacion: this.puntuacion, comentario: this.comentario, puntuacion_maquinaria: this.calificacionMaquinaria, ...this.data });
+    this.dialogRef.close({ puntuacion: this.puntuacion, comentario: this.comentario, ...this.data });
   }
 
   cancel(): void {

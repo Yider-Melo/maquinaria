@@ -109,7 +109,7 @@ async function create(data, userId) {
         await enviarNotificacion(
             b.propietario_id, EVENT_TYPES.BOOKING.CREATED, b.id,
             'Nueva solicitud de reserva',
-            `Has recibido una solicitud de reserva del ${b.fecha_inicio} al ${b.fecha_fin}`
+            `Recibiste una nueva solicitud de reserva`
         );
 
         return b;
@@ -240,7 +240,7 @@ async function confirm(id, userId) {
         await enviarNotificacion(
             booking.arrendatario_id, EVENT_TYPES.BOOKING.CONFIRMED, booking.id,
             'Reserva confirmada',
-            `Tu reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido confirmada`
+            `Tu reserva ha sido confirmada por el propietario`
         );
 
         return booking;
@@ -262,7 +262,7 @@ async function reject(id, userId) {
         await enviarNotificacion(
             booking.arrendatario_id, EVENT_TYPES.BOOKING.REJECTED, booking.id,
             'Reserva rechazada',
-            `Tu solicitud de reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido rechazada`
+            `Tu solicitud de reserva ha sido rechazada`
         );
 
         return booking;
@@ -282,7 +282,7 @@ async function cancel(id, userId, motivo) {
             booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
             EVENT_TYPES.BOOKING.CANCELLED, booking.id,
             'Reserva cancelada',
-            `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido cancelada. Motivo: ${booking.motivo_cancelacion}`
+            `La reserva ha sido cancelada. Motivo: ${booking.motivo_cancelacion}`
         );
 
         return booking;
@@ -302,7 +302,7 @@ async function complete(id, userId) {
             booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
             EVENT_TYPES.BOOKING.COMPLETED, booking.id,
             'Reserva completada',
-            `La reserva del ${booking.fecha_inicio} al ${booking.fecha_fin} ha sido completada. ¡Califica tu experiencia!`
+            `La reserva ha sido completada. ¡Califica tu experiencia!`
         );
 
         return booking;
@@ -324,7 +324,7 @@ async function startRental(id, userId) {
         await enviarNotificacion(
             booking.arrendatario_id, EVENT_TYPES.BOOKING.STARTED, booking.id,
             'Alquiler en curso',
-            `El periodo de alquiler del ${booking.fecha_inicio} al ${booking.fecha_fin} ha comenzado`
+            `El periodo de alquiler ha comenzado`
         );
 
         return booking;
@@ -342,7 +342,7 @@ async function markAsPaid(id) {
         await enviarNotificacion(
             booking.propietario_id, EVENT_TYPES.PAYMENT.CONFIRMED, booking.id,
             'Pago recibido',
-            `El arrendatario ha pagado la reserva del ${booking.fecha_inicio} al ${booking.fecha_fin}`
+            `El arrendatario ha pagado la reserva`
         );
         return booking;
     });

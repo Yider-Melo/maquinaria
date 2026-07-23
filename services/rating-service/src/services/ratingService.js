@@ -3,7 +3,63 @@ const { ConflictError, ValidationError, NotFoundError, ForbiddenError } = requir
 const calificacionRepository = require('../repositories/calificacionRepository');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
+async function fetchUser(userId) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(`${AUTH_SERVICE_URL}/users/${userId}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
+        const body = await res.json();
+        const u = body.data;
+        if (!u) return null;
+        return { nombre: u.nombre || '', apellido: u.apellido || '', email: u.email };
+    } catch { return null; }
+}
+
+async function fetchMachinery(machineryId) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(`${MACHINERY_SERVICE_URL}/${machineryId}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
+        const body = await res.json();
+        const m = body.data;
+        return m ? { titulo: m.titulo } : null;
+    } catch { return null; }
+}
+
+async function enrichRating(rating) {
+    if (!rating) return rating;
+    const [calificador, calificado, maquinaria] = await Promise.all([
+        fetchUser(rating.calificador_id),
+        fetchUser(rating.calificado_id),
+        fetchMachinery(rating.maquinaria_id)
+    ]);
+    return {
+        ...rating,
+        calificador_nombre: calificador ? `${calificador.nombre} ${calificador.apellido}`.trim() : null,
+        calificador_email: calificador?.email || null,
+        calificado_nombre: calificado ? `${calificado.nombre} ${calificado.apellido}`.trim() : null,
+        calificado_email: calificado?.email || null,
+        maquinaria_titulo: maquinaria?.titulo || null
+    };
+}
+
+async function enrichRatings(ratings) {
+    return Promise.all(ratings.map(enrichRating));
+}
 
 async function create(data, userId) {
     if (!data.reserva_id || !data.maquinaria_id || !data.calificado_id || !data.puntuacion) {
@@ -52,23 +108,29 @@ async function create(data, userId) {
 async function getByUser(userId, page = 1, size = 20) {
     size = Math.min(size, 100);
     const { data, total } = await calificacionRepository.findByCalificado(userId, page, size);
-    return { data, total, page, size };
+    return { data: await enrichRatings(data), total, page, size };
 }
 
 async function getMyRatings(userId, page = 1, size = 20) {
     size = Math.min(size, 100);
     const { data, total } = await calificacionRepository.findByCalificador(userId, page, size);
-    return { data, total, page, size };
+    return { data: await enrichRatings(data), total, page, size };
 }
 
 async function getByMachinery(machineryId, page = 1, size = 20) {
     size = Math.min(size, 100);
     const { data, total } = await calificacionRepository.findByMaquinaria(machineryId, page, size);
-    return { data, total, page, size };
+    return { data: await enrichRatings(data), total, page, size };
 }
 
 async function getAverage(userId) {
     return await calificacionRepository.getAverage(userId);
+}
+
+async function getById(id) {
+    const rating = await calificacionRepository.findById(id);
+    if (!rating) throw new NotFoundError('Calificación no encontrada');
+    return await enrichRating(rating);
 }
 
 async function update(id, data, userId) {
@@ -119,6 +181,6 @@ async function adminRatingStats() {
 }
 
 module.exports = {
-    create, getByUser, getMyRatings, getByMachinery, getAverage,
+    create, getById, getByUser, getMyRatings, getByMachinery, getAverage,
     update, remove, report, adminRatingStats
 };

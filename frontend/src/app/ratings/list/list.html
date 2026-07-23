@@ -12,7 +12,8 @@
             </div>
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
             <div class="rating-details">
-              <div><strong>De:</strong> {{ r.calificador_nombre || 'Usuario' }}</div>
+              <div><strong>De:</strong> {{ r.calificador_nombre || 'Usuario' }} <span *ngIf="r.calificador_email">({{ r.calificador_email }})</span></div>
+              <div *ngIf="r.maquinaria_titulo"><strong>Equipo:</strong> {{ r.maquinaria_titulo }}</div>
               <div *ngIf="r.creado_en"><strong>Fecha:</strong> {{ formatDate(r.creado_en) }}</div>
             </div>
           </mat-card-content>
@@ -31,8 +32,8 @@
               </ng-container>
             </div>
             <p class="rating-comment">{{ r.comentario || 'Sin comentario' }}</p>
-            <div *ngIf="r.puntuacion_maquinaria" class="machinery-rating">Equipo: ★ {{ r.puntuacion_maquinaria }}/5</div>
             <div class="rating-details">
+              <div><strong>Para:</strong> {{ r.calificado_nombre || 'Usuario' }}</div>
               <div><strong>Equipo:</strong> {{ r.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
               <div *ngIf="r.reserva_id"><strong>Reserva:</strong> {{ formatId(r.reserva_id, 'ID') }}</div>
               <div *ngIf="r.creado_en"><strong>Fecha:</strong> {{ formatDate(r.creado_en) }}</div>
