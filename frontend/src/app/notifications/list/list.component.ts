@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { formatDateTime, formatDateRelative } from '../../shared/utils';
 
@@ -11,7 +12,7 @@ export class NotificationsList implements OnInit {
   formatDateRelative = formatDateRelative;
   notifications: any[] = []; loading = true; error = '';
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loading = true; this.error = '';
@@ -31,6 +32,20 @@ export class NotificationsList implements OnInit {
 
   markAsRead(id: string): void {
     this.api.put(`/notifications/${id}/read`, {}).subscribe(() => { const n = this.notifications.find(x => x.id === id); if (n) n.leida = true; });
+  }
+
+  goToNotification(n: any): void {
+    this.markAsRead(n.id);
+    if (!n.referencia_id || !n.referencia_tipo) return;
+    if (n.referencia_tipo === 'reserva') {
+      this.router.navigate(['/bookings', n.referencia_id]);
+    } else if (n.referencia_tipo === 'calificacion' || n.tipo?.includes('rating')) {
+      this.router.navigate(['/ratings', n.referencia_id]);
+    } else if (n.referencia_tipo === 'pago' || n.tipo?.includes('payment')) {
+      this.router.navigate(['/payments', n.referencia_id]);
+    } else if (n.tipo?.includes('machinery')) {
+      this.router.navigate(['/machinery', n.referencia_id]);
+    }
   }
   markAllAsRead(): void {
     this.api.put('/notifications/read-all', {}).subscribe(() => this.notifications.forEach(n => n.leida = true));

@@ -7,7 +7,7 @@
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" (click)="markAsRead(n.id)">
+    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" (click)="goToNotification(n)">
       <mat-card-content style="padding:16px;">
         <div class="notif-header">
           <mat-icon class="notif-icon" [class]="getIconClase(n.tipo)">{{ getIcon(n.tipo) }}</mat-icon>
