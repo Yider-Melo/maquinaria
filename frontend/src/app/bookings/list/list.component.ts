@@ -211,27 +211,6 @@ export class BookingsList implements OnInit {
       });
     });
   }
-  cobrarBooking(booking: any): void {
-    this.confirmAction('¿Liberar fondos de esta reserva? (Demo - simulación de cobro)').subscribe(confirmed => {
-      if (!confirmed) return;
-      this.payingBookingId = booking.id;
-      this.api.get<any>(`/payments/booking/${booking.id}`).pipe(
-        finalize(() => this.payingBookingId = null)
-      ).subscribe({
-        next: (res) => {
-          const payments = res.data || [];
-          const pending = payments.find((p: any) => p.estado === 'retenido');
-          if (!pending) { this.snackBar.open('No hay pagos retenidos para liberar', 'Cerrar', { duration: 4000 }); return; }
-          this.api.post(`/payments/${pending.id}/release`, {}).subscribe(() => {
-            this.snackBar.open('Fondos liberados (demo). El pago se ha acreditado al propietario.', 'Cerrar', { duration: 5000 });
-            this.loadBookings();
-          });
-        },
-        error: (err: any) => this.snackBar.open(err.error?.error?.message || 'No se pudo procesar el cobro', 'Cerrar', { duration: 4000 })
-      });
-    });
-  }
-
   completeBooking(id: string): void {
     this.confirmAction('¿Marcar esta reserva como completada?').subscribe(confirmed => {
       if (confirmed) this.api.post(`/bookings/${id}/complete`, {}).subscribe({
