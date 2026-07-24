@@ -203,9 +203,9 @@ export class MachineryList implements OnInit, OnDestroy {
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.load(); } }
 
   private cleanFilters(): Record<string, any> {
-    const cleaned = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
-    if (cleaned.ciudad) cleaned.ciudad = this.normalize(cleaned.ciudad);
-    if (cleaned.departamento) cleaned.departamento = this.normalize(cleaned.departamento);
+    const cleaned: Record<string, any> = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
+    if (cleaned['ciudad']) cleaned['ciudad'] = this.normalize(cleaned['ciudad']);
+    if (cleaned['departamento']) cleaned['departamento'] = this.normalize(cleaned['departamento']);
     return cleaned;
   }
 }
