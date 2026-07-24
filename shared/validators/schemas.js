@@ -303,8 +303,8 @@ const schemas = {
         ciudad: Joi.string().max(100).optional(),
         departamento: Joi.string().max(100).optional(),
         minPrice: Joi.number().min(0).optional(),
-        maxPrice: Joi.number().positive().optional().min(Joi.ref('minPrice')).messages({
-            'number.min': 'El precio máximo no puede ser menor al precio mínimo'
+        maxPrice: Joi.number().positive().optional().messages({
+            'number.positive': 'El precio máximo debe ser un número positivo'
         }),
         lat: Joi.number().min(-90).max(90).optional(),
         lng: Joi.number().min(-180).max(180).optional(),

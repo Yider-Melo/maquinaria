@@ -48,12 +48,12 @@
       {{ buscandoUbicacion ? 'Obteniendo ubicación...' : 'Cerca de mí' }}
     </button>
     <mat-form-field appearance="outline">
-      <mat-label>Mín /día</mat-label>
+      <mat-label>Mínimo</mat-label>
       <input matInput type="number" min="0" [(ngModel)]="filters.minPrice" (keyup.enter)="search()" placeholder="0">
       <mat-icon matPrefix>payments</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>Máx /día</mat-label>
+      <mat-label>Máximo</mat-label>
       <input matInput type="number" min="0" [(ngModel)]="filters.maxPrice" (keyup.enter)="search()" placeholder="500000">
       <mat-icon matPrefix>paid</mat-icon>
     </mat-form-field>
