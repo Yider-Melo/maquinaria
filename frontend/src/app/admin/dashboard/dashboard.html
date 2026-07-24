@@ -89,7 +89,7 @@
             <td>{{ b.maquinaria_id?.substring(0, 8) }}...</td>
             <td><span class="status-badge" [class]="b.estado">{{ b.estado }}</span></td>
             <td>${{ b.precio_total | number }}</td>
-            <td>{{ b.creado_en | date:'short' }}</td>
+            <td>{{ b.creado_en | date:'short':'':'es-CO' }}</td>
           </tr>
         </tbody>
       </table>

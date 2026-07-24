@@ -137,11 +137,18 @@ const schemas = {
             'string.guid': 'El ID de maquinaria no es válido',
             'any.required': 'El ID de maquinaria es requerido'
         }),
-        fecha_inicio: Joi.date().iso().min('now').custom((value, helpers) => {
-            const minDate = new Date();
-            minDate.setDate(minDate.getDate() + 1);
-            if (new Date(value) < minDate) {
-                return helpers.error('date.min', { limit: minDate.toISOString().slice(0, 10) });
+        fecha_inicio: Joi.date().iso().custom((value, helpers) => {
+            const now = new Date();
+            const bogota = new Intl.DateTimeFormat('es-CO', {
+                timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).formatToParts(now);
+            const get = (t) => parseInt(bogota.find(p => p.type === t).value, 10);
+            const todayBogota = new Date(get('year'), get('month') - 1, get('day'));
+            const tomorrow = new Date(todayBogota);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const d = new Date(value);
+            if (d < tomorrow) {
+                return helpers.error('date.min', { limit: tomorrow.toISOString().slice(0, 10) });
             }
             return value;
         }).required().messages({

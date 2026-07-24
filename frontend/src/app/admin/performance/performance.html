@@ -127,7 +127,7 @@
                   <td>{{ r.comentario || 'Sin comentario' }}</td>
                   <td>{{ r.calificador_email || r.calificador_id?.substring(0, 8) }}</td>
                   <td>{{ r.motivo_reporte || 'N/A' }}</td>
-                  <td>{{ r.creado_en | date:'short' }}</td>
+                  <td>{{ r.creado_en | date:'short':'':'es-CO' }}</td>
                 </tr>
               </tbody>
             </table>

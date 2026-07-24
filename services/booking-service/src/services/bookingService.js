@@ -6,29 +6,32 @@ const reservaRepository = require('../repositories/reservaRepository');
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
+const TZ = 'America/Bogota';
+
+function datePartsInTZ(date) {
+    const opts = { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const parts = new Intl.DateTimeFormat('es-CO', opts).formatToParts(date);
+    const get = (t) => parseInt(parts.find(p => p.type === t).value, 10);
+    return { year: get('year'), month: String(get('month')).padStart(2, '0'), day: String(get('day')).padStart(2, '0') };
+}
+
+function todayInTZ() {
+    const { year, month, day } = datePartsInTZ(new Date());
+    return `${year}-${month}-${day}`;
+}
+
 function toDateOnly(value) {
     return new Date(value).toISOString().slice(0, 10);
 }
 
-function todayDateOnly() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${now.getFullYear()}-${month}-${day}`;
-}
-
 function minStartDate() {
-    const now = new Date();
-    const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    return `${date.getUTCFullYear()}-${month}-${day}`;
+    return todayInTZ();
 }
 
 function validateDateRange(startDate, endDate) {
     const start = toDateOnly(startDate);
     const end = toDateOnly(endDate);
-    if (start < minStartDate())         throw new ValidationError('La fecha de inicio debe ser al menos 1 día después de hoy');
+    if (start <= minStartDate()) throw new ValidationError('La fecha de inicio debe ser al menos 1 día después de hoy');
     if (end < start) throw new ValidationError('La fecha final no puede ser anterior a la fecha inicial');
     return { start, end };
 }

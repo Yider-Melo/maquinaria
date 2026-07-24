@@ -158,7 +158,7 @@
         <div class="rating-card" *ngFor="let r of ratings">
           <div class="rating-stars">★ {{ r.puntuacion }}/5</div>
           <p *ngIf="r.comentario" class="rating-comment">"{{ r.comentario }}"</p>
-          <small>{{ r.creado_en | date:'shortDate' }}</small>
+          <small>{{ r.creado_en | date:'shortDate':'':'es-CO' }}</small>
         </div>
       </div>
       <div class="actions" *ngIf="auth.isLoggedIn()">

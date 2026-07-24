@@ -1,3 +1,5 @@
+const TZ = 'America/Bogota';
+
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 function parseDate(iso: string): Date | null {
@@ -6,31 +8,60 @@ function parseDate(iso: string): Date | null {
   return new Date(iso);
 }
 
+function formatInTZ(date: Date, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat('es-CO', { ...options, timeZone: TZ }).format(date);
+}
+
+function bogotaNow(): Date {
+  const now = new Date();
+  const bogota = new Intl.DateTimeFormat('es-CO', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).formatToParts(now);
+  const get = (t: string) => parseInt(bogota.find(p => p.type === t)!.value, 10);
+  return new Date(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+}
+
 export function formatDate(iso: string): string {
   const d = parseDate(iso);
   if (!d) return '—';
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  const { day, month, year } = Object.fromEntries(
+    new Intl.DateTimeFormat('es-CO', { timeZone: TZ, day: 'numeric', month: 'numeric', year: 'numeric' })
+      .formatToParts(d).filter(p => p.type !== 'literal').map(p => [p.type, p.value])
+  ) as any;
+  const m = parseInt(month, 10) - 1;
+  return `${parseInt(day, 10)} ${MONTHS[m]} ${year}`;
 }
 
 export function formatDateShort(iso: string): string {
   const d = parseDate(iso);
   if (!d) return '—';
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  const { day, month } = Object.fromEntries(
+    new Intl.DateTimeFormat('es-CO', { timeZone: TZ, day: 'numeric', month: 'numeric' })
+      .formatToParts(d).filter(p => p.type !== 'literal').map(p => [p.type, p.value])
+  ) as any;
+  const m = parseInt(month, 10) - 1;
+  return `${parseInt(day, 10)} ${MONTHS[m]}`;
 }
 
 export function formatDateTime(iso: string): string {
   const d = parseDate(iso);
   if (!d) return '—';
-  const hrs = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${hrs}:${min}`;
+  const parts = new Intl.DateTimeFormat('es-CO', {
+    timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(d);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '';
+  const day = parseInt(get('day'), 10);
+  const m = parseInt(get('month'), 10) - 1;
+  return `${day} ${MONTHS[m]} ${get('year')} ${get('hour')}:${get('minute')}`;
 }
 
 export function formatDateRelative(iso: string): string {
   if (!iso) return '—';
   const d = parseDate(iso);
   if (!d) return '—';
-  const now = new Date();
+  const now = bogotaNow();
   const diffMs = now.getTime() - d.getTime();
   const diffMin = Math.floor(diffMs / 60000);
   if (diffMin < 1) return 'ahora';

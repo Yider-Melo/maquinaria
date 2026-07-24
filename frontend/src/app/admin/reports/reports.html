@@ -38,7 +38,7 @@
     </mat-tab>
     <mat-tab label="Reservas">
       <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
-        <tr *ngFor="let b of recentBookings"><td>{{ b.id?.substring(0,8) }}</td><td>{{ b.maquinaria_id?.substring(0,8) }}</td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date }} - {{ b.fecha_fin | date }}</td></tr>
+        <tr *ngFor="let b of recentBookings"><td>{{ b.id?.substring(0,8) }}</td><td>{{ b.maquinaria_id?.substring(0,8) }}</td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
       </tbody></table>
     </mat-tab>
     <mat-tab label="Pagos">

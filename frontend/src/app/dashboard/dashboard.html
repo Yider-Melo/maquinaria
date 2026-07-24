@@ -74,7 +74,7 @@
           <p class="empty-mini" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada.</p>
         </mat-card-content></mat-card>
         <mat-card><mat-card-header><mat-card-title>Solicitudes destacadas</mat-card-title></mat-card-header><mat-card-content>
-          <div class="compact-row" *ngFor="let b of ownerRequests.slice(0,5)" routerLink="/bookings"><span>{{ b.estado }} · {{ b.fecha_inicio | date }}</span><strong>${{ b.precio_total | number }}</strong></div>
+          <div class="compact-row" *ngFor="let b of ownerRequests.slice(0,5)" routerLink="/bookings"><span>{{ b.estado }} · {{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }}</span><strong>${{ b.precio_total | number }}</strong></div>
           <p class="empty-mini" *ngIf="ownerRequests.length === 0">Sin solicitudes de reserva.</p>
         </mat-card-content></mat-card>
       </div>

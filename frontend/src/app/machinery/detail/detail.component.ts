@@ -179,9 +179,10 @@ export class MachineryDetail implements OnInit {
       return;
     }
     if (!this.validateBookableRange()) return;
-    const fechaVal = new Date(this.booking.fecha_inicio);
-    const minVal = new Date(this.minDate);
-    if (fechaVal < minVal) {
+    const fechaVal = new Date(this.booking.fecha_inicio + 'T12:00:00');
+    const minVal = new Date(this.minDate + 'T12:00:00');
+    minVal.setDate(minVal.getDate() + 1);
+    if (fechaVal <= minVal) {
       this.error = 'La fecha de inicio debe ser al menos 1 día después de hoy.';
       return;
     }

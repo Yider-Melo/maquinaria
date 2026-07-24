@@ -46,7 +46,7 @@
             <td>${{ p.monto | number }}</td>
             <td><span class="status-badge" [class]="p.estado">{{ p.estado }}</span></td>
             <td>{{ p.metodo_pago || 'N/A' }}</td>
-            <td>{{ p.creado_en | date:'short' }}</td>
+            <td>{{ p.creado_en | date:'short':'':'es-CO' }}</td>
           </tr>
         </tbody>
       </table>
