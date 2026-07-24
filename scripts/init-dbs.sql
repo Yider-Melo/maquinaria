@@ -98,6 +98,7 @@ CREATE DATABASE rentamaq_search;
 \c rentamaq_search;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "unaccent";
 
 CREATE TABLE maquinaria (
     id UUID PRIMARY KEY,

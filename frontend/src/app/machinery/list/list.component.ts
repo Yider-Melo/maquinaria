@@ -91,9 +91,13 @@ export class MachineryList implements OnInit, OnDestroy {
     this.suggestionSub?.unsubscribe();
   }
 
+  private normalize(text: string): string {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
   onDepartamentoChange(): void {
     this.filters.ciudad = '';
-    const depto = this.colombiaData.find(d => d.departamento === this.filters.departamento);
+    const depto = this.colombiaData.find(d => this.normalize(d.departamento) === this.normalize(this.filters.departamento));
     this.ciudadesPorDepto = depto ? depto.ciudades : [];
     this.search();
   }
@@ -199,6 +203,9 @@ export class MachineryList implements OnInit, OnDestroy {
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.load(); } }
 
   private cleanFilters(): Record<string, any> {
-    return Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
+    const cleaned = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
+    if (cleaned.ciudad) cleaned.ciudad = this.normalize(cleaned.ciudad);
+    if (cleaned.departamento) cleaned.departamento = this.normalize(cleaned.departamento);
+    return cleaned;
   }
 }

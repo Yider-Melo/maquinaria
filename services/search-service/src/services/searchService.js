@@ -35,12 +35,12 @@ async function search(filters) {
     }
 
     if (filters.ciudad) {
-        conditions.push(`LOWER(m.ciudad) LIKE $${idx++}`);
+        conditions.push(`unaccent(LOWER(m.ciudad)) LIKE unaccent($${idx++})`);
         values.push(`%${filters.ciudad.trim().toLowerCase()}%`);
     }
 
     if (filters.departamento) {
-        conditions.push(`LOWER(m.departamento) = $${idx++}`);
+        conditions.push(`unaccent(LOWER(m.departamento)) = unaccent($${idx++})`);
         values.push(filters.departamento.trim().toLowerCase());
     }
 

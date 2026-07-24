@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "unaccent";
 CREATE TABLE IF NOT EXISTS maquinaria (
     id UUID PRIMARY KEY,
     propietario_id UUID NOT NULL,
