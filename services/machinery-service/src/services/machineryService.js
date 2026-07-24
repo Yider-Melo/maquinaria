@@ -137,9 +137,18 @@ async function adminSetMachineryStatus(id, active) {
     return maquinaria;
 }
 
+async function setDisponible(id, disponible) {
+    const maquinaria = await maquinariaRepository.findActiveById(id);
+    if (!maquinaria) throw new NotFoundError('Maquinaria no encontrada');
+    await maquinariaRepository.update(id, ['disponible = $2'], [disponible]);
+    const updated = await maquinariaRepository.findActiveById(id);
+    eventBus.publishEvent(EVENT_TYPES.MACHINERY.UPDATED, updated);
+    return updated;
+}
+
 module.exports = {
     create, getById, getByOwner, listActive, update, remove,
     addImage, deleteImage, getImages,
     updateAvailability, getAvailability,
-    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus
+    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, setDisponible
 };

@@ -105,6 +105,15 @@ async function getAdminStats() {
     return result.rows[0];
 }
 
+async function findExpiredBookings() {
+    const result = await pool.query(
+        `SELECT id, maquinaria_id, arrendatario_id, propietario_id FROM reserva
+         WHERE estado IN ('en_curso', 'pagada')
+           AND fecha_fin < CURRENT_DATE`
+    );
+    return result.rows;
+}
+
 async function findRecent(limit) {
     const result = await pool.query(
         `SELECT ${RESERVA_COLUMNS} FROM reserva ORDER BY creado_en DESC LIMIT $1`,
@@ -136,5 +145,5 @@ async function withTransaction(callback) {
 module.exports = {
     getClient, insert, findConflictingBookings, findOccupiedRanges, findById,
     findByUser, findByOwner, updateEstado, cancel,
-    getAdminStats, findRecent, withTransaction
+    getAdminStats, findRecent, findExpiredBookings, withTransaction
 };

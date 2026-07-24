@@ -106,6 +106,13 @@ async function getAvailability(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function internalSetDisponible(req, res, next) {
+    try {
+        const result = await machineryService.setDisponible(req.params.id, req.body.disponible === true);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     create,
     listActive,
@@ -121,4 +128,5 @@ module.exports = {
     deleteImage,
     updateAvailability,
     getAvailability,
+    internalSetDisponible,
 };

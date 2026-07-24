@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const routes = require('./routes');
 const pool = require('./db');
+const scheduler = require('./scheduler');
 const { eventBus, errorHandler, correlationId, requestLogger } = require('shared');
 const createServiceLogger = require('../../../shared/logger');
 
@@ -46,6 +47,7 @@ app.listen(PORT, async () => {
     } catch (err) {
         logger.warn('No se pudo migrar el CHECK de estado:', { message: err.message });
     }
+    scheduler.start();
     logger.info('Booking Service iniciado', { port: PORT });
 });
 

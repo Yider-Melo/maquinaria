@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const machineryController = require('../controllers/machineryController');
-const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
 
 router.post('/', validateToken, requireRole('propietario'), validate(schemas.maquinaria), machineryController.create);
 router.get('/', machineryController.listActive);
@@ -18,6 +18,17 @@ router.get('/:id/images', validateParams(uuidParam('id')), machineryController.g
 router.delete('/:id/images/:imageId', validateToken, validateParams(uuidParam('id')), machineryController.deleteImage);
 router.put('/:id/availability', validateToken, validateParams(uuidParam('id')), validate(schemas.updateAvailability), machineryController.updateAvailability);
 router.get('/:id/availability', validateParams(uuidParam('id')), machineryController.getAvailability);
+
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (console.warn('⚠️ INTERNAL_API_KEY no configurada en machinery-service. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
+
+function internalAuth(req, res, next) {
+    if (req.headers['x-api-key'] !== INTERNAL_API_KEY) {
+        return next(new ForbiddenError('API key inválida'));
+    }
+    next();
+}
+
+router.patch('/internal/:id/disponible', internalAuth, validateParams(uuidParam('id')), machineryController.internalSetDisponible);
 
 router.use(errorHandler);
 
