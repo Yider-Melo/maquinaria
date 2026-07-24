@@ -21,6 +21,28 @@ async function searchWithFilters(whereClause, values, orderBy, size, offset) {
     return { data: result.rows, total };
 }
 
+async function searchWithFiltersLocation(whereClause, values, orderBy, size, offset, latValues) {
+    const countResult = await pool.query(
+        `SELECT COUNT(*) FROM maquinaria m ${whereClause}`,
+        values
+    );
+    const total = parseInt(countResult.rows[0].count);
+
+    const dataValues = [...values, ...latValues];
+    let idx = dataValues.length + 1;
+    const dataResult = await pool.query(
+        `SELECT m.id, m.titulo, m.descripcion, m.tipo, m.marca, m.modelo, m.anio,
+                m.capacidad, m.estado, m.precio_por_dia,
+                m.ubicacion_lat, m.ubicacion_lng, m.ciudad, m.departamento,
+                m.puntuacion_promedio, m.total_resenas
+         FROM maquinaria m
+         ${whereClause} ${orderBy} LIMIT $${idx++} OFFSET $${idx++}`,
+        [...dataValues, size, offset]
+    );
+
+    return { data: dataResult.rows, total };
+}
+
 async function getSuggestions(query) {
     const result = await pool.query(
         `SELECT DISTINCT titulo FROM maquinaria
@@ -70,5 +92,5 @@ async function softDelete(id) {
 }
 
 module.exports = {
-    searchWithFilters, getSuggestions, getNearby, upsert, softDelete
+    searchWithFilters, searchWithFiltersLocation, getSuggestions, getNearby, upsert, softDelete
 };

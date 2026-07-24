@@ -70,7 +70,6 @@ async function search(filters) {
     if (hasLocation) {
         const lat = Number(filters.lat);
         const lng = Number(filters.lng);
-        values.push(lat, lng);
         const latIdx = idx;
         const lngIdx = idx + 1;
         idx += 2;
@@ -80,7 +79,9 @@ async function search(filters) {
     }
     const orderBy = allowedSorts[filters.sort] || allowedSorts.price_asc;
 
-    const { data, total } = await searchRepository.searchWithFilters(whereClause, values, orderBy, size, offset);
+    const { data, total } = hasLocation
+        ? await searchRepository.searchWithFiltersLocation(whereClause, values, orderBy, size, offset, [Number(filters.lat), Number(filters.lng)])
+        : await searchRepository.searchWithFilters(whereClause, values, orderBy, size, offset);
 
     return { data, pagination: { total, page, size, totalPages: Math.ceil(total / size) } };
 }
