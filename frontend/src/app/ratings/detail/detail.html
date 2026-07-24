@@ -1,4 +1,7 @@
 <div class="container" *ngIf="!loading; else loadingTmpl">
+  <button mat-stroked-button class="back-btn" (click)="router.navigate(['/ratings'])">
+    <mat-icon>arrow_back</mat-icon> Volver
+  </button>
   <div class="page-header"><h1>Detalle de Calificación</h1></div>
   <mat-card class="detail-card" *ngIf="rating">
     <mat-card-content>

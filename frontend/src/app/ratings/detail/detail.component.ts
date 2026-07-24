@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { formatDate, formatDateTime, formatId } from '../../shared/utils';
 
@@ -15,6 +15,7 @@ export class RatingsDetail implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    public router: Router,
     private api: Api,
     private cdr: ChangeDetectorRef
   ) {}

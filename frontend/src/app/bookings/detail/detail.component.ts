@@ -50,7 +50,7 @@ export class BookingsDetail implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
+    public router: Router,
     private api: Api,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,

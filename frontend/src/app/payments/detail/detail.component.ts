@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -19,6 +19,7 @@ export class PaymentsDetail implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    public router: Router,
     private api: Api,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef
