@@ -138,7 +138,7 @@ async function adminSetMachineryStatus(id, active) {
 }
 
 async function updateRating(id, puntuacionPromedio, totalResenas) {
-    const fields = ['puntuacion_promedio = $2', 'total_resenas = $3'];
+    const fields = ['puntuacion_promedio = $1', 'total_resenas = $2'];
     const values = [puntuacionPromedio, totalResenas];
     await maquinariaRepository.update(id, fields, values);
     const updated = await getById(id);
