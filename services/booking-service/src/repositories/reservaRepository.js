@@ -8,12 +8,12 @@ async function getClient() {
     return pool;
 }
 
-async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, cantidadUnidades, precioUnitario, precioTotal }, client) {
+async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, precioUnitario, precioTotal }, client) {
     const db = client || pool;
     const result = await db.query(
-        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, cantidad_unidades, precio_unitario, precio_total, estado)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente') RETURNING ${RESERVA_COLUMNS}`,
-        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, cantidadUnidades, precioUnitario, precioTotal]
+        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, precio_unitario, precio_total, estado)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente') RETURNING ${RESERVA_COLUMNS}`,
+        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, precioUnitario, precioTotal]
     );
     return result.rows[0];
 }

@@ -85,9 +85,8 @@ async function create(data, userId) {
     const dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
     if (dias <= 0) throw new ValidationError('El rango de fechas no es válido');
 
-    const cantidadUnidades = dias;
     const precioUnitario = parseFloat(precio_por_dia);
-    const precioTotal = cantidadUnidades * precioUnitario;
+    const precioTotal = dias * precioUnitario;
 
     const booking = await reservaRepository.withTransaction(async (client) => {
         const conflictos = await reservaRepository.findConflictingBookings(data.maquinaria_id, start, end, client);
@@ -98,7 +97,7 @@ async function create(data, userId) {
         const b = await reservaRepository.insert({
             id: uuidv4(), maquinariaId: data.maquinaria_id, userId,
             propietarioId: propietario_id, fechaInicio: start,
-            fechaFin: end, cantidadUnidades, precioUnitario, precioTotal
+            fechaFin: end, precioUnitario, precioTotal
         }, client);
 
         await enviarNotificacion(
