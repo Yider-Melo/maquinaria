@@ -137,6 +137,15 @@ async function adminSetMachineryStatus(id, active) {
     return maquinaria;
 }
 
+async function updateRating(id, puntuacionPromedio, totalResenas) {
+    const fields = ['puntuacion_promedio = $2', 'total_resenas = $3'];
+    const values = [puntuacionPromedio, totalResenas];
+    await maquinariaRepository.update(id, fields, values);
+    const updated = await getById(id);
+    eventBus.publishEvent(EVENT_TYPES.MACHINERY.UPDATED, updated);
+    return updated;
+}
+
 async function setDisponible(id, disponible) {
     const maquinaria = await maquinariaRepository.findActiveById(id);
     if (!maquinaria) throw new NotFoundError('Maquinaria no encontrada');
@@ -150,5 +159,5 @@ module.exports = {
     create, getById, getByOwner, listActive, update, remove,
     addImage, deleteImage, getImages,
     updateAvailability, getAvailability,
-    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, setDisponible
+    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, updateRating, setDisponible
 };

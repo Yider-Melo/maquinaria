@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS maquinaria (
     ciudad VARCHAR(100),
     departamento VARCHAR(100),
     pais VARCHAR(50) DEFAULT 'Colombia',
+    puntuacion_promedio DECIMAL(3, 2) DEFAULT 0,
+    total_resenas INT DEFAULT 0,
     disponible BOOLEAN DEFAULT TRUE,
     activo BOOLEAN DEFAULT TRUE,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

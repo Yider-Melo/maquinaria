@@ -41,19 +41,21 @@ app.listen(PORT, async () => {
             const { data } = event;
             if (event.event === EVENT_TYPES.MACHINERY.CREATED || event.event === EVENT_TYPES.MACHINERY.UPDATED) {
                 await pool.query(
-                    `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento, disponible, activo)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+                    `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento, puntuacion_promedio, total_resenas, disponible, activo)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
                      ON CONFLICT (id) DO UPDATE SET
                        titulo=EXCLUDED.titulo, descripcion=EXCLUDED.descripcion, tipo=EXCLUDED.tipo,
                        marca=EXCLUDED.marca, modelo=EXCLUDED.modelo, anio=EXCLUDED.anio,
                        precio_por_dia=EXCLUDED.precio_por_dia, ubicacion_lat=EXCLUDED.ubicacion_lat,
                        ubicacion_lng=EXCLUDED.ubicacion_lng, ciudad=EXCLUDED.ciudad,
-                       departamento=EXCLUDED.departamento, disponible=EXCLUDED.disponible,
+                       departamento=EXCLUDED.departamento, puntuacion_promedio=EXCLUDED.puntuacion_promedio,
+                       total_resenas=EXCLUDED.total_resenas, disponible=EXCLUDED.disponible,
                        activo=EXCLUDED.activo`,
                     [data.id, data.propietario_id, data.titulo, data.descripcion, data.tipo,
                      data.marca, data.modelo, data.anio, data.capacidad, data.estado,
                      data.precio_por_dia, data.ubicacion_lat, data.ubicacion_lng,
-                     data.direccion, data.ciudad, data.departamento, true, true]
+                     data.direccion, data.ciudad, data.departamento,
+                     data.puntuacion_promedio || 0, data.total_resenas || 0, true, true]
                 );
                 logger.info('Índice actualizado vía evento:', { id: data.id });
             } else if (event.event === EVENT_TYPES.MACHINERY.DELETED) {

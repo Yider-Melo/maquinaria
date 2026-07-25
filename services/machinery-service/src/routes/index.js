@@ -29,6 +29,7 @@ function internalAuth(req, res, next) {
 }
 
 router.patch('/internal/:id/disponible', internalAuth, validateParams(uuidParam('id')), machineryController.internalSetDisponible);
+router.put('/internal/:id/rating', internalAuth, validateParams(uuidParam('id')), machineryController.internalUpdateRating);
 
 router.use(errorHandler);
 

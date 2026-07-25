@@ -7,6 +7,19 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001'
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
 
+async function actualizarRatingMaquinaria(maquinariaId) {
+    try {
+        const avg = await calificacionRepository.getAverageByMachinery(maquinariaId);
+        await fetch(`${MACHINERY_SERVICE_URL}/internal/${maquinariaId}/rating`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': INTERNAL_API_KEY },
+            body: JSON.stringify({ puntuacion_promedio: parseFloat(avg.puntuacion_promedio), total_resenas: parseInt(avg.total_resenas) })
+        });
+    } catch (err) {
+        console.warn('No se pudo actualizar rating de maquinaria:', err.message);
+    }
+}
+
 async function fetchUser(userId) {
     try {
         const controller = new AbortController();
@@ -98,11 +111,13 @@ async function create(data, userId) {
         throw new Error('Error de conexión al servicio de reservas');
     }
 
-    return await calificacionRepository.insert({
+    const result = await calificacionRepository.insert({
         id: uuidv4(), reservaId: data.reserva_id, maquinariaId: data.maquinaria_id,
         calificadorId: userId, calificadoId: data.calificado_id,
         puntuacion: data.puntuacion, puntuacion_maquinaria: data.puntuacion_maquinaria, comentario: data.comentario
     });
+    actualizarRatingMaquinaria(data.maquinaria_id);
+    return result;
 }
 
 async function getByUser(userId, page = 1, size = 20) {
@@ -157,6 +172,7 @@ async function update(id, data, userId) {
 
     const updated = await calificacionRepository.update(id, fields, values);
     await calificacionRepository.markAsEdited(id);
+    actualizarRatingMaquinaria(existing.maquinaria_id);
     return updated;
 }
 
@@ -169,7 +185,9 @@ async function remove(id, userId) {
         throw new ForbiddenError('No puedes eliminar una calificación que no hiciste');
     }
 
+    const existing = await calificacionRepository.findById(id);
     await calificacionRepository.softDelete(id);
+    if (existing) actualizarRatingMaquinaria(existing.maquinaria_id);
     return { message: 'Calificación eliminada' };
 }
 

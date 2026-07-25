@@ -74,6 +74,15 @@ async function getAverage(userId) {
     return result.rows[0];
 }
 
+async function getAverageByMachinery(machineryId) {
+    const result = await pool.query(
+        `SELECT COALESCE(AVG(puntuacion), 0) as puntuacion_promedio, COUNT(*) as total_resenas
+         FROM calificacion WHERE maquinaria_id = $1 AND activo = true`,
+        [machineryId]
+    );
+    return result.rows[0];
+}
+
 async function findById(id) {
     const result = await pool.query(`SELECT ${CALIFICACION_COLUMNS} FROM calificacion WHERE id = $1`, [id]);
     return result.rows[0] || null;
@@ -146,6 +155,6 @@ async function withTransaction(callback) {
 
 module.exports = {
     findByReservaAndCalificador, insert,
-    findByCalificado, findByCalificador, findByMaquinaria, getAverage,
+    findByCalificado, findByCalificador, findByMaquinaria, getAverage, getAverageByMachinery,
     findById, update, markAsEdited, softDelete, report, getAdminStats, withTransaction
 };

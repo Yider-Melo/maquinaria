@@ -113,6 +113,13 @@ async function internalSetDisponible(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function internalUpdateRating(req, res, next) {
+    try {
+        const result = await machineryService.updateRating(req.params.id, req.body.puntuacion_promedio, req.body.total_resenas);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     create,
     listActive,
@@ -129,4 +136,5 @@ module.exports = {
     updateAvailability,
     getAvailability,
     internalSetDisponible,
+    internalUpdateRating,
 };
