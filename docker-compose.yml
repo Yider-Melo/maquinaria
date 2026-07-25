@@ -75,6 +75,7 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       machinery-db:
         condition: service_healthy
@@ -112,6 +113,7 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       search-db:
         condition: service_healthy
@@ -154,6 +156,7 @@ services:
       - PAYMENT_SERVICE_URL=http://payment-service:3005
       - NOTIFICATION_SERVICE_URL=http://notification-service:3007
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       booking-db:
         condition: service_healthy
@@ -194,6 +197,7 @@ services:
       - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
       - BOOKING_SERVICE_URL=http://booking-service:3004
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       payment-db:
         condition: service_healthy
@@ -234,6 +238,7 @@ services:
       - MACHINERY_SERVICE_URL=http://machinery-service:3002
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
       - GATEWAY_URL=http://api-gateway:3000
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       rating-db:
         condition: service_healthy
@@ -275,6 +280,7 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       notification-db:
         condition: service_healthy
