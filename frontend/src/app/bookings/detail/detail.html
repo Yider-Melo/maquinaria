@@ -22,7 +22,7 @@
       <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'" [disabled]="paying">
         <mat-icon *ngIf="paying" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
         <mat-icon *ngIf="!paying">payment</mat-icon>
-        {{ paying ? 'Procesando...' : 'Pagar (demo)' }}
+        {{ paying ? 'Redirigiendo a Mercado Pago...' : 'Pagar' }}
       </button>
       <button mat-stroked-button color="warn" (click)="cancel()" *ngIf="booking.estado!=='cancelada'&&booking.estado!=='completada'">
         <mat-icon>cancel</mat-icon> Cancelar reserva

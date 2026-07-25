@@ -46,6 +46,10 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         body.payer = { email: payerEmail };
     }
 
+    if (process.env.PUBLIC_URL) {
+        body.notification_url = `${process.env.PUBLIC_URL}/api/v1/payments/webhook`;
+    }
+
     try {
         const preference = new Preference(client);
         const result = await preference.create({ body });
