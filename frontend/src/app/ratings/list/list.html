@@ -40,7 +40,7 @@
             </div>
           </mat-card-content>
           <mat-card-actions *ngIf="r.id">
-            <button mat-button color="primary" (click)="editarRating(r)">
+            <button mat-button color="primary" (click)="editarRating(r)" *ngIf="!r.editado">
               <mat-icon>edit</mat-icon> Editar
             </button>
             <button mat-button color="warn" (click)="eliminarRating(r.id)">

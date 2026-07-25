@@ -10,10 +10,12 @@ CREATE TABLE IF NOT EXISTS calificacion (
     comentario TEXT,
     reportado BOOLEAN DEFAULT FALSE,
     motivo_reporte TEXT,
+    editado BOOLEAN DEFAULT FALSE,
     activo BOOLEAN DEFAULT TRUE,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE calificacion ADD COLUMN IF NOT EXISTS editado BOOLEAN DEFAULT FALSE;
 CREATE INDEX IF NOT EXISTS idx_calificacion_calificado ON calificacion(calificado_id);
 CREATE INDEX IF NOT EXISTS idx_calificacion_calificador ON calificacion(calificador_id);
 CREATE INDEX IF NOT EXISTS idx_calificacion_maquinaria ON calificacion(maquinaria_id);

@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 const CALIFICACION_COLUMNS = `id, reserva_id, maquinaria_id, calificador_id, calificado_id,
-    puntuacion, puntuacion_maquinaria, comentario, activo, reportado, motivo_reporte, creado_en, actualizado_en`;
+    puntuacion, puntuacion_maquinaria, comentario, editado, activo, reportado, motivo_reporte, creado_en, actualizado_en`;
 
 async function findByReservaAndCalificador(reservaId, calificadorId) {
     const result = await pool.query(
@@ -90,6 +90,14 @@ async function update(id, fields, values) {
     return result.rows[0];
 }
 
+async function markAsEdited(id) {
+    const result = await pool.query(
+        `UPDATE calificacion SET editado = true, actualizado_en = CURRENT_TIMESTAMP WHERE id = $1 RETURNING ${CALIFICACION_COLUMNS}`,
+        [id]
+    );
+    return result.rows[0] || null;
+}
+
 async function softDelete(id) {
     await pool.query(
         'UPDATE calificacion SET activo = false, actualizado_en = CURRENT_TIMESTAMP WHERE id = $1',
@@ -139,5 +147,5 @@ async function withTransaction(callback) {
 module.exports = {
     findByReservaAndCalificador, insert,
     findByCalificado, findByCalificador, findByMaquinaria, getAverage,
-    findById, update, softDelete, report, getAdminStats, withTransaction
+    findById, update, markAsEdited, softDelete, report, getAdminStats, withTransaction
 };

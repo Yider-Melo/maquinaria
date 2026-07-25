@@ -141,6 +141,9 @@ async function update(id, data, userId) {
     if (existing.calificador_id !== userId) {
         throw new ForbiddenError('No puedes editar una calificación que no hiciste');
     }
+    if (existing.editado) {
+        throw new ValidationError('Esta calificación ya fue editada. Solo se permite editar una vez.');
+    }
 
     const fields = [];
     const values = [];
@@ -152,7 +155,9 @@ async function update(id, data, userId) {
 
     if (fields.length === 0) return existing;
 
-    return await calificacionRepository.update(id, fields, values);
+    const updated = await calificacionRepository.update(id, fields, values);
+    await calificacionRepository.markAsEdited(id);
+    return updated;
 }
 
 async function remove(id, userId) {
