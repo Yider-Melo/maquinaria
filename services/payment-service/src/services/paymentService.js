@@ -10,6 +10,7 @@ const logger = createServiceLogger('payment-service');
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://api-gateway:3000';
+const PUBLIC_URL = process.env.PUBLIC_URL || GATEWAY_URL;
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 async function markBookingAsPaid(bookingId) {
@@ -94,11 +95,11 @@ async function createCheckout(bookingId, userId, metodoPago) {
         unitPrice: reserva.precio_total,
         quantity: 1,
         payerEmail: reserva.arrendatario_email,
-        notificationUrl: `${GATEWAY_URL}/api/v1/payments/webhook`,
+        notificationUrl: `${PUBLIC_URL}/api/v1/payments/webhook`,
         backUrls: {
-            success: `${GATEWAY_URL}/payments/success?external_ref=${externalReference}`,
-            failure: `${GATEWAY_URL}/payments/failure?external_ref=${externalReference}`,
-            pending: `${GATEWAY_URL}/payments/pending?external_ref=${externalReference}`
+            success: `${PUBLIC_URL}/payments/success?external_ref=${externalReference}`,
+            failure: `${PUBLIC_URL}/payments/failure?external_ref=${externalReference}`,
+            pending: `${PUBLIC_URL}/payments/pending?external_ref=${externalReference}`
         }
     });
 

@@ -35,11 +35,10 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         external_reference: externalReference,
         notification_url: notificationUrl,
         back_urls: backUrls || {
-            success: `${process.env.GATEWAY_URL || 'http://localhost:3000'}/payments/success`,
-            failure: `${process.env.GATEWAY_URL || 'http://localhost:3000'}/payments/failure`,
-            pending: `${process.env.GATEWAY_URL || 'http://localhost:3000'}/payments/pending`
-        },
-        auto_return: 'approved'
+            success: `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/success`,
+            failure: `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/failure`,
+            pending: `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/pending`
+        }
     };
 
     if (payerEmail) {
