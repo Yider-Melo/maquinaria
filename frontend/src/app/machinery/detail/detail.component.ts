@@ -31,7 +31,7 @@ export class MachineryDetail implements OnInit {
   ratings: any[] = []; ratingAverage = 0; ratingCount = 0; machineBookings: any[] = [];
   estadoLabel = estadoLabel;
   propietarioNombre = '';
-  booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia', cantidad_horas: 1 };
+  booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia' };
   bookingLoading = false; checkingAvailability = false;
   availability: { checked: boolean; disponible: boolean; message: string } = { checked: false, disponible: false, message: '' };
   occupiedDates = new Set<string>();
@@ -143,9 +143,8 @@ export class MachineryDetail implements OnInit {
     const diff = Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1;
     return diff > 0 ? diff : 0;
   }
-  get bookingUnits(): number { return this.booking.modalidad === 'hora' ? Number(this.booking.cantidad_horas || 0) : this.bookingDays; }
-  get unitPrice(): number { return this.booking.modalidad === 'hora' ? Number(this.item?.precio_por_hora || 0) : Number(this.item?.precio_por_dia || 0); }
-  get estimatedTotal(): number { return this.bookingUnits * this.unitPrice; }
+  get unitPrice(): number { return Number(this.item?.precio_por_dia || 0); }
+  get estimatedTotal(): number { return this.bookingDays * this.unitPrice; }
   get ivaAmount(): number { return Math.round(this.estimatedTotal * 0.19); }
   get appFee(): number { return 5000; }
   get estimatedTotalWithIVA(): number { return Math.round(this.estimatedTotal * 1.19); }
@@ -186,15 +185,11 @@ export class MachineryDetail implements OnInit {
       this.error = 'La fecha de inicio debe ser al menos 1 día después de hoy.';
       return;
     }
-    if (this.booking.modalidad === 'hora' && (!this.item.precio_por_hora || this.booking.cantidad_horas <= 0)) {
-      this.error = 'Selecciona una cantidad de horas válida para reservar por hora.';
-      return;
-    }
     if (!this.availability.checked || !this.availability.disponible) {
       this.error = 'Verifica la disponibilidad antes de enviar la reserva.';
       return;
     }
-    const modalidadLabel = this.booking.modalidad === 'hora' ? `${this.booking.cantidad_horas} hora(s)` : `${this.bookingDays} día(s)`;
+    const modalidadLabel = `${this.bookingDays} día(s)`;
     const dialogRef = this.dialog.open(ConfirmActionDialog, {
       data: {
         message: `¿Confirmas la reserva por ${modalidadLabel}? Total a pagar: $${this.grandTotal.toLocaleString('es-CO')} (incluye IVA y cuota de servicio)`,
@@ -220,7 +215,7 @@ export class MachineryDetail implements OnInit {
         fecha_inicio: this.booking.fecha_inicio,
         fecha_fin: this.booking.fecha_fin,
         modalidad: this.booking.modalidad,
-        cantidad_unidades: this.booking.cantidad_horas
+        cantidad_unidades: this.bookingDays
       }).subscribe({
         next: () => {
           this.bookingLoading = false;

@@ -146,12 +146,12 @@ export class BookingsList implements OnInit {
   }
 
   private attachMachineDetails(booking: any, machine: any): any {
-    const price = booking?.precio_total ?? booking?.precio_unitario ?? machine?.precio_por_dia ?? machine?.precio_por_hora;
+    const price = booking?.precio_total ?? booking?.precio_unitario ?? machine?.precio_por_dia;
     return {
       ...booking,
       maquinaria_titulo: booking?.maquinaria_titulo || machine?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
       maquinaria_precio: price,
-      modalidad_label: booking?.modalidad === 'hora' ? 'Por hora' : 'Por día'
+      modalidad_label: 'Por día'
     };
   }
 
@@ -166,10 +166,6 @@ export class BookingsList implements OnInit {
   }
 
   getBookingTimeLabel(booking: any): string {
-    if (booking?.modalidad === 'hora') {
-      const hours = Number(booking?.cantidad_horas || 1);
-      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-    }
     return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 

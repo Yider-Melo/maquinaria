@@ -66,7 +66,7 @@ export class PaymentsDetail implements OnInit {
                 this.payment.arrendatario_id = b.arrendatario_id;
               }
               this.payment.maquinaria_titulo = m?.titulo || `Maquinaria #${(this.payment.maquinaria_id || '').substring(0, 8)}`;
-              this.payment.maquinaria_precio = m?.precio_por_dia ?? m?.precio_por_hora;
+              this.payment.maquinaria_precio = m?.precio_por_dia;
               this.loading = false;
               this.cdr.markForCheck();
             }
@@ -91,10 +91,6 @@ export class PaymentsDetail implements OnInit {
   }
 
   getBookingTimeLabel(): string {
-    if (this.payment?.modalidad === 'hora') {
-      const hours = Number(this.payment?.cantidad_horas || 1);
-      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-    }
     return this.payment?.fecha_inicio && this.payment?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 }

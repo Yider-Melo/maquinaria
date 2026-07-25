@@ -41,7 +41,7 @@ export class MachineryForm implements OnInit, CanComponentDeactivate {
       capacidadUnidad: ['toneladas'],
       estado: ['bueno', Validators.required],
       precio_por_dia: [null, [Validators.required, Validators.min(0.01)]],
-      precio_por_hora: [null, Validators.min(0.01)],
+
       ubicacion_lat: [null],
       ubicacion_lng: [null],
       direccion: ['', Validators.maxLength(500)],

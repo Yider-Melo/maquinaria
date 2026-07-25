@@ -35,7 +35,6 @@
       <div class="detail-meta">
         <div class="meta-item"><mat-icon>handyman</mat-icon><span>Estado: <strong>{{ item.estado }}</strong></span></div>
         <div class="meta-item" *ngIf="item.capacidad"><mat-icon>speed</mat-icon><span>Capacidad: <strong>{{ item.capacidad }}</strong></span></div>
-        <div class="meta-item" *ngIf="item.precio_por_hora"><mat-icon>schedule</mat-icon><span>${{ item.precio_por_hora }} <strong>/hora</strong></span></div>
         <div class="meta-item" *ngIf="propietarioNombre"><mat-icon>person</mat-icon><span>Propietario: <strong>{{ propietarioNombre }}</strong></span></div>
       </div>
       <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
@@ -50,7 +49,6 @@
           <mat-label>Modalidad de arriendo</mat-label>
           <mat-select [(ngModel)]="booking.modalidad">
             <mat-option value="dia">Por día - ${{ item.precio_por_dia | number }}/día</mat-option>
-            <mat-option value="hora" [disabled]="!item.precio_por_hora">Por hora - ${{ (item.precio_por_hora || 0) | number }}/hora</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -112,14 +110,10 @@
             <input matInput type="date" [(ngModel)]="booking.fecha_fin" [min]="booking.fecha_inicio || minDate" (ngModelChange)="onDateInputChange()">
           </mat-form-field>
         </div>
-        <mat-form-field appearance="outline" class="full" *ngIf="booking.modalidad === 'hora'">
-          <mat-label>Cantidad de horas</mat-label>
-          <input matInput type="number" min="1" [(ngModel)]="booking.cantidad_horas">
-        </mat-form-field>
         <div class="booking-summary">
           <table class="price-table">
             <tr>
-              <td>{{ bookingUnits || 0 }} {{ booking.modalidad === 'hora' ? 'hora(s)' : 'día(s)' }} x ${{ unitPrice | number }}</td>
+              <td>{{ bookingDays || 0 }} día(s) x ${{ unitPrice | number }}</td>
               <td class="price-value">${{ estimatedTotal | number }}</td>
             </tr>
             <tr>
@@ -140,7 +134,7 @@
           <mat-icon>{{ availability.disponible ? 'event_available' : 'event_busy' }}</mat-icon><span>{{ availability.message }}</span>
         </div>
         <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
-        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading || !availability.checked || (booking.modalidad === 'hora' && !item.precio_por_hora)" (click)="reserve()">
+        <button mat-raised-button class="reserve-btn" [disabled]="bookingLoading || checkingAvailability || loading || !availability.checked" (click)="reserve()">
           <mat-icon>{{ bookingLoading ? 'hourglass_top' : 'book_online' }}</mat-icon> {{ bookingLoading ? 'Enviando...' : 'Solicitar reserva' }}
         </button>
         <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>

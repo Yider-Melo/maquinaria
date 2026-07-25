@@ -90,9 +90,6 @@ const schemas = {
             'number.positive': 'El precio por día debe ser mayor a cero',
             'any.required': 'El precio por día es requerido'
         }),
-        precio_por_hora: Joi.number().positive().optional().allow(null).messages({
-            'number.positive': 'El precio por hora debe ser mayor a cero'
-        }),
         ubicacion_lat: Joi.number().min(-90).max(90).optional().allow(null),
         ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
         direccion: Joi.string().max(500).optional(),
@@ -119,9 +116,6 @@ const schemas = {
         }),
         precio_por_dia: Joi.number().positive().optional().messages({
             'number.positive': 'El precio por día debe ser mayor a cero'
-        }),
-        precio_por_hora: Joi.number().positive().optional().allow(null).messages({
-            'number.positive': 'El precio por hora debe ser mayor a cero'
         }),
         ubicacion_lat: Joi.number().min(-90).max(90).optional().allow(null),
         ubicacion_lng: Joi.number().min(-180).max(180).optional().allow(null),
@@ -161,12 +155,6 @@ const schemas = {
             'any.required': 'La fecha de fin es requerida',
             'date.format': 'La fecha de fin no tiene un formato válido'
         }),
-        modalidad: Joi.string().valid('dia', 'hora').default('dia').messages({
-            'any.only': 'La modalidad debe ser dia u hora'
-        }),
-        cantidad_horas: Joi.number().positive().optional().messages({
-            'number.positive': 'La cantidad de horas debe ser mayor a cero'
-        })
     }),
 
     // Calificacion post-alquiler

@@ -62,7 +62,7 @@ async function create(data, userId) {
 
     const { start, end } = validateDateRange(data.fecha_inicio, data.fecha_fin);
 
-    let propietario_id, precio_por_dia, precio_por_hora;
+    let propietario_id, precio_por_dia;
     try {
         const res = await axios.get(`${MACHINERY_SERVICE_URL}/${data.maquinaria_id}`);
         const maq = res.data.data;
@@ -71,7 +71,6 @@ async function create(data, userId) {
         }
         propietario_id = maq.propietario_id;
         precio_por_dia = parseFloat(maq.precio_por_dia);
-        precio_por_hora = parseFloat(maq.precio_por_hora || 0);
     } catch (err) {
         if (err instanceof ValidationError) throw err;
         throw new NotFoundError('Maquinaria no encontrada');
@@ -81,20 +80,13 @@ async function create(data, userId) {
         throw new ValidationError('No puedes alquilar tu propia maquinaria');
     }
 
-    const modalidad = data.modalidad === 'hora' ? 'hora' : 'dia';
     const fechaInicio = new Date(start);
     const fechaFin = new Date(end);
     const dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
     if (dias <= 0) throw new ValidationError('El rango de fechas no es válido');
 
-    let cantidadUnidades = dias;
-    let precioUnitario = parseFloat(precio_por_dia);
-    if (modalidad === 'hora') {
-        if (!precio_por_hora || precio_por_hora <= 0) throw new ValidationError('Esta maquinaria no tiene precio por hora configurado');
-        cantidadUnidades = Number(data.cantidad_unidades || data.cantidad_horas || 0);
-        if (!Number.isFinite(cantidadUnidades) || cantidadUnidades <= 0) throw new ValidationError('La cantidad de horas debe ser mayor a cero');
-        precioUnitario = precio_por_hora;
-    }
+    const cantidadUnidades = dias;
+    const precioUnitario = parseFloat(precio_por_dia);
     const precioTotal = cantidadUnidades * precioUnitario;
 
     const booking = await reservaRepository.withTransaction(async (client) => {
@@ -106,7 +98,7 @@ async function create(data, userId) {
         const b = await reservaRepository.insert({
             id: uuidv4(), maquinariaId: data.maquinaria_id, userId,
             propietarioId: propietario_id, fechaInicio: start,
-            fechaFin: end, modalidad, cantidadUnidades, precioUnitario, precioTotal
+            fechaFin: end, cantidadUnidades, precioUnitario, precioTotal
         }, client);
 
         await enviarNotificacion(

@@ -21,7 +21,7 @@
             </div>
             <div class="booking-details">
               <div><strong>Equipo:</strong> {{ b.maquinaria_titulo || 'Maquinaria sin nombre' }}</div>
-              <div><strong>Precio unitario:</strong> ${{ (b.maquinaria_precio || b.precio_unitario || 0) | number }}<small> {{ b.modalidad_label || 'por día' }}</small></div>
+              <div><strong>Precio unitario:</strong> ${{ (b.maquinaria_precio || b.precio_unitario || 0) | number }}<small> por día</small></div>
               <div><strong>Total estimado:</strong> ${{ b.precio_total | number }}</div>
               <div><strong>Fechas:</strong> {{ getBookingDateLabel(b) }}</div>
             </div>

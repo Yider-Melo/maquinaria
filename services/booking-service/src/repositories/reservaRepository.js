@@ -1,19 +1,19 @@
 const pool = require('../db');
 
 const RESERVA_COLUMNS = `id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin,
-    modalidad, cantidad_unidades, precio_unitario, precio_total, estado,
+    precio_unitario, precio_total, estado,
     motivo_cancelacion, creado_en, actualizado_en`;
 
 async function getClient() {
     return pool;
 }
 
-async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, modalidad, cantidadUnidades, precioUnitario, precioTotal }, client) {
+async function insert({ id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, cantidadUnidades, precioUnitario, precioTotal }, client) {
     const db = client || pool;
     const result = await db.query(
-        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, modalidad, cantidad_unidades, precio_unitario, precio_total, estado)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pendiente') RETURNING ${RESERVA_COLUMNS}`,
-        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, modalidad, cantidadUnidades, precioUnitario, precioTotal]
+        `INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, cantidad_unidades, precio_unitario, precio_total, estado)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente') RETURNING ${RESERVA_COLUMNS}`,
+        [id, maquinariaId, userId, propietarioId, fechaInicio, fechaFin, cantidadUnidades, precioUnitario, precioTotal]
     );
     return result.rows[0];
 }

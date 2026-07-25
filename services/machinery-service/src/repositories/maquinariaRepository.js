@@ -2,17 +2,17 @@ const { v4: uuidv4 } = require('uuid');
 const pool = require('../db');
 
 const MAQUINARIA_COLUMNS = `id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio,
-    capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng,
+    capacidad, estado, precio_por_dia, ubicacion_lat, ubicacion_lng,
     direccion, ciudad, departamento, puntuacion_promedio, total_resenas,
     disponible, activo, creado_en, actualizado_en`;
 
 async function insert({ id, propietarioId, data }) {
     const result = await pool.query(
-        `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        `INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          RETURNING ${MAQUINARIA_COLUMNS}`,
         [id, propietarioId, data.titulo, data.descripcion, data.tipo, data.marca, data.modelo,
-         data.anio, data.capacidad, data.estado, data.precio_por_dia, data.precio_por_hora,
+         data.anio, data.capacidad, data.estado, data.precio_por_dia,
          data.ubicacion_lat, data.ubicacion_lng, data.direccion, data.ciudad, data.departamento]
     );
     return result.rows[0];

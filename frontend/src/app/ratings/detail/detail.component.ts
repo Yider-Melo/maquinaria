@@ -56,10 +56,6 @@ export class RatingsDetail implements OnInit {
   }
 
   getBookingTimeLabel(): string {
-    if (this.rating?.modalidad === 'hora') {
-      const hours = Number(this.rating?.cantidad_horas || 1);
-      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-    }
     return this.rating?.fecha_inicio && this.rating?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 }

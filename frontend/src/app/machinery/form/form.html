@@ -45,7 +45,7 @@
               <mat-error *ngIf="fieldHasError('estado', 'required')">El estado es requerido</mat-error>
             </mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Precio/día *</mat-label><input matInput type="number" formControlName="precio_por_dia" placeholder="500000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span><mat-error *ngIf="fieldHasError('precio_por_dia', 'required')">El precio es requerido</mat-error><mat-error *ngIf="fieldHasError('precio_por_dia', 'min')">Debe ser mayor a 0</mat-error></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Precio/hora</mat-label><input matInput type="number" formControlName="precio_por_hora" placeholder="80000"><span matTextSuffix style="color:#888;font-size:13px;">COP</span><mat-error *ngIf="fieldHasError('precio_por_hora', 'min')">Debe ser mayor a 0</mat-error></mat-form-field>
+
           </div>
         </div>
 

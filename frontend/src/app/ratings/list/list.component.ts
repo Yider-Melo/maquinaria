@@ -97,7 +97,7 @@ export class RatingsList implements OnInit {
         this.completedBookings = bookings.map((booking: any) => ({
           ...booking,
           maquinaria_titulo: booking?.maquinaria_titulo || machinesById.get(booking.maquinaria_id)?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
-          maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia ?? machinesById.get(booking.maquinaria_id)?.precio_por_hora
+          maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia
         }));
         this.cdr.markForCheck();
       }
@@ -115,10 +115,6 @@ export class RatingsList implements OnInit {
   }
 
   getBookingTimeLabel(booking: any): string {
-    if (booking?.modalidad === 'hora') {
-      const hours = Number(booking?.cantidad_horas || 1);
-      return `Duración: ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
-    }
     return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 

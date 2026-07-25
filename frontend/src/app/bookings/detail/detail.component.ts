@@ -87,7 +87,7 @@ export class BookingsDetail implements OnInit {
               const machine = machineRes?.data;
               if (machine) {
                 this.booking.maquinaria_titulo = machine?.titulo || `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8)}`;
-                this.booking.maquinaria_precio = machine?.precio_por_dia ?? machine?.precio_por_hora;
+                this.booking.maquinaria_precio = machine?.precio_por_dia;
               }
               this.loading = false;
               this.cdr.markForCheck();

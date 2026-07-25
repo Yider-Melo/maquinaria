@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS maquinaria (
     capacidad VARCHAR(50),
     estado VARCHAR(50) NOT NULL CHECK (estado IN ('nuevo', 'excelente', 'bueno', 'regular')),
     precio_por_dia DECIMAL(12, 2) NOT NULL,
-    precio_por_hora DECIMAL(12, 2),
     moneda VARCHAR(3) DEFAULT 'COP',
     ubicacion_lat DECIMAL(10, 7),
     ubicacion_lng DECIMAL(10, 7),
