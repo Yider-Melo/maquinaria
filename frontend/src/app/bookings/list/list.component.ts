@@ -217,35 +217,29 @@ export class BookingsList implements OnInit {
   }
 
   payBooking(booking: any): void {
-    this.confirmAction('¿Procesar pago de esta reserva? (Demo - no se realizará un cobro real)').subscribe(confirmed => {
-      if (!confirmed) return;
-      this.payingBookingId = booking.id;
-      this.api.post<any>('/payments/checkout', { reserva_id: booking.id, metodo_pago: 'simulado' }).pipe(
-        finalize(() => this.payingBookingId = null)
-      ).subscribe({
-        next: (res) => {
-          const paymentId = res.data?.pago_id;
-          if (!paymentId) {
-            console.error('payBooking: no paymentId in response', res);
-            this.snackBar.open('Error: no se obtuvo ID de pago', 'Cerrar', { duration: 4000 });
-            return;
-          }
-          this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe({
+    this.payingBookingId = booking.id;
+    this.api.post<any>('/payments/checkout', { reserva_id: booking.id }).pipe(
+      finalize(() => this.payingBookingId = null)
+    ).subscribe({
+      next: (res) => {
+        const data = res.data;
+        if (data?.checkout_url) {
+          window.location.href = data.checkout_url;
+        } else if (data?.pago_id) {
+          this.api.post(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe({
             next: () => {
-              this.snackBar.open('✅ Pago de prueba aprobado.', 'Cerrar', { duration: 6000 });
+              this.snackBar.open('Pago aprobado', 'Cerrar', { duration: 6000 });
               this.loadBookings();
             },
             error: (err2) => {
-              console.error('simulate-approval failed', err2);
-              this.snackBar.open('Error al aprobar el pago: ' + (err2.error?.error?.message || err2.message), 'Cerrar', { duration: 6000 });
+              this.snackBar.open('Error al aprobar el pago', 'Cerrar', { duration: 6000 });
             }
           });
-        },
-        error: (err) => {
-          console.error('checkout failed', err);
-          this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 });
         }
-      });
+      },
+      error: (err) => {
+        this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 });
+      }
     });
   }
 }

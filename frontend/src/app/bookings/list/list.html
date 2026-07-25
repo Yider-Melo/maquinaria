@@ -31,7 +31,7 @@
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
             <button mat-button color="primary" (click)="payBooking(b)" *ngIf="b.estado==='confirmada'" [disabled]="payingBookingId === b.id">
-              <mat-icon>{{ payingBookingId === b.id ? 'hourglass_top' : 'payments' }}</mat-icon> {{ payingBookingId === b.id ? 'Procesando...' : 'Pagar (demo)' }}
+              <mat-icon>{{ payingBookingId === b.id ? 'hourglass_top' : 'payments' }}</mat-icon> {{ payingBookingId === b.id ? 'Redirigiendo a MP...' : 'Pagar' }}
             </button>
           </mat-card-actions>
         </mat-card>
