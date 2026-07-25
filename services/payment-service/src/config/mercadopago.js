@@ -1,9 +1,10 @@
-const mercadopago = require('mercadopago');
+const { MercadoPagoConfig, Preference, Payment, Refund } = require('mercadopago');
 const createServiceLogger = require('../../../../shared/logger');
 
 const logger = createServiceLogger('mercadopago');
 
 const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+let client = null;
 
 function isConfigured() {
     return !!ACCESS_TOKEN;
@@ -14,7 +15,7 @@ function configure() {
         logger.warn('MERCADOPAGO_ACCESS_TOKEN no configurado. Usando modo simulado.');
         return false;
     }
-    mercadopago.configure({ access_token: ACCESS_TOKEN });
+    client = new MercadoPagoConfig({ accessToken: ACCESS_TOKEN });
     logger.info('Mercado Pago SDK configurado correctamente');
     return true;
 }
@@ -29,7 +30,7 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         };
     }
 
-    const preference = {
+    const body = {
         items: [{ title, unit_price: Number(unitPrice), quantity: Number(quantity || 1), currency_id: 'COP' }],
         external_reference: externalReference,
         notification_url: notificationUrl,
@@ -42,20 +43,21 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
     };
 
     if (payerEmail) {
-        preference.payer = { email: payerEmail };
+        body.payer = { email: payerEmail };
     }
 
     try {
-        const result = await mercadopago.preferences.create(preference);
-        logger.info('Preferencia MP creada:', { id: result.body.id, externalReference });
+        const preference = new Preference(client);
+        const result = await preference.create({ body });
+        logger.info('Preferencia MP creada:', { id: result.id, externalReference });
         return {
-            id: result.body.id,
-            init_point: result.body.init_point,
-            sandbox_init_point: result.body.sandbox_init_point,
+            id: result.id,
+            init_point: result.init_point,
+            sandbox_init_point: result.sandbox_init_point,
             simulated: false
         };
     } catch (err) {
-        logger.error('Error creando preferencia MP:', { message: err.message, status: err.status });
+        logger.error('Error creando preferencia MP:', { message: err.message, status: err.status, cause: err.cause });
         throw new Error('Error al crear el pago en Mercado Pago');
     }
 }
@@ -63,8 +65,9 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
 async function getPayment(paymentId) {
     if (!isConfigured()) return null;
     try {
-        const result = await mercadopago.payment.get(paymentId);
-        return result.body;
+        const payment = new Payment(client);
+        const result = await payment.get({ id: paymentId });
+        return result;
     } catch (err) {
         logger.error('Error obteniendo pago MP:', { message: err.message });
         return null;
@@ -74,9 +77,10 @@ async function getPayment(paymentId) {
 async function capturePayment(paymentId) {
     if (!isConfigured()) return null;
     try {
-        const result = await mercadopago.payment.capture(paymentId);
+        const payment = new Payment(client);
+        const result = await payment.capture({ id: paymentId });
         logger.info('Pago capturado en MP:', { paymentId });
-        return result.body;
+        return result;
     } catch (err) {
         logger.error('Error capturando pago MP:', { message: err.message });
         return null;
@@ -86,9 +90,10 @@ async function capturePayment(paymentId) {
 async function refundPayment(paymentId) {
     if (!isConfigured()) return null;
     try {
-        const result = await mercadopago.refund.create(paymentId);
+        const refund = new Refund(client);
+        const result = await refund.create({ payment_id: paymentId });
         logger.info('Reembolso procesado en MP:', { paymentId });
-        return result.body;
+        return result;
     } catch (err) {
         logger.error('Error reembolsando pago MP:', { message: err.message });
         return null;

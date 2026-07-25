@@ -195,6 +195,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
       - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+      - GATEWAY_URL=http://api-gateway:3000
       - BOOKING_SERVICE_URL=http://booking-service:3004
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - JWT_SECRET=${JWT_SECRET}
