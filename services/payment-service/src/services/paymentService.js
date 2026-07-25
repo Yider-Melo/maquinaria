@@ -64,20 +64,29 @@ async function createCheckout(bookingId, userId, metodoPago) {
     }
 
     const existingPayment = await pagoRepository.findActivePaymentByBooking(bookingId);
+    let id, externalReference;
+
     if (existingPayment) {
-        return { pago_id: existingPayment.id, estado: existingPayment.estado };
+        id = existingPayment.id;
+        externalReference = existingPayment.referencia_pasarela;
+        if (existingPayment.checkout_url) {
+            return {
+                pago_id: existingPayment.id,
+                checkout_url: existingPayment.checkout_url,
+                estado: existingPayment.estado
+            };
+        }
+    } else {
+        id = uuidv4();
+        externalReference = `RENTAMAQ-${id}`;
+        await pagoRepository.insert({
+            id, bookingId, userId,
+            propietarioId: reserva.propietario_id,
+            monto: reserva.precio_total,
+            metodoPago: metodoPago || 'mercadopago',
+            referenciaPasarela: externalReference
+        });
     }
-
-    const id = uuidv4();
-    const externalReference = `RENTAMAQ-${id}`;
-
-    await pagoRepository.insert({
-        id, bookingId, userId,
-        propietarioId: reserva.propietario_id,
-        monto: reserva.precio_total,
-        metodoPago: metodoPago || 'mercadopago',
-        referenciaPasarela: externalReference
-    });
 
     const mpPreference = await mercadopago.createPreference({
         externalReference,
@@ -93,12 +102,15 @@ async function createCheckout(bookingId, userId, metodoPago) {
         }
     });
 
+    const checkoutUrl = mpPreference.init_point;
+    await pagoRepository.updateCheckoutUrl(id, checkoutUrl);
+
     return {
         pago_id: id,
         referencia: externalReference,
         monto: reserva.precio_total,
         estado: 'pendiente',
-        checkout_url: mpPreference.init_point,
+        checkout_url: checkoutUrl,
         sandbox_checkout_url: mpPreference.sandbox_init_point,
         simulated: mpPreference.simulated,
         message: mpPreference.simulated
