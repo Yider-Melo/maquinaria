@@ -5,6 +5,7 @@ import { BookingsRoutingModule } from './bookings-routing.module';
 import { SharedModule } from '../shared/shared.module';
 import { BookingsList } from './list/list.component';
 import { BookingsDetail } from './detail/detail.component';
+import { RatingsModule } from '../ratings/ratings.module';
 
-@NgModule({ declarations: [BookingsList, BookingsDetail], imports: [BookingsRoutingModule, SharedModule] })
+@NgModule({ declarations: [BookingsList, BookingsDetail], imports: [BookingsRoutingModule, SharedModule, RatingsModule] })
 export class BookingsModule {}

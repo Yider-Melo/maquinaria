@@ -7,5 +7,5 @@ import { RatingsList } from './list/list.component';
 import { RatingsDetail } from './detail/detail.component';
 import { RatingForm } from './form/form';
 
-@NgModule({ declarations: [RatingsList, RatingsDetail, RatingForm], imports: [RatingsRoutingModule, SharedModule], schemas: [CUSTOM_ELEMENTS_SCHEMA] })
+@NgModule({ declarations: [RatingsList, RatingsDetail, RatingForm], imports: [RatingsRoutingModule, SharedModule], exports: [RatingForm], schemas: [CUSTOM_ELEMENTS_SCHEMA] })
 export class RatingsModule {}

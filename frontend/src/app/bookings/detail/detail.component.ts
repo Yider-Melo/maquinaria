@@ -7,6 +7,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../core/services/api.service';
+import { Auth } from '../../core/services/auth.service';
+import { RatingForm } from '../../ratings/form/form';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
 
 @Component({
@@ -52,6 +54,7 @@ export class BookingsDetail implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private api: Api,
+    private auth: Auth,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private cdr: ChangeDetectorRef
@@ -121,6 +124,31 @@ export class BookingsDetail implements OnInit {
         },
         error: (err: any) => this.snackBar.open(err.error?.error?.message || 'Error al cancelar', 'Cerrar', { duration: 4000 })
       });
+    });
+  }
+
+  openRatingDialog(): void {
+    if (!this.booking) return;
+    const userId = this.auth.getUser()?.id;
+    const calificadoId = this.booking.propietario_id === userId ? this.booking.arrendatario_id : this.booking.propietario_id;
+    const dialogRef = this.dialog.open(RatingForm, {
+      data: {
+        reserva_id: this.booking.id,
+        calificado_id: calificadoId,
+        maquinaria_id: this.booking.maquinaria_id
+      }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario } = result;
+        this.api.post('/ratings', { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe({
+          next: () => {
+            this.snackBar.open('Calificación guardada correctamente', 'Cerrar', { duration: 3000 });
+            this.loadBooking(this.booking.id);
+          },
+          error: (err: any) => this.snackBar.open(err.error?.error?.message || 'Error al guardar calificación', 'Cerrar', { duration: 4000 })
+        });
+      }
     });
   }
 

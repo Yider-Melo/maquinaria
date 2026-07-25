@@ -27,7 +27,7 @@
       <button mat-stroked-button color="warn" (click)="cancel()" *ngIf="booking.estado!=='cancelada'&&booking.estado!=='completada'">
         <mat-icon>cancel</mat-icon> Cancelar reserva
       </button>
-      <button mat-stroked-button color="primary" [routerLink]="['/ratings']" *ngIf="booking.estado==='completada'">
+      <button mat-stroked-button color="primary" (click)="openRatingDialog()" *ngIf="booking.estado==='completada'">
         <mat-icon>rate_review</mat-icon> Calificar experiencia
       </button>
       <button mat-stroked-button color="accent" [routerLink]="['/machinery', booking.maquinaria_id]" *ngIf="booking.maquinaria_id">
