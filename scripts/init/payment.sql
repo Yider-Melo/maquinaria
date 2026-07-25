@@ -20,3 +20,4 @@ CREATE INDEX IF NOT EXISTS idx_pago_propietario ON pago(propietario_id);
 CREATE INDEX IF NOT EXISTS idx_pago_estado ON pago(estado);
 CREATE INDEX IF NOT EXISTS idx_pago_referencia ON pago(referencia_pasarela);
 ALTER TABLE pago ADD COLUMN IF NOT EXISTS propietario_id UUID;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS referencia_pasarela_mp VARCHAR(255);

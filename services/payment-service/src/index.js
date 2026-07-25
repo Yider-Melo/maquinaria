@@ -5,6 +5,7 @@ const routes = require('./routes');
 const pool = require('./db');
 const { errorHandler, correlationId, requestLogger } = require('shared');
 const createServiceLogger = require('../../../shared/logger');
+const mercadopago = require('./config/mercadopago');
 
 const logger = createServiceLogger('payment-service');
 
@@ -40,6 +41,12 @@ async function ensurePaymentSchema() {
 }
 
 logger.info('Payment Service modo: consulta directa (sin RabbitMQ)');
+
+if (mercadopago.configure()) {
+    logger.info('Mercado Pago habilitado con token real');
+} else {
+    logger.warn('Mercado Pago en modo simulado (sin token)');
+}
 
 ensurePaymentSchema()
     .then(() => {

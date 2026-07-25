@@ -159,19 +159,17 @@ export class BookingsDetail implements OnInit {
       return;
     }
     this.paying = true;
-    this.api.post('/payments/checkout', { reserva_id: this.booking.id, metodo_pago: 'simulado' }).subscribe({
+    this.api.post('/payments/checkout', { reserva_id: this.booking.id }).subscribe({
         next: (res: any) => {
-          const paymentId = res.data?.pago_id;
-          if (paymentId) {
-            this.api.post(`/payments/${paymentId}/simulate-approval`, {}).subscribe(() => {
-              this.snackBar.open('Pago de prueba aprobado (modo demo)', 'Cerrar', { duration: 5000 });
-              this.paying = false;
+          this.paying = false;
+          const data = res.data;
+          if (data?.checkout_url) {
+            window.location.href = data.checkout_url;
+          } else if (data?.pago_id) {
+            this.api.post(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe(() => {
+              this.snackBar.open('Pago aprobado', 'Cerrar', { duration: 5000 });
               this.loadBooking(this.booking.id);
             });
-          } else {
-            this.snackBar.open('Pago de prueba iniciado. Ref: ' + res.data.referencia + ' (modo demo)', 'Cerrar', { duration: 6000 });
-            this.paying = false;
-            this.loadBooking(this.booking.id);
           }
         },
         error: (err: any) => {

@@ -1,7 +1,7 @@
 const pool = require('../db');
 
 const PAGO_COLUMNS = `id, reserva_id, usuario_id, propietario_id, monto, metodo_pago,
-    estado, referencia_pasarela, creado_en, actualizado_en`;
+    estado, referencia_pasarela, referencia_pasarela_mp, creado_en, actualizado_en`;
 
 async function findReservaById(bookingId) {
     const result = await pool.query(
@@ -73,8 +73,15 @@ async function findByUser(userId) {
 }
 
 async function findByIdSimple(pagoId) {
-    const result = await pool.query('SELECT usuario_id, propietario_id FROM pago WHERE id = $1', [pagoId]);
+    const result = await pool.query('SELECT id, usuario_id, propietario_id, referencia_pasarela_mp FROM pago WHERE id = $1', [pagoId]);
     return result.rows[0] || null;
+}
+
+async function updateReferenciaPasarela(id, mpPaymentId) {
+    await pool.query(
+        'UPDATE pago SET referencia_pasarela_mp = $1, actualizado_en = CURRENT_TIMESTAMP WHERE id = $2',
+        [mpPaymentId, id]
+    );
 }
 
 async function updateEstadoWhere(pagoId, estadoActual, nuevoEstado) {
@@ -103,6 +110,6 @@ async function getDashboard() {
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
     findByReferenciaPasarela, updateEstado,
-    findByIdWithReserva, findByBooking, findByUser, findByIdSimple, updateEstadoWhere,
+    findByIdWithReserva, findByBooking, findByUser, findByIdSimple, updateEstadoWhere, updateReferenciaPasarela,
     getDashboard
 };

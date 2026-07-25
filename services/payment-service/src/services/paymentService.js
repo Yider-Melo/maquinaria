@@ -1,12 +1,15 @@
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const { NotFoundError, ForbiddenError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
 const pagoRepository = require('../repositories/pagoRepository');
+const mercadopago = require('../config/mercadopago');
 const createServiceLogger = require('../../../../shared/logger');
 
 const logger = createServiceLogger('payment-service');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://api-gateway:3000';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 async function markBookingAsPaid(bookingId) {
@@ -66,23 +69,41 @@ async function createCheckout(bookingId, userId, metodoPago) {
     }
 
     const id = uuidv4();
-    const referenciaPasarela = `RENTAMAQ-${id.substring(0, 8).toUpperCase()}`;
+    const externalReference = `RENTAMAQ-${id}`;
 
     await pagoRepository.insert({
         id, bookingId, userId,
         propietarioId: reserva.propietario_id,
         monto: reserva.precio_total,
-        metodoPago: metodoPago || 'tarjeta_credito',
-        referenciaPasarela
+        metodoPago: metodoPago || 'mercadopago',
+        referenciaPasarela: externalReference
+    });
+
+    const mpPreference = await mercadopago.createPreference({
+        externalReference,
+        title: `Reserva #${bookingId.substring(0, 8).toUpperCase()}`,
+        unitPrice: reserva.precio_total,
+        quantity: 1,
+        payerEmail: reserva.arrendatario_email,
+        notificationUrl: `${GATEWAY_URL}/api/v1/payments/webhook`,
+        backUrls: {
+            success: `${GATEWAY_URL}/payments/success?external_ref=${externalReference}`,
+            failure: `${GATEWAY_URL}/payments/failure?external_ref=${externalReference}`,
+            pending: `${GATEWAY_URL}/payments/pending?external_ref=${externalReference}`
+        }
     });
 
     return {
         pago_id: id,
-        referencia: referenciaPasarela,
+        referencia: externalReference,
         monto: reserva.precio_total,
         estado: 'pendiente',
-        checkout_url: `/payments/${id}?ref=${referenciaPasarela}`,
-        message: 'Checkout simulado creado. Confirma el pago para retener fondos.'
+        checkout_url: mpPreference.init_point,
+        sandbox_checkout_url: mpPreference.sandbox_init_point,
+        simulated: mpPreference.simulated,
+        message: mpPreference.simulated
+            ? 'Modo simulado. Usa simulate-approval para probar.'
+            : 'Redirigiendo a Mercado Pago...'
     };
 }
 
@@ -106,15 +127,37 @@ function determinarEstado(status) {
 
 async function handleWebhook(payload) {
     const action = payload.action || payload.type;
-    const pagoId = payload.data?.id;
-    if (!pagoId) return { message: 'Payload invalido' };
+    const mpPaymentId = payload.data?.id;
+    if (!mpPaymentId) return { message: 'Payload invalido' };
 
     if (action === 'payment.created' || action === 'payment.updated' || action === 'payment') {
-        const pago = await pagoRepository.findByReferenciaPasarela(`RENTAMAQ-${pagoId}`);
+        let externalReference = payload.data?.external_reference;
+        let status = payload.data?.status;
+
+        if (!externalReference || !status) {
+            const mpPayment = await mercadopago.getPayment(mpPaymentId);
+            if (mpPayment) {
+                externalReference = mpPayment.external_reference;
+                status = mpPayment.status;
+            }
+        }
+
+        if (!externalReference || !externalReference.startsWith('RENTAMAQ-')) {
+            return { message: 'Referencia externa no reconocida' };
+        }
+
+        const pago = await pagoRepository.findByReferenciaPasarela(externalReference);
         if (!pago) return { message: 'Pago no encontrado' };
 
-        const nuevoEstado = determinarEstado(payload.data?.status || payload.status);
+        const nuevoEstado = determinarEstado(status);
         await pagoRepository.updateEstado(pago.id, nuevoEstado);
+        await pagoRepository.updateReferenciaPasarela(pago.id, String(mpPaymentId));
+        pago.referencia_pasarela_mp = String(mpPaymentId);
+
+        if (nuevoEstado === 'retenido') {
+            await markBookingAsPaid(pago.reserva_id);
+        }
+
         try {
             eventBus.publishEvent(EVENT_TYPES.PAYMENT.UPDATED, { pago_id: pago.id, estado: nuevoEstado, reserva_id: pago.reserva_id });
         } catch { }
@@ -143,6 +186,13 @@ async function releaseFunds(pagoId, userId) {
     if (!pago) throw new NotFoundError('Pago no encontrado');
     if (pago.propietario_id !== userId) throw new ForbiddenError('Solo el propietario puede liberar fondos');
 
+    if (pago.referencia_pasarela_mp) {
+        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
+        if (!isNaN(mpPaymentId)) {
+            await mercadopago.capturePayment(mpPaymentId);
+        }
+    }
+
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'liberado');
     return result || { message: 'Pago no encontrado o no está en estado retenido' };
 }
@@ -151,6 +201,13 @@ async function refund(pagoId, userId) {
     const pago = await pagoRepository.findByIdSimple(pagoId);
     if (!pago) throw new NotFoundError('Pago no encontrado');
     if (pago.usuario_id !== userId && pago.propietario_id !== userId) throw new ForbiddenError('No tienes permiso para reembolsar este pago');
+
+    if (pago.referencia_pasarela_mp) {
+        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
+        if (!isNaN(mpPaymentId)) {
+            await mercadopago.refundPayment(mpPaymentId);
+        }
+    }
 
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'reembolsado');
     return result || { message: 'Pago no encontrado o no reembolsable' };
