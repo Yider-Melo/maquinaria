@@ -185,9 +185,8 @@ async function remove(id, userId) {
         throw new ForbiddenError('No puedes eliminar una calificación que no hiciste');
     }
 
-    const existing = await calificacionRepository.findById(id);
     await calificacionRepository.softDelete(id);
-    if (existing) actualizarRatingMaquinaria(existing.maquinaria_id);
+    actualizarRatingMaquinaria(existing.maquinaria_id);
     return { message: 'Calificación eliminada' };
 }
 
