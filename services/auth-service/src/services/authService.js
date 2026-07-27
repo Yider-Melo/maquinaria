@@ -277,6 +277,16 @@ async function saveBankAccount(userId, data) {
     return cuenta;
 }
 
+async function deleteAccount(userId) {
+    const user = await usuarioRepository.findById(userId);
+    if (!user) throw new NotFoundError('Usuario no encontrado');
+    await refreshTokenRepository.revokeAllByUser(userId);
+    await cuentaBancariaRepository.remove(userId);
+    const result = await usuarioRepository.softDelete(userId);
+    if (!result) throw new NotFoundError('La cuenta ya fue eliminada o no existe');
+    return { message: 'Cuenta eliminada correctamente' };
+}
+
 async function deleteBankAccount(userId) {
     await cuentaBancariaRepository.remove(userId);
     return { message: 'Cuenta bancaria eliminada' };
@@ -291,5 +301,6 @@ module.exports = {
     setup2FA, verify2FA, forgotPassword, resetPassword,
     refreshToken, logout, logoutAll,
     validateToken, adminListUsers, adminUserStats, adminSetUserStatus,
-    getBankAccount, saveBankAccount, deleteBankAccount, getBankAccountInternal
+    getBankAccount, saveBankAccount, deleteBankAccount, getBankAccountInternal,
+    deleteAccount
 };

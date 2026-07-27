@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -51,7 +51,7 @@ export class Profile implements OnInit {
   imageLoading = false;
   error = '';
 
-  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog) {}
+  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -242,6 +242,21 @@ export class Profile implements OnInit {
         this.bankLoading = false;
       },
       error: (err) => { this.error = err.error?.error?.message || 'No se pudo guardar la cuenta.'; this.bankLoading = false; }
+    });
+  }
+
+  deleteAccount(): void {
+    const dialogRef = this.dialog.open(ConfirmDeleteDialog, { data: { message: '¿Estás seguro de eliminar tu cuenta? Esta acción es irreversible. Se cerrarán todas tus sesiones y no podrás recuperar tus datos.' } });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.api.delete('/auth/profile').subscribe({
+        next: () => {
+          this.snackBar.open('Cuenta eliminada correctamente.', 'Cerrar', { duration: 5000 });
+          this.auth.logout();
+          this.router.navigate(['/']);
+        },
+        error: (err) => this.error = err.error?.error?.message || 'No se pudo eliminar la cuenta.'
+      });
     });
   }
 

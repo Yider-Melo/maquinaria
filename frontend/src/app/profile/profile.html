@@ -32,6 +32,13 @@
       </mat-card-content>
       <mat-card-actions><button mat-raised-button class="primary" [disabled]="passwordSaving" (click)="changePassword()">Cambiar contraseña</button></mat-card-actions>
     </mat-card>
+    <mat-card class="delete-card">
+      <mat-card-header><mat-card-title>Eliminar cuenta</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <p class="delete-warning">Esta acción es irreversible. Se eliminarán tus datos personales y se cerrarán todas las sesiones.</p>
+      </mat-card-content>
+      <mat-card-actions><button mat-raised-button color="warn" (click)="deleteAccount()">Eliminar mi cuenta</button></mat-card-actions>
+    </mat-card>
   </div>
 
   <section class="renter-profile" *ngIf="canUseRenterProfile">

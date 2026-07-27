@@ -158,6 +158,13 @@ async function verifyEmailByToken(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function deleteAccount(req, res, next) {
+    try {
+        const result = await authService.deleteAccount(req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function getBankAccount(req, res, next) {
     try {
         const cuenta = await authService.getBankAccount(req.user.id);
@@ -210,4 +217,5 @@ module.exports = {
     deleteBankAccount,
     getBankAccountInternal,
     verifyEmailByToken,
+    deleteAccount,
 };

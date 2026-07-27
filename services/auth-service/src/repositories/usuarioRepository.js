@@ -126,6 +126,16 @@ async function getStats() {
     return result.rows[0];
 }
 
+async function softDelete(userId) {
+    const result = await pool.query(
+        `UPDATE usuarios SET activo = false, email = CONCAT('deleted-', id, '@rentamaq.com'), token_verificacion = NULL, token_recuperacion = NULL, expiracion_token_recuperacion = NULL, secreto_2fa = NULL, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $1 AND activo = true
+         RETURNING id`,
+        [userId]
+    );
+    return result.rows[0] || null;
+}
+
 async function setActive(userId, active) {
     const result = await pool.query(
         `UPDATE usuarios SET activo = $1, actualizado_en = CURRENT_TIMESTAMP
@@ -173,5 +183,6 @@ module.exports = {
     getStats,
     setActive,
     verifyEmail,
-    findByVerificationToken
+    findByVerificationToken,
+    softDelete
 };
