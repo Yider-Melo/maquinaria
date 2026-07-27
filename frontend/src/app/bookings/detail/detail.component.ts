@@ -152,6 +152,21 @@ export class BookingsDetail implements OnInit {
     });
   }
 
+  canConfirm(): boolean {
+    return this.booking?.estado === 'pendiente' && this.booking?.propietario_id === this.auth.getUser()?.id;
+  }
+
+  confirm(): void {
+    if (!this.booking) return;
+    this.api.post(`/bookings/${this.booking.id}/confirm`, {}).subscribe({
+      next: () => {
+        this.snackBar.open('Reserva confirmada correctamente', 'Cerrar', { duration: 3000 });
+        this.loadBooking(this.booking.id);
+      },
+      error: (err: any) => this.snackBar.open(err.error?.error?.message || 'Error al confirmar', 'Cerrar', { duration: 4000 })
+    });
+  }
+
   pay(): void {
     if (!this.booking || this.paying) return;
     if (this.booking.estado !== 'confirmada') {

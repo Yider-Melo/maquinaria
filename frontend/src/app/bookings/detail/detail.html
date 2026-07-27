@@ -19,6 +19,9 @@
       <div class="detail-row" *ngIf="booking.maquinaria_precio !== undefined"><span class="detail-label">Precio unitario</span><span class="detail-value">${{ booking.maquinaria_precio | number }}<small> /día</small></span></div>
     </mat-card-content>
     <mat-card-actions class="detail-actions">
+      <button mat-raised-button color="primary" (click)="confirm()" *ngIf="canConfirm()">
+        <mat-icon>check_circle</mat-icon> Confirmar reserva
+      </button>
       <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'" [disabled]="paying">
         <mat-icon *ngIf="paying" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
         <mat-icon *ngIf="!paying">payment</mat-icon>
