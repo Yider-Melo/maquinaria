@@ -5,6 +5,13 @@ const { validate, validateParams, uuidParam, validateToken, requireRole, errorHa
 
 router.get('/admin/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
 router.post('/checkout', validateToken, validate(schemas.pago), paymentController.createCheckout);
+function internalAuth(req, res, next) {
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== (process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev')) {
+        return res.status(403).json({ success: false, error: { message: 'API key inválida' } });
+    }
+    next();
+}
 function webhookAuth(req, res, next) {
     const signature = req.headers['x-webhook-signature'];
     const allowedIps = (process.env.WEBHOOK_ALLOWED_IPS || '').split(',');
@@ -21,6 +28,7 @@ function internalAuth(req, res, next) {
     }
     next();
 }
+router.post('/internal/booking/:bookingId/release', internalAuth, validateParams(uuidParam('bookingId')), paymentController.releaseByBooking);
 router.get('/my-payments', validateToken, paymentController.getMyPayments);
 router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);

@@ -22,6 +22,19 @@ router.get('/users', validateToken, requireRole('admin'), authController.adminLi
 router.get('/users/stats', validateToken, requireRole('admin'), authController.adminUserStats);
 router.put('/users/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), authController.adminSetUserStatus);
 
+router.get('/bank-account', validateToken, authController.getBankAccount);
+router.put('/bank-account', validateToken, authController.saveBankAccount);
+router.delete('/bank-account', validateToken, authController.deleteBankAccount);
+
+function internalAuth(req, res, next) {
+    const apiKey = req.headers['x-api-key'];
+    if (apiKey !== (process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev')) {
+        return res.status(403).json({ success: false, error: { message: 'API key inválida' } });
+    }
+    next();
+}
+router.get('/internal/users/:id/bank-account', internalAuth, validateParams(uuidParam('id')), authController.getBankAccountInternal);
+
 router.use(errorHandler);
 
 module.exports = router;

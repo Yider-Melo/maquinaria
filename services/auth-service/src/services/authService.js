@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, getJwtSecret } = require('shared');
 const usuarioRepository = require('../repositories/usuarioRepository');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
+const cuentaBancariaRepository = require('../repositories/cuentaBancariaRepository');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
@@ -225,9 +226,47 @@ async function adminSetUserStatus(userId, active) {
     return user;
 }
 
+async function getBankAccount(userId) {
+    const cuenta = await cuentaBancariaRepository.findByUsuarioId(userId);
+    return cuenta || null;
+}
+
+async function saveBankAccount(userId, data) {
+    const user = await usuarioRepository.findById(userId);
+    if (!user || user.tipo_usuario !== 'propietario') {
+        throw new ValidationError('Solo los propietarios pueden registrar cuentas bancarias');
+    }
+    const BANCOS_VALIDOS = ['nequi', 'bancolombia', 'davivienda', 'bbva', 'popular', 'occidente', 'bogota', 'av_villas', 'colpatria', 'caja_social'];
+    if (!BANCOS_VALIDOS.includes(data.banco)) {
+        throw new ValidationError(`Banco inválido. Válidos: ${BANCOS_VALIDOS.join(', ')}`);
+    }
+    if (!data.titular || !data.numero_cuenta || !data.numero_documento) {
+        throw new ValidationError('titular, numero_cuenta y numero_documento son requeridos');
+    }
+    const cuenta = await cuentaBancariaRepository.upsert(userId, {
+        banco: data.banco,
+        tipo_cuenta: data.tipo_cuenta || 'ahorros',
+        numero_cuenta: data.numero_cuenta,
+        titular: data.titular,
+        tipo_documento: data.tipo_documento || 'CC',
+        numero_documento: data.numero_documento,
+    });
+    return cuenta;
+}
+
+async function deleteBankAccount(userId) {
+    await cuentaBancariaRepository.remove(userId);
+    return { message: 'Cuenta bancaria eliminada' };
+}
+
+async function getBankAccountInternal(userId) {
+    return await cuentaBancariaRepository.findByUsuarioId(userId);
+}
+
 module.exports = {
     register, login, getProfile, updateProfile, changePassword, verifyEmail,
     setup2FA, verify2FA, forgotPassword, resetPassword,
     refreshToken, logout, logoutAll,
-    validateToken, adminListUsers, adminUserStats, adminSetUserStatus
+    validateToken, adminListUsers, adminUserStats, adminSetUserStatus,
+    getBankAccount, saveBankAccount, deleteBankAccount, getBankAccountInternal
 };

@@ -35,8 +35,32 @@ app.use('/', routes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-    logger.info('Auth Service iniciado', { port: PORT });
+async function ensureBankAccountSchema() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS cuentas_bancarias (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+            banco VARCHAR(50) NOT NULL,
+            tipo_cuenta VARCHAR(20) NOT NULL DEFAULT 'ahorros',
+            numero_cuenta VARCHAR(50) NOT NULL,
+            titular VARCHAR(200) NOT NULL,
+            tipo_documento VARCHAR(5) NOT NULL DEFAULT 'CC',
+            numero_documento VARCHAR(20) NOT NULL,
+            creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(usuario_id)
+        )
+    `);
+    logger.info('Esquema de cuentas_bancarias asegurado');
+}
+
+ensureBankAccountSchema().then(() => {
+    app.listen(PORT, () => {
+        logger.info('Auth Service iniciado', { port: PORT });
+    });
+}).catch((err) => {
+    logger.error('Error asegurando esquema de cuentas bancarias:', err);
+    process.exit(1);
 });
 
 process.on('SIGTERM', () => {

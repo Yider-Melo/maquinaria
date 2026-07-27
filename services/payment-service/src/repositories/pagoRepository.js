@@ -100,6 +100,16 @@ async function updateEstadoWhere(pagoId, estadoActual, nuevoEstado) {
     return result.rows[0] || null;
 }
 
+async function findPaymentByBooking(bookingId) {
+    const result = await pool.query(
+        `SELECT id, propietario_id, referencia_pasarela_mp, monto FROM pago
+         WHERE reserva_id = $1 AND estado = 'retenido'
+         ORDER BY creado_en DESC LIMIT 1`,
+        [bookingId]
+    );
+    return result.rows[0] || null;
+}
+
 async function getDashboard() {
     const totals = await pool.query(
         `SELECT
@@ -117,6 +127,7 @@ async function getDashboard() {
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
     findByReferenciaPasarela, updateEstado, updateCheckoutUrl,
-    findByIdWithReserva, findByBooking, findByUser, findByIdSimple, updateEstadoWhere, updateReferenciaPasarela,
+    findByIdWithReserva, findByBooking, findByUser, findByIdSimple,
+    updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     getDashboard
 };

@@ -5,6 +5,7 @@ const reservaRepository = require('../repositories/reservaRepository');
 
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
 
 const TZ = 'America/Bogota';
 
@@ -283,6 +284,24 @@ async function cancel(id, userId, motivo) {
     });
 }
 
+async function releasePayment(bookingId) {
+    const url = `${PAYMENT_SERVICE_URL}/internal/booking/${bookingId}/release`;
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' }
+        });
+        const body = await response.text();
+        if (!response.ok) {
+            console.warn('No se pudo liberar el pago automáticamente:', { status: response.status, body });
+        } else {
+            console.log('Pago liberado automáticamente al completar reserva:', { bookingId });
+        }
+    } catch (err) {
+        console.warn('Error al liberar pago automático:', { message: err.message });
+    }
+}
+
 async function complete(id, userId) {
     const reserva = await getById(id, userId);
     if (reserva.estado !== 'pagada' && reserva.estado !== 'en_curso') {
@@ -298,6 +317,8 @@ async function complete(id, userId) {
             'Reserva completada',
             `La reserva ha sido completada. ¡Califica tu experiencia!`
         );
+
+        setImmediate(() => releasePayment(id));
 
         return booking;
     });

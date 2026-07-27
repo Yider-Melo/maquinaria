@@ -62,6 +62,17 @@
 .password-rules mat-icon { color: #9ca3af; font-size: 17px; width: 17px; height: 17px; }
 .password-rules .valid { color: var(--rm-success); font-weight: 700; }
 .password-rules .valid mat-icon { color: var(--rm-success); }
+.terms-box { border: 1px solid var(--rm-border); border-radius: 12px; padding: 16px 18px; margin: 12px 0 18px; background: #fefcf8; }
+.terms-checkbox { display: flex; align-items: flex-start; gap: 10px; }
+.terms-checkbox ::ng-deep .mdc-checkbox { width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; }
+.terms-checkbox ::ng-deep .mdc-checkbox__background { border-radius: 50% !important; width: 20px !important; height: 20px !important; top: 1px !important; left: 1px !important; border-width: 2px !important; }
+.terms-checkbox ::ng-deep .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background { background-color: var(--rm-primary) !important; border-color: var(--rm-primary) !important; }
+.terms-checkbox ::ng-deep .mdc-checkbox__checkmark { border-radius: 50%; }
+.terms-checkbox ::ng-deep .mdc-checkbox__ripple { display: none !important; }
+.terms-checkbox ::ng-deep .mdc-checkbox__focus-ring { display: none !important; }
+.terms-label { font-size: 13px; line-height: 1.6; color: var(--rm-ink); }
+.terms-label a { color: var(--rm-primary-dark); font-weight: 700; cursor: pointer; text-decoration: underline; }
+.terms-label a:hover { color: var(--rm-primary); }
 .error-box {
   background: #fff0f0; border: 1px solid #ffcdd2; border-radius: 10px;
   padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;

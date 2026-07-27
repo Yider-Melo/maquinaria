@@ -84,9 +84,11 @@
             </mat-form-field>
           </div>
         </div>
-        <mat-checkbox [(ngModel)]="aceptaTerminos" name="aceptaTerminos" class="terms-checkbox" color="primary">
-          Acepto los <a (click)="openTerminos()">términos y condiciones</a> y las <a (click)="openPoliticas()">políticas de privacidad</a>
-        </mat-checkbox>
+        <div class="terms-box">
+          <mat-checkbox [(ngModel)]="aceptaTerminos" name="aceptaTerminos" class="terms-checkbox" color="primary">
+            <span class="terms-label">Acepto los <a href="#" (click)="$event.preventDefault(); openTerminos()">términos y condiciones</a> y las <a href="#" (click)="$event.preventDefault(); openPoliticas()">políticas de privacidad</a></span>
+          </mat-checkbox>
+        </div>
         <div class="error-box" *ngIf="error">
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>

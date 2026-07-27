@@ -151,6 +151,34 @@ async function getUserById(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getBankAccount(req, res, next) {
+    try {
+        const cuenta = await authService.getBankAccount(req.user.id);
+        success(res, cuenta);
+    } catch (err) { next(err); }
+}
+
+async function saveBankAccount(req, res, next) {
+    try {
+        const cuenta = await authService.saveBankAccount(req.user.id, req.body);
+        success(res, cuenta);
+    } catch (err) { next(err); }
+}
+
+async function deleteBankAccount(req, res, next) {
+    try {
+        const result = await authService.deleteBankAccount(req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getBankAccountInternal(req, res, next) {
+    try {
+        const cuenta = await authService.getBankAccountInternal(req.params.id);
+        success(res, cuenta);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     register,
     login,
@@ -170,4 +198,8 @@ module.exports = {
     adminUserStats,
     adminSetUserStatus,
     getUserById,
+    getBankAccount,
+    saveBankAccount,
+    deleteBankAccount,
+    getBankAccountInternal,
 };

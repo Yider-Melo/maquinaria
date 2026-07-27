@@ -1,6 +1,13 @@
 const paymentService = require('../services/paymentService');
 const { success } = require('shared');
 
+async function releaseByBooking(req, res, next) {
+    try {
+        const result = await paymentService.releaseByBooking(req.params.bookingId);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function getDashboard(req, res, next) {
     try {
         const dashboard = await paymentService.getDashboard();
@@ -74,4 +81,5 @@ module.exports = {
     simulateApproval,
     releaseFunds,
     refund,
+    releaseByBooking,
 };

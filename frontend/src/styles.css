@@ -81,6 +81,7 @@ table.mat-mdc-table { background: var(--rm-surface) !important; color: var(--rm-
 .mat-mdc-header-cell { color: var(--rm-secondary) !important; font-weight: 800 !important; }
 .mat-mdc-cell { color: var(--rm-ink) !important; }
 .mat-mdc-paginator { background: var(--rm-surface) !important; color: var(--rm-muted) !important; }
+.terms-checkbox .mdc-checkbox__ripple, .terms-checkbox .mdc-checkbox__focus-ring { display: none !important; }
 .mat-mdc-chip { background: #fff1d6 !important; color: var(--rm-secondary) !important; }
 *:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 a:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }

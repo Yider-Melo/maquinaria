@@ -1,9 +1,11 @@
 // Componente de registro de usuario. Recoge los datos del formulario
 // y los envía al servicio de autenticación para crear una cuenta nueva.
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { Auth } from '../../core/services/auth.service';
+import { LegalDialog } from '../legal-dialog.component';
 
 @Component({
   standalone: false,
@@ -20,14 +22,67 @@ export class Register {
     { label: 'Un número', valid: false }
   ];
 
-  constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {}
+  constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private dialog: MatDialog) {}
 
   openTerminos(): void {
-    this.snackBar.open('Al registrarte aceptas: uso responsable de la plataforma, veracidad de datos, y responsabilidad sobre el equipo alquilado.', 'Cerrar', { duration: 8000 });
+    this.dialog.open(LegalDialog, {
+      width: '600px',
+      data: {
+        title: 'Términos y Condiciones',
+        content: `1. Aceptación de los Términos
+Al registrarte y utilizar RentaMaq, aceptas cumplir con estos términos y condiciones.
+
+2. Descripción del Servicio
+RentaMaq es una plataforma que conecta a propietarios de maquinaria con arrendatarios interesados en alquilar equipos.
+
+3. Responsabilidades del Usuario
+- Proporcionar información veraz y actualizada.
+- No utilizar la plataforma para actividades ilegales.
+- Mantener la confidencialidad de tus credenciales de acceso.
+- Respetar los acuerdos de alquiler establecidos.
+
+4. Responsabilidad sobre la Maquinaria
+- El arrendatario se compromete a usar la maquinaria de forma responsable.
+- El propietario debe garantizar que la maquinaria está en condiciones óptimas.
+- Ambos partes acuerdan resolver disputas de buena fe.
+
+5. Comisiones
+RentaMaq cobra una comisión por cada transacción realizada a través de la plataforma.
+
+6. Modificaciones
+RentaMaq se reserva el derecho de modificar estos términos en cualquier momento.`
+      }
+    });
   }
 
   openPoliticas(): void {
-    this.snackBar.open('Tus datos personales se usarán solo para la gestión de alquileres y no serán compartidos con terceros sin tu consentimiento.', 'Cerrar', { duration: 8000 });
+    this.dialog.open(LegalDialog, {
+      width: '600px',
+      data: {
+        title: 'Políticas de Privacidad',
+        content: `1. Información que Recopilamos
+Recopilamos la información que nos proporcionas al registrarte: nombre, email, teléfono y tipo de usuario.
+
+2. Uso de la Información
+Utilizamos tus datos para:
+- Gestionar tu cuenta y autenticación.
+- Facilitar la comunicación entre arrendatarios y propietarios.
+- Procesar pagos a través de Mercado Pago.
+- Enviar notificaciones relacionadas con tus reservas.
+
+3. Compartición de Datos
+No compartimos tus datos personales con terceros sin tu consentimiento explícito, excepto cuando sea necesario para procesar pagos o cumplir con la ley.
+
+4. Seguridad
+Implementamos medidas de seguridad para proteger tu información contra accesos no autorizados.
+
+5. Tus Derechos
+Puedes solicitar la eliminación de tus datos contactándonos. Tus datos se conservarán mientras tu cuenta esté activa.
+
+6. Contacto
+Para cualquier consulta sobre privacidad, contáctanos a través de la plataforma.`
+      }
+    });
   }
 
   private emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

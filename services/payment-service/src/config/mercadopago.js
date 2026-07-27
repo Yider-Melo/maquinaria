@@ -103,4 +103,45 @@ async function refundPayment(paymentId) {
     }
 }
 
-module.exports = { configure, isConfigured, createPreference, getPayment, capturePayment, refundPayment };
+async function createPayout({ amount, description, bankId, accountNumber, holderName, holderDocType, holderDocNumber, holderEmail, externalRef }) {
+    if (!isConfigured()) {
+        logger.warn('Modo simulado: payout no ejecutado', { amount, bankId });
+        return { simulated: true, amount, message: 'Payout simulado' };
+    }
+    try {
+        const body = {
+            transaction_amount: amount,
+            description: description || 'Pago al propietario RentaMaq',
+            payment_method_id: bankId,
+            payer: {
+                email: holderEmail,
+                identification: {
+                    type: holderDocType || 'CC',
+                    number: holderDocNumber
+                }
+            },
+            external_reference: externalRef
+        };
+        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'X-Idempotency-Key': externalRef
+            },
+            body: JSON.stringify(body)
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            logger.error('Error en payout MP:', { status: response.status, result });
+            return null;
+        }
+        logger.info('Payout creado en MP:', { id: result.id, amount, bankId });
+        return { id: result.id, status: result.status, amount };
+    } catch (err) {
+        logger.error('Error creando payout MP:', { message: err.message });
+        return null;
+    }
+}
+
+module.exports = { configure, isConfigured, createPreference, getPayment, capturePayment, refundPayment, createPayout };

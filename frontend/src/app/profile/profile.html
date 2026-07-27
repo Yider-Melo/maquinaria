@@ -121,6 +121,50 @@
     </div>
   </section>
 
+  <mat-card class="bank-card" *ngIf="canManageMachineryImages">
+    <mat-card-header><mat-card-title>Datos bancarios para pagos</mat-card-title><mat-card-subtitle>Al completar una reserva, el pago (menos comisión) se enviará automáticamente a esta cuenta.</mat-card-subtitle></mat-card-header>
+    <mat-card-content>
+      <div class="bank-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Banco</mat-label>
+          <mat-select [(ngModel)]="bankAccount.banco">
+            <mat-option value="">Seleccionar</mat-option>
+            <mat-option *ngFor="let b of bancos" [value]="b">{{ b }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de cuenta</mat-label>
+          <mat-select [(ngModel)]="bankAccount.tipo_cuenta">
+            <mat-option value="ahorros">Ahorros</mat-option>
+            <mat-option value="corriente">Corriente</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Número de cuenta</mat-label>
+          <input matInput [(ngModel)]="bankAccount.numero_cuenta" placeholder="Número de cuenta o celular (Nequi)">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Titular</mat-label>
+          <input matInput [(ngModel)]="bankAccount.titular" placeholder="Nombre del titular">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo documento</mat-label>
+          <mat-select [(ngModel)]="bankAccount.tipo_documento">
+            <mat-option *ngFor="let td of tiposDocumento" [value]="td">{{ td }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Número documento</mat-label>
+          <input matInput [(ngModel)]="bankAccount.numero_documento" placeholder="Cédula del titular">
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button class="primary" [disabled]="bankLoading || !bankAccount.banco || !bankAccount.numero_cuenta" (click)="saveBankAccount()">Guardar cuenta bancaria</button>
+      <button mat-stroked-button color="warn" *ngIf="bankAccount.id" (click)="deleteBankAccount()">Eliminar</button>
+    </mat-card-actions>
+  </mat-card>
+
   <mat-card class="machinery-photo-card" *ngIf="canManageMachineryImages">
     <mat-card-header>
       <mat-card-title>Fotos de tus vehículos y maquinaria</mat-card-title>

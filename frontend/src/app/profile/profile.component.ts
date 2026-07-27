@@ -41,6 +41,10 @@ export class Profile implements OnInit {
   password = { currentPassword: '', newPassword: '' };
   ownerMachines: any[] = [];
   renterBookings: any[] = [];
+  bankAccount: any = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
+  bancos = ['nequi', 'bancolombia', 'davivienda', 'bbva', 'popular', 'occidente', 'bogota', 'av_villas', 'colpatria', 'caja_social'];
+  tiposDocumento = ['CC', 'CE', 'NIT'];
+  bankLoading = false;
   selectedMachine: any = null;
   machineImages: any[] = [];
   imageUrl = '';
@@ -56,7 +60,7 @@ export class Profile implements OnInit {
       next: (res) => {
         this.profile = res.data;
         this.loading = false;
-        if (this.canManageMachineryImages) this.loadOwnerMachines();
+        if (this.canManageMachineryImages) { this.loadOwnerMachines(); this.loadBankAccount(); }
         if (this.canUseRenterProfile) this.loadRenterBookings();
       },
       error: () => { this.error = 'No se pudo cargar tu perfil.'; this.loading = false; }
@@ -219,6 +223,39 @@ export class Profile implements OnInit {
     this.api.post<any>('/auth/profile/verify-email', {}).subscribe({
       next: (res) => { this.profile = res.data; this.snackBar.open('Correo verificado en modo demo.', 'Cerrar', { duration: 3000 }); },
       error: () => this.error = 'No se pudo verificar el correo.'
+    });
+  }
+
+  loadBankAccount(): void {
+    this.api.get<any>('/auth/bank-account').subscribe({
+      next: (res) => { if (res.data) this.bankAccount = res.data; },
+      error: () => {}
+    });
+  }
+
+  saveBankAccount(): void {
+    this.bankLoading = true; this.error = '';
+    this.api.put<any>('/auth/bank-account', this.bankAccount).subscribe({
+      next: (res) => {
+        this.bankAccount = res.data;
+        this.snackBar.open('Cuenta bancaria guardada.', 'Cerrar', { duration: 3000 });
+        this.bankLoading = false;
+      },
+      error: (err) => { this.error = err.error?.error?.message || 'No se pudo guardar la cuenta.'; this.bankLoading = false; }
+    });
+  }
+
+  deleteBankAccount(): void {
+    const dialogRef = this.dialog.open(ConfirmDeleteDialog, { data: { message: '¿Eliminar tu cuenta bancaria? Si no hay cuenta configurada, el pago se quedará en RentaMaq.' } });
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.api.delete('/auth/bank-account').subscribe({
+        next: () => {
+          this.bankAccount = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
+          this.snackBar.open('Cuenta bancaria eliminada.', 'Cerrar', { duration: 3000 });
+        },
+        error: () => this.error = 'No se pudo eliminar la cuenta.'
+      });
     });
   }
 }

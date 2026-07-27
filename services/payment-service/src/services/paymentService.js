@@ -9,9 +9,11 @@ const logger = createServiceLogger('payment-service');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://api-gateway:3000';
 const PUBLIC_URL = process.env.PUBLIC_URL || GATEWAY_URL;
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
+const COMISION_PLATAFORMA = parseFloat(process.env.COMISION_PLATAFORMA_PORCENTAJE || '10') / 100;
 
 async function markBookingAsPaid(bookingId) {
     const url = `${BOOKING_SERVICE_URL}/internal/${bookingId}/mark-paid`;
@@ -226,6 +228,74 @@ async function refund(pagoId, userId) {
     return result || { message: 'Pago no encontrado o no reembolsable' };
 }
 
+async function getOwnerBankAccount(ownerId) {
+    try {
+        const url = `${AUTH_SERVICE_URL}/internal/users/${ownerId}/bank-account`;
+        const response = await fetch(url, {
+            headers: { 'x-api-key': INTERNAL_API_KEY }
+        });
+        if (!response.ok) return null;
+        const body = await response.json();
+        return body.data || null;
+    } catch (err) {
+        logger.warn('Error obteniendo cuenta bancaria del propietario:', { message: err.message });
+        return null;
+    }
+}
+
+async function releaseByBooking(bookingId) {
+    const pago = await pagoRepository.findPaymentByBooking(bookingId);
+    if (!pago) {
+        logger.warn('No hay pago en estado retenido para la reserva:', { bookingId });
+        return { message: 'No hay pago pendiente de liberación' };
+    }
+
+    if (pago.referencia_pasarela_mp) {
+        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
+        if (!isNaN(mpPaymentId)) {
+            await mercadopago.capturePayment(mpPaymentId);
+        }
+    }
+
+    const montoPropietario = Math.round(pago.monto * (1 - COMISION_PLATAFORMA));
+    const comision = pago.monto - montoPropietario;
+
+    const bankAccount = await getOwnerBankAccount(pago.propietario_id);
+    if (bankAccount) {
+        const bankIdMap = {
+            nequi: 'nequi', bancolombia: 'bancolombia', davivienda: 'davivienda',
+            bbva: 'bbva', popular: 'popular', occidente: 'occidente',
+            bogota: 'bogota', av_villas: 'av_villas', colpatria: 'colpatria',
+            caja_social: 'caja_social'
+        };
+        const mpBankId = bankIdMap[bankAccount.banco] || bankAccount.banco;
+        const payoutResult = await mercadopago.createPayout({
+            amount: montoPropietario,
+            description: `Pago alquiler - Reserva ${bookingId.substring(0, 8).toUpperCase()}`,
+            bankId: mpBankId,
+            accountNumber: bankAccount.numero_cuenta,
+            holderName: bankAccount.titular,
+            holderDocType: bankAccount.tipo_documento,
+            holderDocNumber: bankAccount.numero_documento,
+            holderEmail: '',
+            externalRef: `PAYOUT-${pago.id}`
+        });
+        if (payoutResult) {
+            logger.info('Payout al propietario exitoso:', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco });
+        } else {
+            logger.warn('Payout al propietario falló, el dinero queda en RentaMaq:', { propietarioId: pago.propietario_id });
+        }
+    } else {
+        logger.warn('Propietario sin cuenta bancaria registrada. El dinero queda en RentaMaq:', { propietarioId: pago.propietario_id });
+    }
+
+    const result = await pagoRepository.updateEstadoWhere(pago.id, 'retenido', 'liberado');
+    if (result) {
+        logger.info('Fondos liberados automáticamente:', { pagoId: pago.id, bookingId, comision, montoPropietario });
+    }
+    return result || { message: 'Pago no encontrado o no está en estado retenido' };
+}
+
 async function getDashboard() {
     return await pagoRepository.getDashboard();
 }
@@ -233,5 +303,5 @@ async function getDashboard() {
 module.exports = {
     createCheckout, handleWebhook, determinarEstado,
     getPaymentById, getPaymentsByBooking, getMyPayments,
-    simulateApproval, releaseFunds, refund, getDashboard
+    simulateApproval, releaseFunds, refund, releaseByBooking, getDashboard
 };
