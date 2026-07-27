@@ -22,6 +22,7 @@ router.get('/users', validateToken, requireRole('admin'), authController.adminLi
 router.get('/users/stats', validateToken, requireRole('admin'), authController.adminUserStats);
 router.put('/users/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), authController.adminSetUserStatus);
 
+router.get('/verify-email/:token', authController.verifyEmailByToken);
 router.get('/bank-account', validateToken, authController.getBankAccount);
 router.put('/bank-account', validateToken, authController.saveBankAccount);
 router.delete('/bank-account', validateToken, authController.deleteBankAccount);

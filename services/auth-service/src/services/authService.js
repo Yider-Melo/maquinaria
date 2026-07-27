@@ -8,6 +8,7 @@ const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, getJwt
 const usuarioRepository = require('../repositories/usuarioRepository');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 const cuentaBancariaRepository = require('../repositories/cuentaBancariaRepository');
+const emailService = require('./emailService');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
@@ -30,6 +31,8 @@ async function register({ email, password, nombre, apellido, telefono, tipo_usua
     const id = uuidv4();
 
     await usuarioRepository.insert({ id, email, passwordHash, nombre, apellido, telefono: telefono || null, tipo_usuario, tokenVerificacion });
+
+    setImmediate(() => emailService.sendVerificationEmail(email, nombre, tokenVerificacion));
 
     return { id, email, nombre, apellido, tipo_usuario };
 }
@@ -111,6 +114,14 @@ async function verifyEmail(userId) {
     return user;
 }
 
+async function verifyEmailByToken(token) {
+    if (!token) throw new ValidationError('Token requerido');
+    const user = await usuarioRepository.findByVerificationToken(token);
+    if (!user) throw new ValidationError('Token inválido o expirado');
+    const result = await usuarioRepository.verifyEmail(user.id);
+    return result;
+}
+
 async function setup2FA(userId) {
     const secret = speakeasy.generateSecret({ name: `Rentamaq:${userId}` });
     await usuarioRepository.update2FASecret(userId, secret.base32);
@@ -147,6 +158,8 @@ async function forgotPassword(email) {
     const token = uuidv4();
     const expiracion = new Date(Date.now() + 60 * 60 * 1000);
     await usuarioRepository.setResetToken(user.id, token, expiracion);
+
+    setImmediate(() => emailService.sendPasswordReset(email, token, user.nombre || 'usuario'));
 
     return { success: true };
 }

@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: api-gateway/Dockerfile
+    restart: unless-stopped
     ports:
       - "3100:3000"
     environment:
@@ -25,6 +26,12 @@ services:
       - payment-service
       - rating-service
       - notification-service
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
@@ -32,6 +39,7 @@ services:
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3001
       - DB_HOST=auth-db
@@ -40,14 +48,27 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - JWT_SECRET=${JWT_SECRET}
+      - PUBLIC_URL=${PUBLIC_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM:-noreply@rentamaq.com}
     depends_on:
       auth-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   auth-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_auth
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -67,6 +88,7 @@ services:
     build:
       context: .
       dockerfile: services/machinery-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3002
       - DB_HOST=machinery-db
@@ -81,11 +103,18 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   machinery-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_machinery
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -105,6 +134,7 @@ services:
     build:
       context: .
       dockerfile: services/search-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3003
       - DB_HOST=search-db
@@ -119,11 +149,18 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   search-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_search
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -143,6 +180,7 @@ services:
     build:
       context: .
       dockerfile: services/booking-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3004
       - DB_HOST=booking-db
@@ -162,11 +200,18 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3004/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   booking-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_booking
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -186,6 +231,7 @@ services:
     build:
       context: .
       dockerfile: services/payment-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3005
       - DB_HOST=payment-db
@@ -205,11 +251,18 @@ services:
     depends_on:
       payment-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3005/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   payment-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_payment
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -229,6 +282,7 @@ services:
     build:
       context: .
       dockerfile: services/rating-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3006
       - DB_HOST=rating-db
@@ -246,11 +300,18 @@ services:
     depends_on:
       rating-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3006/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   rating-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_rating
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -270,6 +331,7 @@ services:
     build:
       context: .
       dockerfile: services/notification-service/Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=3007
       - DB_HOST=notification-db
@@ -290,11 +352,18 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3007/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - rentamaq-network
 
   notification-db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=rentamaq_notification
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -312,6 +381,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"

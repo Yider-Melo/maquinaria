@@ -4,6 +4,7 @@ const createServiceLogger = require('../../../shared/logger');
 const { errorHandler, correlationId, requestLogger, eventBus } = require('shared');
 const pool = require('./db');
 const routes = require('./routes');
+const emailService = require('./services/emailService');
 
 const logger = createServiceLogger('auth-service');
 
@@ -53,6 +54,8 @@ async function ensureBankAccountSchema() {
     `);
     logger.info('Esquema de cuentas_bancarias asegurado');
 }
+
+emailService.configure();
 
 ensureBankAccountSchema().then(() => {
     app.listen(PORT, () => {

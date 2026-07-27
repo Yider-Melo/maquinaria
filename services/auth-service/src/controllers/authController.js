@@ -151,6 +151,13 @@ async function getUserById(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function verifyEmailByToken(req, res, next) {
+    try {
+        const result = await authService.verifyEmailByToken(req.params.token);
+        success(res, { message: 'Correo verificado correctamente', user: result });
+    } catch (err) { next(err); }
+}
+
 async function getBankAccount(req, res, next) {
     try {
         const cuenta = await authService.getBankAccount(req.user.id);
@@ -202,4 +209,5 @@ module.exports = {
     saveBankAccount,
     deleteBankAccount,
     getBankAccountInternal,
+    verifyEmailByToken,
 };

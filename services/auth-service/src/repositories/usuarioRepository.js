@@ -136,6 +136,14 @@ async function setActive(userId, active) {
     return result.rows[0] || null;
 }
 
+async function findByVerificationToken(token) {
+    const result = await pool.query(
+        `SELECT id, email, nombre FROM usuarios WHERE token_verificacion = $1 AND email_verificado = false AND activo = true`,
+        [token]
+    );
+    return result.rows[0] || null;
+}
+
 async function verifyEmail(userId) {
     const result = await pool.query(
         `UPDATE usuarios SET email_verificado = true, token_verificacion = NULL, actualizado_en = CURRENT_TIMESTAMP
@@ -164,5 +172,6 @@ module.exports = {
     findAll,
     getStats,
     setActive,
-    verifyEmail
+    verifyEmail,
+    findByVerificationToken
 };
