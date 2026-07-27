@@ -16,7 +16,7 @@ function isConfigured() {
     return !!(SMTP_HOST && SMTP_USER && SMTP_PASS);
 }
 
-function configure() {
+async function configure() {
     if (!isConfigured()) {
         logger.warn('SMTP no configurado. Los emails solo se mostrarán en logs.');
         return false;
@@ -25,9 +25,18 @@ function configure() {
         host: SMTP_HOST,
         port: SMTP_PORT,
         secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS }
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
     });
     logger.info('Servicio de emails configurado:', { host: SMTP_HOST, port: SMTP_PORT });
+    try {
+        await transporter.verify();
+        logger.info('Conexión SMTP verificada correctamente');
+    } catch (err) {
+        logger.error('Error verificando conexión SMTP:', { error: err.message });
+    }
     return true;
 }
 

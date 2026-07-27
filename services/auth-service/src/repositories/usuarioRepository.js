@@ -73,7 +73,7 @@ async function verify2FA(userId) {
 }
 
 async function findIdByEmail(email) {
-    const result = await pool.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, nombre FROM usuarios WHERE email = $1', [email]);
     return result.rows[0] || null;
 }
 

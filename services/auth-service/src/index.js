@@ -55,9 +55,12 @@ async function ensureBankAccountSchema() {
     logger.info('Esquema de cuentas_bancarias asegurado');
 }
 
-emailService.configure();
-
-ensureBankAccountSchema().then(() => {
+ensureBankAccountSchema().then(async () => {
+    try {
+        await emailService.configure();
+    } catch (err) {
+        logger.error('Error configurando email:', err);
+    }
     app.listen(PORT, () => {
         logger.info('Auth Service iniciado', { port: PORT });
     });

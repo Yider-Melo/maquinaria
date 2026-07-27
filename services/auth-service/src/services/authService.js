@@ -9,6 +9,8 @@ const usuarioRepository = require('../repositories/usuarioRepository');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 const cuentaBancariaRepository = require('../repositories/cuentaBancariaRepository');
 const emailService = require('./emailService');
+const createServiceLogger = require('../../../../shared/logger');
+const logger = createServiceLogger('auth-service');
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 30;
@@ -32,7 +34,10 @@ async function register({ email, password, nombre, apellido, telefono, tipo_usua
 
     await usuarioRepository.insert({ id, email, passwordHash, nombre, apellido, telefono: telefono || null, tipo_usuario, tokenVerificacion });
 
-    setImmediate(() => emailService.sendVerificationEmail(email, nombre, tokenVerificacion));
+    setImmediate(async () => {
+        try { await emailService.sendVerificationEmail(email, nombre || 'usuario', tokenVerificacion); }
+        catch (err) { logger.error('Error enviando email de verificación:', { error: err.message }); }
+    });
 
     return { id, email, nombre, apellido, tipo_usuario };
 }
@@ -159,7 +164,12 @@ async function forgotPassword(email) {
     const expiracion = new Date(Date.now() + 60 * 60 * 1000);
     await usuarioRepository.setResetToken(user.id, token, expiracion);
 
-    setImmediate(() => emailService.sendPasswordReset(email, token, user.nombre || 'usuario'));
+    logger.info('Preparando envío de email de recuperación:', { email, token: token.substring(0, 8) + '...' });
+    setImmediate(async () => {
+        logger.info('Enviando email de recuperación...');
+        try { await emailService.sendPasswordReset(email, token, user.nombre || 'usuario'); }
+        catch (err) { logger.error('Error enviando email de recuperación:', { error: err.message }); }
+    });
 
     return { success: true };
 }
