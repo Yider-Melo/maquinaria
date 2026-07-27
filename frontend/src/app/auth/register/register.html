@@ -49,15 +49,22 @@
             </mat-form-field>
           </div>
           <div class="form-field">
-            <mat-form-field appearance="outline" style="width:100%;">
+            <mat-form-field appearance="outline" style="width:100%;" [class.field-error]="data.confirmPassword && !passwordsMatch">
               <mat-label>Confirmar</mat-label>
-              <input matInput [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="data.confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repite la contraseña" (ngModelChange)="updatePasswordRules()">
+              <input matInput [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="data.confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Repite la contraseña" (ngModelChange)="updatePasswordRules(); confirmTouched = true" (blur)="confirmTouched = true">
               <mat-icon matPrefix>lock</mat-icon>
               <button mat-icon-button matSuffix type="button" (click)="showConfirmPassword = !showConfirmPassword" [attr.aria-label]="showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
                 <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
-              <mat-error *ngIf="data.confirmPassword && data.password !== data.confirmPassword">Las contraseñas no coinciden</mat-error>
+              <mat-error *ngIf="data.confirmPassword && !passwordsMatch">
+                <mat-icon style="font-size:16px;width:16px;height:16px;vertical-align:middle;">warning</mat-icon> Las contraseñas no coinciden
+              </mat-error>
             </mat-form-field>
+            <div class="match-indicator" *ngIf="data.confirmPassword">
+              <mat-icon *ngIf="passwordsMatch" class="match-ok">check_circle</mat-icon>
+              <mat-icon *ngIf="!passwordsMatch" class="match-fail">cancel</mat-icon>
+              <span [class.match-ok-text]="passwordsMatch" [class.match-fail-text]="!passwordsMatch">{{ passwordsMatch ? 'Las contraseñas coinciden' : 'Las contraseñas no coinciden' }}</span>
+            </div>
           </div>
         </div>
         <div class="password-rules">

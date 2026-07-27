@@ -14,6 +14,7 @@ import { LegalDialog } from '../legal-dialog.component';
 export class Register {
   data = { email: '', password: '', confirmPassword: '', nombre: '', apellido: '', telefono: '', tipo_usuario: 'arrendatario' };
   error = ''; loading = false; showPassword = false; showConfirmPassword = false; aceptaTerminos = false;
+  confirmTouched = false;
 
   passwordRules = [
     { label: 'Mínimo 8 caracteres', valid: false },
@@ -134,6 +135,10 @@ Para cualquier consulta sobre privacidad, contáctanos a través de la plataform
         this.cdr.markForCheck();
       }
     });
+  }
+
+  get passwordsMatch(): boolean {
+    return !this.data.confirmPassword || this.data.password === this.data.confirmPassword;
   }
 
   updatePasswordRules(): void {
