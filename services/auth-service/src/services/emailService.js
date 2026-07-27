@@ -75,7 +75,7 @@ async function sendPasswordReset(email, token, nombre) {
             </div>
         </div>
     `;
-    return await sendEmail({ to, subject: 'Recuperación de contraseña - RentaMaq', html });
+    return await sendEmail({ to: email, subject: 'Recuperación de contraseña - RentaMaq', html });
 }
 
 async function sendVerificationEmail(email, nombre, token) {
@@ -98,7 +98,7 @@ async function sendVerificationEmail(email, nombre, token) {
             </div>
         </div>
     `;
-    return await sendEmail({ to, subject: 'Verifica tu correo - RentaMaq', html });
+    return await sendEmail({ to: email, subject: 'Verifica tu correo - RentaMaq', html });
 }
 
 module.exports = { configure, isConfigured, sendPasswordReset, sendVerificationEmail };
