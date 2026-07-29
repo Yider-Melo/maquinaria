@@ -1,13 +1,45 @@
 .page { padding:24px; max-width:1200px; margin:0 auto; }
 .page h1 { margin-bottom:24px; }
-.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:24px; }
-.stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:pointer; transition:transform .2s; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
+.stat-card.machinery, .stat-card.bookings, .stat-card.payments, .stat-card.reports { cursor:pointer; transition:transform .2s; }
+.stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
 .stat-card mat-icon { font-size:40px; width:40px; height:40px; }
-.stat-card.users mat-icon { color:#7b1fa2; }
-.stat-card.machinery mat-icon { color:#2e7d32; }
+.stat-card.users mat-icon { color:var(--rm-primary); }
+.stat-card.machinery mat-icon { color:var(--rm-success); }
+.stat-card.bookings mat-icon { color:var(--rm-accent); }
+.stat-card.payments mat-icon { color:var(--rm-secondary); }
+.stat-card.reports mat-icon { color:#7b1fa2; }
 .stat-info { display:flex; flex-direction:column; }
-.stat-value { font-size:32px; font-weight:bold; line-height:1.2; color:#333; }
-.stat-label { font-size:14px; color:#888; }
-.stat-sub { font-size:12px; color:#aaa; margin-top:2px; }
-@media (max-width:640px){ .stats-grid { grid-template-columns:1fr; } }
+.stat-value { font-size:28px; font-weight:bold; line-height:1.2; color:var(--rm-ink); }
+.stat-label { font-size:14px; color:var(--rm-muted); }
+.stat-sub { font-size:12px; color:var(--rm-muted); margin-top:2px; }
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+@media (max-width:768px){ .charts-row { grid-template-columns:1fr; } }
+@media (max-width:640px){ .stats-grid { grid-template-columns:1fr; } .bar-item { grid-template-columns:1fr; gap:4px; } .bar-label { text-align:left; } .bar-value { text-align:right; } }
+.bar-chart { display:flex; flex-direction:column; gap:8px; padding:8px 0; }
+.bar-item { display:grid; grid-template-columns:100px 1fr 50px; align-items:center; gap:8px; }
+.bar-label { font-size:13px; color:var(--rm-muted); text-align:right; }
+.bar-track { height:20px; background:#f2dfc7; border-radius:10px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:10px; transition:width .5s; min-width:2px; }
+.bar-fill.pending { background:var(--rm-accent); }
+.bar-fill.confirmed { background:var(--rm-primary); }
+.bar-fill.completed { background:var(--rm-success); }
+.bar-fill.cancelled { background:var(--rm-danger); }
+.bar-fill.type { background:var(--rm-secondary); }
+.bar-value { font-size:14px; font-weight:600; color:var(--rm-ink); }
+.recent-card { margin-bottom:24px; }
+.admin-table { width:100%; border-collapse:collapse; }
+.admin-table th { text-align:left; padding:12px 8px; border-bottom:2px solid var(--rm-border); color:var(--rm-secondary); font-weight:800; font-size:13px; }
+.admin-table td { padding:10px 8px; border-bottom:1px solid var(--rm-border); font-size:14px; color:var(--rm-ink); }
+.admin-table button:hover { background: var(--rm-primary); color: white; }
+.admin-table tr:hover { background: rgba(0,0,0,0.03); }
+.status-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:500; text-transform:capitalize; }
+.status-badge.pendiente { background:#fff3e0; color:#e65100; }
+.status-badge.confirmada { background:#e3f2fd; color:#1565c0; }
+.status-badge.en_curso { background:#f3e5f5; color:#7b1fa2; }
+.status-badge.completada { background:#e8f5e9; color:#2e7d32; }
+.status-badge.cancelada { background:#fbe9e7; color:#bf360c; }
+.status-badge.rechazada { background:#ffebee; color:#c62828; }
+.empty { color:var(--rm-muted); text-align:center; padding:16px; }

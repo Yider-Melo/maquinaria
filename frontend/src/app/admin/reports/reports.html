@@ -2,11 +2,27 @@
   <h1>Gestión administrativa</h1>
 
   <div class="report-grid">
+    <mat-card><mat-icon>group</mat-icon><div><strong>{{ stats?.total || 0 }}</strong><span>Usuarios registrados</span></div></mat-card>
+    <mat-card><mat-icon>engineering</mat-icon><div><strong>{{ stats?.propietarios || 0 }}</strong><span>Propietarios</span></div></mat-card>
+    <mat-card><mat-icon>person_search</mat-icon><div><strong>{{ stats?.arrendatarios || 0 }}</strong><span>Arrendatarios</span></div></mat-card>
     <mat-card><mat-icon>report</mat-icon><div><strong>{{ ratingReportadas || 0 }}</strong><span>Calificaciones reportadas</span></div></mat-card>
   </div>
 
   <mat-tab-group>
-
+    <mat-tab label="Usuarios">
+      <table class="admin-table">
+        <thead><tr><th>Usuario</th><th>Rol</th><th>Teléfono</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let u of users">
+            <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><small>{{ u.email }}</small></td>
+            <td>{{ u.tipo_usuario }}</td>
+            <td>{{ u.telefono || 'N/A' }}</td>
+            <td><span class="status" [class.ok]="u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+            <td><button mat-stroked-button (click)="toggleUser(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-tab>
     <mat-tab label="Maquinaria">
       <table class="admin-table">
         <thead><tr><th>Máquina</th><th>Tipo</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>

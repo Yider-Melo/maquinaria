@@ -17,11 +17,14 @@ import { CommonModule } from '@angular/common';
           <a mat-button class="sidebar-link" routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
             <mat-icon>dashboard</mat-icon> Dashboard
           </a>
-          <a mat-button class="sidebar-link" routerLink="/admin/machinery" routerLinkActive="active">
-            <mat-icon>construction</mat-icon> Máquinas
+          <a mat-button class="sidebar-link" routerLink="/admin/performance" routerLinkActive="active">
+            <mat-icon>trending_up</mat-icon> Rendimiento
           </a>
-          <a mat-button class="sidebar-link" routerLink="/admin/users" routerLinkActive="active">
-            <mat-icon>people</mat-icon> Usuarios
+          <a mat-button class="sidebar-link" routerLink="/admin/accounting" routerLinkActive="active">
+            <mat-icon>account_balance</mat-icon> Contabilidad
+          </a>
+          <a mat-button class="sidebar-link" routerLink="/admin/reports" routerLinkActive="active">
+            <mat-icon>assessment</mat-icon> Gestión
           </a>
         </nav>
         <div class="sidebar-footer">

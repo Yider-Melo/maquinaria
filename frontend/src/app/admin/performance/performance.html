@@ -15,7 +15,11 @@
             <span class="summary-value">{{ machineryStats?.resumen?.inactivas || 0 }}</span>
             <span class="summary-label">Inactivas</span>
           </mat-card>
-
+          <mat-card class="summary-card">
+            <mat-icon>group</mat-icon>
+            <span class="summary-value">{{ machineryStats?.resumen?.propietarios_con_maquinaria || 0 }}</span>
+            <span class="summary-label">Propietarios</span>
+          </mat-card>
           <mat-card class="summary-card">
             <mat-icon>category</mat-icon>
             <span class="summary-value">{{ machineryStats?.resumen?.tipos_distintos || 0 }}</span>

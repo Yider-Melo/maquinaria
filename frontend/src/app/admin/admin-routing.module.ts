@@ -4,8 +4,9 @@ import { AuthGuard } from '../core/guards/auth.guard';
 import { RoleGuard } from '../core/guards/role.guard';
 import { AdminLayout } from './admin-layout';
 import { AdminDashboard } from './dashboard/dashboard.component';
-import { AdminMachinery } from './machinery/machinery.component';
-import { AdminUsers } from './users/users.component';
+import { AdminAccounting } from './accounting/accounting.component';
+import { AdminPerformance } from './performance/performance.component';
+import { AdminReports } from './reports/reports.component';
 
 const routes: Routes = [
   {
@@ -15,8 +16,9 @@ const routes: Routes = [
     data: { roles: ['admin'] },
     children: [
       { path: '', component: AdminDashboard },
-      { path: 'machinery', component: AdminMachinery },
-      { path: 'users', component: AdminUsers }
+      { path: 'accounting', component: AdminAccounting },
+      { path: 'performance', component: AdminPerformance },
+      { path: 'reports', component: AdminReports }
     ]
   }
 ];

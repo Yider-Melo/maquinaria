@@ -5,15 +5,6 @@
     <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Arrendador' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
   </a>
   <nav aria-label="Navegación principal" *ngIf="auth.isLoggedIn()">
-    <a mat-button class="nav-link" routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" aria-label="Inicio"><mat-icon aria-hidden="true">home</mat-icon></a>
-    <a mat-button class="nav-link" routerLink="/machinery" routerLinkActive="active-link"><mat-icon aria-hidden="true">search</mat-icon> <span>Maquinaria</span></a>
-    <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link"><mat-icon aria-hidden="true">book_online</mat-icon> <span>Reservas</span></a>
-    <a mat-button class="nav-link" routerLink="/payments" routerLinkActive="active-link"><mat-icon aria-hidden="true">payments</mat-icon> <span>Pagos</span></a>
-    <a mat-button class="nav-link" routerLink="/ratings" routerLinkActive="active-link"><mat-icon aria-hidden="true">star</mat-icon> <span>Calificaciones</span></a>
-    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link">
-      <mat-icon aria-hidden="true">notifications</mat-icon> <span>Notificaciones</span>
-      <span *ngIf="unreadCount > 0" class="badge" aria-live="polite" [attr.aria-label]="unreadCount + ' notificaciones sin leer'">{{ unreadCount }}</span>
-    </a>
     <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" *ngIf="auth.esTipo('admin')">
       <mat-icon aria-hidden="true">admin_panel_settings</mat-icon> <span>Admin</span>
     </a>

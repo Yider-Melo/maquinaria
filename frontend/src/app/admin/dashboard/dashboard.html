@@ -1,22 +1,108 @@
 <div class="page" *ngIf="!loading; else loadingTmpl">
   <h1>Panel de Administración</h1>
   <div class="stats-grid">
-    <mat-card class="stat-card machinery" routerLink="/admin/machinery">
-      <mat-icon>construction</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">{{ stats.machinery?.resumen?.activas || 0 }}</span>
-        <span class="stat-label">Máquinas Activas</span>
-        <span class="stat-sub">{{ stats.machinery?.resumen?.total || 0 }} registradas · {{ stats.machinery?.resumen?.tipos_distintos || 0 }} tipos</span>
-      </div>
-    </mat-card>
-    <mat-card class="stat-card users" routerLink="/admin/users">
+    <mat-card class="stat-card users">
       <mat-icon>people</mat-icon>
       <div class="stat-info">
         <span class="stat-value">{{ stats.users?.total || 0 }}</span>
         <span class="stat-label">Usuarios</span>
-        <span class="stat-sub">Registrados en la plataforma</span>
+        <span class="stat-sub">P: {{ stats.users?.propietarios || 0 }} | A: {{ stats.users?.arrendatarios || 0 }}</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card machinery" routerLink="/admin/performance">
+      <mat-icon>construction</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.machinery?.resumen?.activas || 0 }}</span>
+        <span class="stat-label">Máquinas Activas</span>
+        <span class="stat-sub">{{ stats.machinery?.resumen?.total || 0 }} registradas</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card bookings" routerLink="/admin/performance">
+      <mat-icon>book_online</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.bookings?.total || 0 }}</span>
+        <span class="stat-label">Reservas Totales</span>
+        <span class="stat-sub">{{ stats.bookings?.pendientes || 0 }} pendientes</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card payments" routerLink="/admin/accounting">
+      <mat-icon>payments</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">${{ (stats.payments?.resumen?.total_liberado || 0) | number }}</span>
+        <span class="stat-label">Facturación Total</span>
+        <span class="stat-sub">${{ (stats.payments?.resumen?.total_retenido || 0) | number }} retenido</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card reports" routerLink="/admin/reports">
+      <mat-icon>assessment</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.users?.total || 0 }}</span>
+        <span class="stat-label">Gestión</span>
+        <span class="stat-sub">Usuarios, máquinas, reportes</span>
       </div>
     </mat-card>
   </div>
+
+  <div class="charts-row">
+    <mat-card class="chart-card">
+      <mat-card-header><mat-card-title>Reservas por Estado</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <div class="bar-chart">
+          <div class="bar-item" *ngIf="stats.bookings?.pendientes">
+            <span class="bar-label">Pendientes</span>
+            <div class="bar-track"><div class="bar-fill pending" [style.width.%]="barPercent(stats.bookings?.pendientes, stats.bookings?.total)"></div></div>
+            <span class="bar-value">{{ stats.bookings?.pendientes }}</span>
+          </div>
+          <div class="bar-item" *ngIf="stats.bookings?.confirmadas">
+            <span class="bar-label">Confirmadas</span>
+            <div class="bar-track"><div class="bar-fill confirmed" [style.width.%]="barPercent(stats.bookings?.confirmadas, stats.bookings?.total)"></div></div>
+            <span class="bar-value">{{ stats.bookings?.confirmadas }}</span>
+          </div>
+          <div class="bar-item" *ngIf="stats.bookings?.completadas">
+            <span class="bar-label">Completadas</span>
+            <div class="bar-track"><div class="bar-fill completed" [style.width.%]="barPercent(stats.bookings?.completadas, stats.bookings?.total)"></div></div>
+            <span class="bar-value">{{ stats.bookings?.completadas }}</span>
+          </div>
+          <div class="bar-item" *ngIf="stats.bookings?.canceladas">
+            <span class="bar-label">Canceladas</span>
+            <div class="bar-track"><div class="bar-fill cancelled" [style.width.%]="barPercent(stats.bookings?.canceladas, stats.bookings?.total)"></div></div>
+            <span class="bar-value">{{ stats.bookings?.canceladas }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="chart-card">
+      <mat-card-header><mat-card-title>Maquinaria por Tipo</mat-card-title></mat-card-header>
+      <mat-card-content>
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let t of topTypes">
+            <span class="bar-label">{{ t.tipo }}</span>
+            <div class="bar-track"><div class="bar-fill type" [style.width.%]="barPercent(t.cantidad, stats.machinery?.resumen?.activas)"></div></div>
+            <span class="bar-value">{{ t.cantidad }}</span>
+          </div>
+          <p *ngIf="(!stats.machinery?.por_tipo || stats.machinery?.por_tipo?.length === 0)" class="empty">Sin datos</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="recent-card">
+    <mat-card-header><mat-card-title>Últimas Reservas</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <table *ngIf="stats.recentBookings?.length" class="admin-table">
+        <thead><tr><th>ID</th><th>Maquinaria</th><th>Estado</th><th>Total</th><th>Fecha</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let b of stats.recentBookings">
+            <td>{{ b.id?.substring(0, 8) }}...</td>
+            <td>{{ b.maquinaria_id?.substring(0, 8) }}...</td>
+            <td><span class="status-badge" [class]="b.estado">{{ b.estado }}</span></td>
+            <td>${{ b.precio_total | number }}</td>
+            <td>{{ b.creado_en | date:'short':'':'es-CO' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!stats.recentBookings?.length" class="empty">Sin reservas recientes</p>
+    </mat-card-content>
+  </mat-card>
 </div>
 <ng-template #loadingTmpl><app-loading></app-loading></ng-template>
