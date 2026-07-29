@@ -6,7 +6,6 @@
 .stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
 .stat-card mat-icon { font-size:40px; width:40px; height:40px; }
-.stat-card.users mat-icon { color:var(--rm-primary); }
 .stat-card.machinery mat-icon { color:var(--rm-success); }
 .stat-card.bookings mat-icon { color:var(--rm-accent); }
 .stat-card.payments mat-icon { color:var(--rm-secondary); }

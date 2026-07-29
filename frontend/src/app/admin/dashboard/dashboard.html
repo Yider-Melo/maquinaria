@@ -1,14 +1,7 @@
 <div class="page" *ngIf="!loading; else loadingTmpl">
   <h1>Panel de Administración</h1>
   <div class="stats-grid">
-    <mat-card class="stat-card users">
-      <mat-icon>people</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">{{ stats.users?.total || 0 }}</span>
-        <span class="stat-label">Usuarios</span>
-        <span class="stat-sub">P: {{ stats.users?.propietarios || 0 }} | A: {{ stats.users?.arrendatarios || 0 }}</span>
-      </div>
-    </mat-card>
+
     <mat-card class="stat-card machinery" routerLink="/admin/performance">
       <mat-icon>construction</mat-icon>
       <div class="stat-info">
@@ -36,9 +29,9 @@
     <mat-card class="stat-card reports" routerLink="/admin/reports">
       <mat-icon>assessment</mat-icon>
       <div class="stat-info">
-        <span class="stat-value">{{ stats.users?.total || 0 }}</span>
+        <span class="stat-value">{{ stats.machinery?.resumen?.total || 0 }}</span>
         <span class="stat-label">Gestión</span>
-        <span class="stat-sub">Usuarios, máquinas, reportes</span>
+        <span class="stat-sub">Máquinas, reservas, reportes</span>
       </div>
     </mat-card>
   </div>
