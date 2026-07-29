@@ -1,9 +1,12 @@
 // Módulo raíz de la aplicación. Declara el componente App, importa los módulos
 // principales (navegación, formularios, animaciones, HTTP) y configura
 // el manejador global de errores y el interceptor de autenticación.
-import { NgModule, ErrorHandler } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgModule, ErrorHandler, LOCALE_ID } from '@angular/core';
+import { CommonModule, registerLocaleData } from '@angular/common';
+import localeEsCO from '@angular/common/locales/es-CO';
 import { BrowserModule } from '@angular/platform-browser';
+
+registerLocaleData(localeEsCO);
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -48,6 +51,7 @@ export class GlobalErrorHandler implements ErrorHandler {
     CoreModule
   ],
   providers: [
+      { provide: LOCALE_ID, useValue: 'es-CO' },
       { provide: ErrorHandler, useClass: GlobalErrorHandler },
       provideHttpClient(withInterceptors([authInterceptor, errorInterceptor, loggingInterceptor]))
   ],
