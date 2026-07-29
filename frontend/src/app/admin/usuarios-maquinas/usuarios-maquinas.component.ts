@@ -48,27 +48,27 @@ export class AdminUsuariosMaquinas implements OnInit {
   maquinas: Machinery[] = [];
   maquinasPorUsuario: { [key: string]: Machinery[] } = {};
   expandidos: Set<string> = new Set();
-  loading = true;
 
   constructor(private api: Api, private dialog: MatDialog) {}
 
+  private procesarMaquinas(lista: Machinery[]): void {
+    this.maquinas = lista;
+    this.maquinasPorUsuario = {};
+    for (const m of this.maquinas) {
+      const uid = m.propietario_id;
+      if (!this.maquinasPorUsuario[uid]) this.maquinasPorUsuario[uid] = [];
+      this.maquinasPorUsuario[uid].push(m);
+    }
+  }
+
   ngOnInit(): void {
-    forkJoin([
-      this.api.get<Usuario[]>('/admin/users?page=1&size=200').pipe(catchError(() => of({ success: true, data: [] } as any))),
-      this.api.get<Machinery[]>('/admin/machinery/all?page=1&size=200').pipe(catchError(() => of({ success: true, data: [] } as any)))
-    ]).subscribe({
-      next: ([usersRes, machineryRes]) => {
-        this.usuarios = usersRes?.data || [];
-        this.maquinas = machineryRes?.data || [];
-        this.maquinasPorUsuario = {};
-        for (const m of this.maquinas) {
-          const uid = m.propietario_id;
-          if (!this.maquinasPorUsuario[uid]) this.maquinasPorUsuario[uid] = [];
-          this.maquinasPorUsuario[uid].push(m);
-        }
-        this.loading = false;
-      }
-    });
+    this.api.get<Usuario[]>('/admin/users?page=1&size=200').pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe(res => this.usuarios = res?.data || []);
+
+    this.api.get<Machinery[]>('/admin/machinery/all?page=1&size=200').pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe(res => this.procesarMaquinas(res?.data || []));
   }
 
   toggleExpand(u: Usuario): void {
