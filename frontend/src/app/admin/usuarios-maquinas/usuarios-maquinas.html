@@ -1,0 +1,61 @@
+<div class="page" *ngIf="!loading; else loadingTmpl">
+  <h1>Usuarios y Máquinas</h1>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Usuario</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Máquinas</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let u of usuarios">
+        <tr class="user-row" [class.expanded]="expandidos.has(u.id)" (click)="toggleExpand(u)">
+          <td><mat-icon>{{ expandidos.has(u.id) ? 'expand_less' : 'expand_more' }}</mat-icon></td>
+          <td><strong>{{ u.nombre }} {{ u.apellido }}</strong></td>
+          <td>{{ u.email }}</td>
+          <td><span class="role-badge" [class]="u.tipo_usuario">{{ u.tipo_usuario }}</span></td>
+          <td>{{ maquinasPorUsuario[u.id]?.length || 0 }}</td>
+          <td><span class="status" [class.ok]="u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+          <td>
+            <button mat-stroked-button (click)="toggleUser($event, u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button>
+          </td>
+        </tr>
+        <tr *ngIf="expandidos.has(u.id)" class="expand-row">
+          <td colspan="7">
+            <div class="expand-content">
+              <h4 *ngIf="maquinasPorUsuario[u.id]?.length">Máquinas de {{ u.nombre }}</h4>
+              <table class="sub-table" *ngIf="maquinasPorUsuario[u.id]?.length">
+                <thead>
+                  <tr><th>Máquina</th><th>Tipo</th><th>Precio/día</th><th>Calificación</th><th>Reseñas</th><th>Estado</th><th>Acción</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let m of maquinasPorUsuario[u.id]">
+                    <td>{{ m.titulo }}</td>
+                    <td>{{ m.tipo }}</td>
+                    <td>${{ m.precio_por_dia | number }}</td>
+                    <td class="rating-cell">
+                      <span *ngIf="m.puntuacion_promedio" class="stars">
+                        {{ getStars(m.puntuacion_promedio) }}
+                      </span>
+                      <span *ngIf="!m.puntuacion_promedio" class="no-rating">—</span>
+                    </td>
+                    <td>{{ m.total_resenas || 0 }}</td>
+                    <td><span class="status" [class.ok]="m.activo">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
+                    <td><button mat-stroked-button (click)="toggleMachinery($event, m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <p *ngIf="!maquinasPorUsuario[u.id]?.length" class="empty-sub">Este usuario no tiene máquinas registradas</p>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+</div>
+<ng-template #loadingTmpl><app-loading></app-loading></ng-template>
