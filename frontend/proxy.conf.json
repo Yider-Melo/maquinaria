@@ -1,0 +1,14 @@
+{
+  "/api/**": {
+    "target": "http://localhost:3100",
+    "secure": false,
+    "logLevel": "debug",
+    "changeOrigin": true
+  },
+  "/socket.io/**": {
+    "target": "http://localhost:3100",
+    "ws": true,
+    "secure": false,
+    "logLevel": "debug"
+  }
+}

@@ -16,6 +16,7 @@ const { schemas } = require('./validators/schemas');
 const eventBus = require('./events/eventBus');
 const EVENT_TYPES = require('./events/eventTypes');
 const { buildPool } = require('./config/db');
+const emailService = require('./emailService');
 
 module.exports = {
     AppError, NotFoundError, ValidationError,
@@ -30,5 +31,6 @@ module.exports = {
     eventBus,
     EVENT_TYPES,
     buildPool,
-    setEventBusLogger: eventBus.setLogger
+    setEventBusLogger: eventBus.setLogger,
+    emailService
 };

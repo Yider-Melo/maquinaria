@@ -2,6 +2,8 @@ const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const { NotFoundError, ForbiddenError, ConflictError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
 const reservaRepository = require('../repositories/reservaRepository');
+const createServiceLogger = require('../../../shared/logger');
+const logger = createServiceLogger('booking-service');
 
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
@@ -51,7 +53,7 @@ async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
                 timeout: 3000
             });
         } catch (err) {
-            console.warn('No se pudo enviar notificacion por HTTP:', tipo, err.message);
+            logger.warn('No se pudo enviar notificacion por HTTP', { tipo, error: err.message });
         }
     }
 }
@@ -293,12 +295,12 @@ async function releasePayment(bookingId) {
         });
         const body = await response.text();
         if (!response.ok) {
-            console.warn('No se pudo liberar el pago automáticamente:', { status: response.status, body });
+            logger.warn('No se pudo liberar el pago automáticamente:', { status: response.status, bookingId });
         } else {
-            console.log('Pago liberado automáticamente al completar reserva:', { bookingId });
+            logger.info('Pago liberado automáticamente al completar reserva:', { bookingId });
         }
     } catch (err) {
-        console.warn('Error al liberar pago automático:', { message: err.message });
+        logger.warn('Error al liberar pago automático:', { message: err.message, bookingId });
     }
 }
 

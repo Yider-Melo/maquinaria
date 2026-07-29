@@ -5,6 +5,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
+import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 
 @Component({
   standalone: false,
@@ -38,7 +39,7 @@ export class PaymentsDetail implements OnInit {
 
   private loadPayment(id: string): void {
     this.api.get<any>(`/payments/${id}`).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         if (!res?.data) {
           this.error = 'No se pudo cargar el pago.';
           this.loading = false;
@@ -58,12 +59,9 @@ export class PaymentsDetail implements OnInit {
               const b = booking?.data;
               const m = machinery?.data;
               if (b) {
-                this.payment.booking = b;
                 this.payment.fecha_inicio = b.fecha_inicio;
                 this.payment.fecha_fin = b.fecha_fin;
                 this.payment.modalidad = b.modalidad;
-                this.payment.propietario_id = b.propietario_id;
-                this.payment.arrendatario_id = b.arrendatario_id;
               }
               this.payment.maquinaria_titulo = m?.titulo || `Maquinaria #${(this.payment.maquinaria_id || '').substring(0, 8)}`;
               this.payment.maquinaria_precio = m?.precio_por_dia;

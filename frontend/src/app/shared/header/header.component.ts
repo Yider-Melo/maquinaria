@@ -8,6 +8,7 @@ import { Auth } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
 import { Api } from '../../core/services/api.service';
 import { Subscription } from 'rxjs';
+import { UnreadCount } from '../../core/models';
 
 @Component({
   selector: 'app-header', templateUrl: './header.html', styleUrls: ['./header.css'],
@@ -52,7 +53,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   private loadUnreadCount(): void {
-    this.api.get<any>('/notifications/unread-count').subscribe({
+    this.api.get<UnreadCount>('/notifications/unread-count').subscribe({
       next: (res) => {
         this.unreadCount = res.data?.no_leidas || 0;
       },

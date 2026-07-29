@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { formatDateTime, formatDateRelative } from '../../shared/utils';
+import { Notification, PaginatedResponse } from '../../core/models';
 
 @Component({
   standalone: false,
@@ -10,13 +11,13 @@ import { formatDateTime, formatDateRelative } from '../../shared/utils';
 export class NotificationsList implements OnInit {
   formatDateTime = formatDateTime;
   formatDateRelative = formatDateRelative;
-  notifications: any[] = []; loading = true; error = '';
+  notifications: Notification[] = []; loading = true; error = '';
 
   constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loading = true; this.error = '';
-    this.api.get<any>('/notifications').subscribe({
+    this.api.get<PaginatedResponse<Notification>>('/notifications').subscribe({
       next: (res) => {
         this.notifications = res.data?.data || [];
         this.loading = false;
@@ -31,10 +32,10 @@ export class NotificationsList implements OnInit {
   }
 
   markAsRead(id: string): void {
-    this.api.put(`/notifications/${id}/read`, {}).subscribe(() => { const n = this.notifications.find(x => x.id === id); if (n) n.leida = true; });
+    this.api.put<Notification>(`/notifications/${id}/read`, {}).subscribe(() => { const n = this.notifications.find(x => x.id === id); if (n) n.leida = true; });
   }
 
-  goToNotification(n: any): void {
+  goToNotification(n: Notification): void {
     this.markAsRead(n.id);
     if (!n.referencia_id || !n.referencia_tipo) return;
     if (n.referencia_tipo === 'reserva') {
@@ -48,7 +49,7 @@ export class NotificationsList implements OnInit {
     }
   }
   markAllAsRead(): void {
-    this.api.put('/notifications/read-all', {}).subscribe(() => this.notifications.forEach(n => n.leida = true));
+    this.api.put<{ success: boolean }>('/notifications/read-all', {}).subscribe(() => this.notifications.forEach(n => n.leida = true));
   }
 
   getIcon(tipo: string): string {

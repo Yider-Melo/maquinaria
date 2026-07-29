@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { departamentos as deptos } from '../../shared/colombia-data';
+import { Machinery, SearchResult, ApiResponse } from '../../core/models';
 
 @Component({
   standalone: false,
@@ -13,14 +14,14 @@ import { departamentos as deptos } from '../../shared/colombia-data';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MachineryList implements OnInit, OnDestroy {
-  items: any[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20; error = '';
+  items: Machinery[] = []; loading = true; total = 0; totalPages = 0; page = 1; size = 20; error = '';
   suggestions: string[] = [];
   sugerenciasCorreccion: string[] = [];
   buscandoUbicacion = false;
   ubicacionActiva = false;
   filters: any = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
   private suggestionSubject = new Subject<string>();
-  private suggestionSub: any;
+  private suggestionSub: Subscription | undefined;
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora'];
   departamentos = deptos;
   sortOptions = [
@@ -74,7 +75,7 @@ export class MachineryList implements OnInit, OnDestroy {
     target?.click();
   }
 
-  trackById(_index: number, item: any): string { return item?.id || _index; }
+  trackById(_index: number, item: Machinery): string { return item?.id || String(_index); }
 
   ngOnInit(): void {
     this.load();
@@ -109,7 +110,7 @@ export class MachineryList implements OnInit, OnDestroy {
     if (this.auth.esTipo('propietario') && this.auth.getUser()?.id) {
       params.propietario_id = this.auth.getUser()!.id;
     }
-    this.api.get<any>('/search', params).subscribe({
+    this.api.get<SearchResult>('/search', params).subscribe({
       next: (res) => {
         this.items = res.data?.data || [];
         this.total = res.data?.pagination?.total || 0;
@@ -202,8 +203,8 @@ export class MachineryList implements OnInit, OnDestroy {
   prevPage(): void { if (this.page > 1) { this.page--; this.load(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.load(); } }
 
-  private cleanFilters(): Record<string, any> {
-    const cleaned: Record<string, any> = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
+  private cleanFilters(): any {
+    const cleaned: any = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
     if (cleaned['ciudad']) cleaned['ciudad'] = this.normalize(cleaned['ciudad']);
     if (cleaned['departamento']) cleaned['departamento'] = this.normalize(cleaned['departamento']);
     return cleaned;

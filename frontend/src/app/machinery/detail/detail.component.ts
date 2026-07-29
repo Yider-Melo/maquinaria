@@ -7,6 +7,7 @@ import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { estadoLabel } from '../../shared/utils';
+import { Machinery, MachineryImage, Rating, Booking, OccupiedDates, CheckAvailability, ApiResponse, PaginatedResponse, Usuario } from '../../core/models';
 
 interface CalendarDay {
   date: string;
@@ -26,9 +27,9 @@ interface CalendarDay {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MachineryDetail implements OnInit {
-  item: any = null; images: any[] = []; loading = true; error = '';
+  item: any = null; images: MachineryImage[] = []; loading = true; error = '';
   selectedImage = this.fallbackImage;
-  ratings: any[] = []; ratingAverage = 0; ratingCount = 0; machineBookings: any[] = [];
+  ratings: Rating[] = []; ratingAverage = 0; ratingCount = 0;   machineBookings: any[] = [];
   estadoLabel = estadoLabel;
   propietarioNombre = '';
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia' };
@@ -42,7 +43,7 @@ export class MachineryDetail implements OnInit {
   currentMonth: Date = new Date();
   calendarTitle = '';
 
-  trackById(_index: number, item: any): string { return item?.id || _index; }
+  trackById(_index: number, item: Machinery | Rating): string { return item?.id || String(_index); }
 
   prevImage(): void {
     if (this.images.length < 2) return;
@@ -62,7 +63,7 @@ export class MachineryDetail implements OnInit {
     if (!this.item?.id || !this.isOwner()) return;
     const endDate = new Date();
     endDate.setFullYear(endDate.getFullYear() + 1);
-    this.api.get<any>('/bookings/machinery/' + this.item.id + '/occupied', { start: new Date().toISOString().slice(0, 10), end: endDate.toISOString().slice(0, 10) }).subscribe({
+    this.api.get<OccupiedDates>('/bookings/machinery/' + this.item.id + '/occupied', { start: new Date().toISOString().slice(0, 10), end: endDate.toISOString().slice(0, 10) }).subscribe({
       next: (res) => {
         this.machineBookings = res.data?.ranges || [];
         this.cdr.detectChanges();
@@ -72,11 +73,11 @@ export class MachineryDetail implements OnInit {
 
   private loadRatings(): void {
     if (!this.item?.id) return;
-    this.api.get<any>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
+    this.api.get<PaginatedResponse<Rating>>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
       next: (res) => {
         this.ratings = res.data?.data || [];
-        this.ratingAverage = this.item.puntuacion_promedio || 0;
-        this.ratingCount = this.item.total_resenas || 0;
+        this.ratingAverage = this.item?.puntuacion_promedio || 0;
+        this.ratingCount = this.item?.total_resenas || 0;
         this.cdr.detectChanges();
       }
     });
@@ -97,7 +98,7 @@ export class MachineryDetail implements OnInit {
       return;
     }
 
-    this.api.get<any>(`/machinery/${id}`).pipe(
+    this.api.get<Machinery>(`/machinery/${id}`).pipe(
       finalize(() => {
         this.loading = false;
         this.cdr.detectChanges();
@@ -108,7 +109,7 @@ export class MachineryDetail implements OnInit {
         this.images = res.data?.imagenes || [];
         this.selectedImage = this.images[0]?.url || this.fallbackImage;
         if (this.item?.propietario_id) {
-          this.api.get<any>(`/auth/users/${this.item.propietario_id}`).subscribe({
+          this.api.get<Usuario>(`/auth/users/${this.item.propietario_id}`).subscribe({
             next: (userRes) => {
               const user = userRes?.data;
               if (user) this.propietarioNombre = `${user.nombre || ''} ${user.apellido || ''}`.trim();
@@ -210,8 +211,8 @@ export class MachineryDetail implements OnInit {
       this.cdr.detectChanges();
       return;
     }
-    this.api.post('/bookings', {
-        maquinaria_id: this.item.id,
+    this.api.post<Booking>('/bookings', {
+        maquinaria_id: this.item!.id,
         fecha_inicio: this.booking.fecha_inicio,
         fecha_fin: this.booking.fecha_fin,
         modalidad: this.booking.modalidad,
@@ -249,8 +250,8 @@ export class MachineryDetail implements OnInit {
     }
     this.checkingAvailability = true;
 
-    this.api.get<any>('/bookings/check-availability', {
-      machineryId: this.item.id,
+    this.api.get<CheckAvailability>('/bookings/check-availability', {
+      machineryId: this.item!.id,
       start: this.booking.fecha_inicio,
       end: this.booking.fecha_fin
     }).pipe(
@@ -386,7 +387,7 @@ export class MachineryDetail implements OnInit {
     const endDate = new Date(this.currentMonth);
     endDate.setMonth(endDate.getMonth() + 2);
     endDate.setDate(0);
-    this.api.get<any>(`/bookings/machinery/${this.item.id}/occupied`, { start, end: endDate.toISOString().slice(0, 10) }).subscribe({
+    this.api.get<OccupiedDates>(`/bookings/machinery/${this.item!.id}/occupied`, { start, end: endDate.toISOString().slice(0, 10) }).subscribe({
       next: (res) => {
         this.occupiedDates = new Set(res.data?.dates || []);
         this.buildCalendar();
@@ -416,7 +417,7 @@ export class MachineryDetail implements OnInit {
   toggleDisponible(): void {
     if (!this.item) return;
     const nuevoEstado = !this.item.disponible;
-    this.api.patch(`/machinery/${this.item.id}`, { disponible: nuevoEstado }).subscribe({
+    this.api.patch<Machinery>(`/machinery/${this.item!.id}`, { disponible: nuevoEstado }).subscribe({
       next: () => {
         this.item.disponible = nuevoEstado;
         this.snackBar.open(nuevoEstado ? 'Maquinaria disponible para reservas' : 'Maquinaria marcada como no disponible', 'Cerrar', { duration: 3000 });
@@ -429,17 +430,18 @@ export class MachineryDetail implements OnInit {
   deleteItem(): void {
     const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: '¿Estás seguro de eliminar esta maquinaria? Esta acción no se puede deshacer.', warn: true, confirmText: 'Eliminar' } });
     dialogRef.afterClosed().subscribe(confirmed => {
-      if (confirmed) this.api.delete(`/machinery/${this.item.id}`).subscribe(() => this.router.navigate(['/machinery']));
+      if (confirmed) this.api.delete(`/machinery/${this.item!.id}`).subscribe(() => this.router.navigate(['/machinery']));
     });
   }
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file || !this.item) return;
     const reader = new FileReader();
-    reader.onload = (e: any) => {
-      const url = e.target.result;
-      this.api.post(`/machinery/${this.item.id}/images`, { url }).subscribe(() => {
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const url = e.target?.result as string;
+      this.api.post<MachineryImage>(`/machinery/${this.item!.id}/images`, { url }).subscribe(() => {
         this.images.push({ url, id: Date.now().toString() });
         this.selectedImage = url;
       });
@@ -448,7 +450,7 @@ export class MachineryDetail implements OnInit {
   }
 
   removeImage(imageId: string): void {
-    this.api.delete(`/machinery/${this.item.id}/images/${imageId}`).subscribe(() => {
+    this.api.delete(`/machinery/${this.item!.id}/images/${imageId}`).subscribe(() => {
       this.images = this.images.filter(i => i.id !== imageId);
     });
   }

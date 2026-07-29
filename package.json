@@ -16,5 +16,8 @@
     "start:notification": "cd services/notification-service && npm run dev",
     "start:gateway": "cd api-gateway && npm run dev"
   },
-  "dependencies": {}
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "nodemailer": "^9.0.3"
+  }
 }

@@ -10,10 +10,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
-import { forkJoin, of, timeout } from 'rxjs';
+import { forkJoin, of, timeout, Observable } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
+import { Booking, Machinery, Payment, PaymentCheckout, PaginatedResponse, ApiResponse } from '../../core/models';
 
 @Component({
   standalone: true,
@@ -48,12 +49,12 @@ export class CancelDialog {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingsList implements OnInit {
-  asArrendatario: any[] = []; asPropietario: any[] = []; loading = true;
+  asArrendatario: Booking[] = []; asPropietario: Booking[] = []; loading = true;
   error = '';
   tabIndex = 0;
   payingBookingId: string | null = null;
 
-  trackById(_index: number, item: any): string { return item?.id || _index; }
+  trackById(_index: number, item: Booking): string { return item?.id || String(_index); }
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
 
@@ -63,22 +64,16 @@ export class BookingsList implements OnInit {
     if (showLoading) this.loading = true;
     this.error = '';
 
-    const calls: any[] = [
-      this.api.get<any>('/bookings/my-bookings').pipe(
-        catchError((err) => {
-          console.error('Error loading my-bookings:', err);
-          return of({ data: { data: [] } });
-        })
+    const calls: Observable<ApiResponse<PaginatedResponse<Booking>>>[] = [
+      this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings').pipe(
+        catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
       )
     ];
 
     if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
       calls.push(
-        this.api.get<any>('/bookings/my-listings').pipe(
-          catchError((err) => {
-            console.error('Error loading my-listings:', err);
-            return of({ data: { data: [] } });
-          })
+        this.api.get<PaginatedResponse<Booking>>('/bookings/my-listings').pipe(
+          catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
     }
@@ -90,68 +85,61 @@ export class BookingsList implements OnInit {
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: (results: any[]) => {
+      next: (results) => {
         const r0 = results[0]?.data;
-        const asArrendatario = Array.isArray(r0) ? r0 : (r0?.data || []);
+        const asArrendatario: Booking[] = Array.isArray(r0) ? r0 : (r0?.data || []);
         const r1 = results[1]?.data;
-        const asPropietario = calls.length > 1 ? (Array.isArray(r1) ? r1 : (r1?.data || [])) : [];
-        this.asArrendatario = asArrendatario.map((b: any) => this.attachMachineDetails(b, null));
-        this.asPropietario = asPropietario.map((b: any) => this.attachMachineDetails(b, null));
+        const asPropietario: Booking[] = calls.length > 1 ? (Array.isArray(r1) ? r1 : (r1?.data || [])) : [];
+        this.asArrendatario = asArrendatario.map((b) => this.attachMachineDetails(b, null));
+        this.asPropietario = asPropietario.map((b) => this.attachMachineDetails(b, null));
         this.cdr.markForCheck();
         this.enrichBookingsWithMachinery(asArrendatario, asPropietario);
       },
-      error: (err) => {
-        console.error('Error loading bookings:', err);
+      error: () => {
         this.error = 'No se pudieron cargar las reservas.';
         this.cdr.markForCheck();
       }
     });
   }
 
-  private enrichBookingsWithMachinery(arrendatario: any[], propietario: any[]): void {
+  private enrichBookingsWithMachinery(arrendatario: Booking[], propietario: Booking[]): void {
     const uniqueIds = [...new Set([...arrendatario, ...propietario]
-      .map((booking: any) => booking?.maquinaria_id)
-      .filter((id: string | undefined): id is string => !!id))];
+      .map((booking) => booking?.maquinaria_id)
+      .filter((id): id is string => !!id))];
 
     if (uniqueIds.length === 0) {
-        console.log('No machinery IDs, showing raw bookings:', arrendatario.length, propietario.length);
-      this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
-      this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
+      this.asArrendatario = arrendatario.map((booking) => this.attachMachineDetails(booking, null));
+      this.asPropietario = propietario.map((booking) => this.attachMachineDetails(booking, null));
       this.cdr.markForCheck();
       return;
     }
 
-    console.log('Fetching machinery for bookings:', uniqueIds.length, 'machines');
-    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
-      next: (results: any[]) => {
-        console.log('Machinery data received:', results.length);
-        const machinesById = new Map<string, any>();
-        uniqueIds.forEach((id: string, index: number) => {
+    forkJoin(uniqueIds.map((id) => this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! }))))).subscribe({
+      next: (results) => {
+        const machinesById = new Map<string, Machinery>();
+        uniqueIds.forEach((id, index) => {
           const machine = results[index]?.data;
           if (machine) machinesById.set(id, machine);
         });
 
-        this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
-        this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id)));
-        console.log('asArrendatario length:', this.asArrendatario.length);
+        this.asArrendatario = arrendatario.map((booking) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id) || null));
+        this.asPropietario = propietario.map((booking) => this.attachMachineDetails(booking, machinesById.get(booking.maquinaria_id) || null));
         this.cdr.markForCheck();
       },
       error: () => {
-        console.log('Error fetching machinery, showing raw bookings');
-        this.asArrendatario = arrendatario.map((booking: any) => this.attachMachineDetails(booking, null));
-        this.asPropietario = propietario.map((booking: any) => this.attachMachineDetails(booking, null));
+        this.asArrendatario = arrendatario.map((booking) => this.attachMachineDetails(booking, null));
+        this.asPropietario = propietario.map((booking) => this.attachMachineDetails(booking, null));
         this.cdr.markForCheck();
       }
     });
   }
 
-  private attachMachineDetails(booking: any, machine: any): any {
+  private attachMachineDetails(booking: Booking, machine: Machinery | null): Booking {
     const price = booking?.precio_total ?? booking?.precio_unitario ?? machine?.precio_por_dia;
     return {
       ...booking,
       maquinaria_titulo: booking?.maquinaria_titulo || machine?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
       maquinaria_precio: price,
-      modalidad_label: 'Por día'
     };
   }
 
@@ -159,22 +147,22 @@ export class BookingsList implements OnInit {
   formatId = formatId;
   estadoLabel = estadoLabel;
 
-  getBookingDateLabel(booking: any): string {
+  getBookingDateLabel(booking: Booking): string {
     if (!booking?.fecha_inicio && !booking?.fecha_fin) return 'Sin fecha';
     if (!booking?.fecha_fin) return formatDate(booking.fecha_inicio);
     return `${formatDate(booking.fecha_inicio)} → ${formatDate(booking.fecha_fin)}`;
   }
 
-  getBookingTimeLabel(booking: any): string {
-    return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
+  getBookingTimeLabel(_booking: Booking): string {
+    return _booking?.fecha_inicio && _booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 
-  openBookingDetail(booking: any): void {
+  openBookingDetail(booking: Booking): void {
     if (!booking?.id) return;
     this.router.navigate(['/bookings', booking.id]);
   }
 
-  private confirmAction(msg: string): import('rxjs').Observable<boolean> {
+  private confirmAction(msg: string): Observable<boolean> {
     const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: msg } });
     return dialogRef.afterClosed();
   }
@@ -182,7 +170,7 @@ export class BookingsList implements OnInit {
   cancelBooking(id: string): void {
     const dialogRef = this.dialog.open(CancelDialog);
     dialogRef.afterClosed().subscribe(result => {
-      if (result) this.api.post(`/bookings/${id}/cancel`, { motivo: result.motivo }).subscribe({
+      if (result) this.api.post<Booking>(`/bookings/${id}/cancel`, { motivo: (result as any).motivo }).subscribe({
         next: () => {
           this.snackBar.open('Reserva cancelada correctamente', 'Cerrar', { duration: 3000 });
           this.loadBookings();
@@ -193,7 +181,7 @@ export class BookingsList implements OnInit {
   }
   confirmBooking(id: string): void {
     this.confirmAction('¿Confirmar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.post(`/bookings/${id}/confirm`, {}).subscribe({
+      if (confirmed) this.api.post<Booking>(`/bookings/${id}/confirm`, {}).subscribe({
         next: () => { this.snackBar.open('Reserva confirmada correctamente', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
         error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al confirmar', 'Cerrar', { duration: 4000 })
       });
@@ -201,7 +189,7 @@ export class BookingsList implements OnInit {
   }
   rejectBooking(id: string): void {
     this.confirmAction('¿Rechazar esta reserva?').subscribe(confirmed => {
-      if (confirmed) this.api.post(`/bookings/${id}/reject`, {}).subscribe({
+      if (confirmed) this.api.post<Booking>(`/bookings/${id}/reject`, {}).subscribe({
         next: () => { this.snackBar.open('Reserva rechazada', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
         error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al rechazar', 'Cerrar', { duration: 4000 })
       });
@@ -209,16 +197,16 @@ export class BookingsList implements OnInit {
   }
   completeBooking(id: string): void {
     this.confirmAction('¿Marcar esta reserva como completada?').subscribe(confirmed => {
-      if (confirmed) this.api.post(`/bookings/${id}/complete`, {}).subscribe({
+      if (confirmed) this.api.post<Booking>(`/bookings/${id}/complete`, {}).subscribe({
         next: () => { this.snackBar.open('Reserva completada correctamente', 'Cerrar', { duration: 3000 }); this.loadBookings(); },
         error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al completar la reserva', 'Cerrar', { duration: 4000 })
       });
     });
   }
 
-  payBooking(booking: any): void {
+  payBooking(booking: Booking): void {
     this.payingBookingId = booking.id;
-    this.api.post<any>('/payments/checkout', { reserva_id: booking.id }).pipe(
+    this.api.post<PaymentCheckout>('/payments/checkout', { reserva_id: booking.id }).pipe(
       finalize(() => this.payingBookingId = null)
     ).subscribe({
       next: (res) => {
@@ -226,12 +214,12 @@ export class BookingsList implements OnInit {
         if (data?.checkout_url) {
           window.location.href = data.checkout_url;
         } else if (data?.pago_id) {
-          this.api.post(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe({
+          this.api.post<Payment>(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe({
             next: () => {
               this.snackBar.open('Pago aprobado', 'Cerrar', { duration: 6000 });
               this.loadBookings();
             },
-            error: (err2) => {
+            error: () => {
               this.snackBar.open('Error al aprobar el pago', 'Cerrar', { duration: 6000 });
             }
           });

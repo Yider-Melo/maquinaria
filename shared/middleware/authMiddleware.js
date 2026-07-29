@@ -1,10 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { UnauthorizedError, ForbiddenError } = require('../errors/AppError');
+const createServiceLogger = require('../logger');
+const logger = createServiceLogger('auth-middleware');
 
 function getJwtSecret() {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-        console.warn('⚠️ JWT_SECRET no configurado. Usando secreto por defecto (inseguro). Configura JWT_SECRET en producción.');
+        logger.warn('JWT_SECRET no configurado. Usando secreto por defecto (inseguro). Configura JWT_SECRET en producción.');
         return 'rentamaq-secret-key-dev';
     }
     return secret;

@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { MachineryStats, BookingStats, RatingStats } from '../../core/models';
 
 @Component({
   selector: 'app-admin-performance', templateUrl: './performance.html', styleUrls: ['./performance.css'],
@@ -17,9 +18,9 @@ export class AdminPerformance implements OnInit {
 
   ngOnInit(): void {
     forkJoin([
-      this.api.get<any>('/admin/machinery/stats').pipe(catchError(() => of({ data: null }))),
-      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ data: null }))),
-      this.api.get<any>('/admin/ratings/stats').pipe(catchError(() => of({ data: null })))
+      this.api.get<MachineryStats>('/admin/machinery/stats').pipe(catchError(() => of({ success: true, data: null! }))),
+      this.api.get<BookingStats>('/admin/bookings/stats').pipe(catchError(() => of({ success: true, data: null! }))),
+      this.api.get<RatingStats>('/admin/ratings/stats').pipe(catchError(() => of({ success: true, data: null! })))
     ]).pipe(
       finalize(() => {
         this.loading = false;
@@ -32,8 +33,7 @@ export class AdminPerformance implements OnInit {
         this.ratingStats = ratings?.data;
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error loading performance stats:', err);
+      error: () => {
         this.cdr.markForCheck();
       }
     });

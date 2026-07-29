@@ -7,6 +7,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CanComponentDeactivate } from '../../core/guards/can-deactivate.guard';
 import { colombiaData, machineryTypes, capacidadUnidades } from './form-data';
+import { Machinery, MachineryImage, ApiResponse } from '../../core/models';
 
 @Component({
   selector: 'app-machinery-form', templateUrl: './form.html', styleUrls: ['./form.css'],
@@ -55,7 +56,7 @@ export class MachineryForm implements OnInit, CanComponentDeactivate {
     if (id) {
       this.isEdit = true;
       this.loading = true;
-      this.api.get<any>(`/machinery/${id}`).subscribe({
+      this.api.get<Machinery>(`/machinery/${id}`).subscribe({
         next: (res) => {
           const { imagenes, ...rest } = res.data;
           this.form.patchValue(rest);
@@ -158,10 +159,10 @@ export class MachineryForm implements OnInit, CanComponentDeactivate {
     }
     delete formValue.capacidadUnidad;
     const obs = this.isEdit
-      ? this.api.put(`/machinery/${this.route.snapshot.paramMap.get('id')}`, formValue)
-      : this.api.post('/machinery', formValue);
+      ? this.api.put<Machinery>(`/machinery/${this.route.snapshot.paramMap.get('id')}`, formValue)
+      : this.api.post<Machinery>('/machinery', formValue);
     obs.subscribe({
-      next: (res: any) => this.uploadPhotosAndNavigate(res.data.id),
+      next: (res: ApiResponse<Machinery>) => this.uploadPhotosAndNavigate(res.data.id),
       error: (err) => {
         if (err.status === 401) {
           this.error = 'Tu sesión expiró. Inicia sesión nuevamente.';

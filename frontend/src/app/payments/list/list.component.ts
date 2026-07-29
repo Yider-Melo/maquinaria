@@ -4,6 +4,7 @@ import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { formatDate, formatId, formatDateTime, estadoLabel } from '../../shared/utils';
+import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 
 @Component({
   standalone: false,
@@ -16,9 +17,9 @@ export class PaymentsList implements OnInit {
 
   ngOnInit(): void {
     this.loading = true; this.error = '';
-    this.api.get<any>('/payments/my-payments').subscribe({
+    this.api.get<Payment[]>('/payments/my-payments').subscribe({
       next: (res) => {
-        const pagos = res?.data || [];
+        const pagos: Payment[] = res?.data || [];
         if (pagos.length === 0) {
           this.payments = [];
           this.loading = false;
@@ -35,28 +36,27 @@ export class PaymentsList implements OnInit {
     });
   }
 
-  private enrichPayments(pagos: any[]): void {
+  private enrichPayments(pagos: Payment[]): void {
     const bookingIds = [...new Set(pagos.map(p => p.reserva_id))];
-    const machineryIds = [...new Set(pagos.filter(p => p.reserva_id).map(p => p.reserva_id))];
 
     forkJoin({
       bookings: forkJoin(bookingIds.map(id =>
-        this.api.get<any>(`/bookings/${id}`).pipe(catchError(() => of({ data: null })))
+        this.api.get<Booking>(`/bookings/${id}`).pipe(catchError(() => of({ success: true, data: null! })))
       )),
     }).subscribe({
       next: ({ bookings }) => {
-        const bookingsById = new Map<string, any>();
+        const bookingsById = new Map<string, Booking>();
         bookingIds.forEach((id, i) => {
           const b = bookings[i]?.data;
           if (b) bookingsById.set(id, b);
         });
 
-        const machineryIds2 = [...new Set(pagos.map(p => bookingsById.get(p.reserva_id)?.maquinaria_id).filter(Boolean))];
+        const machineryIds2 = [...new Set(pagos.map(p => bookingsById.get(p.reserva_id)?.maquinaria_id).filter(Boolean))] as string[];
         forkJoin(machineryIds2.map(id =>
-          this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null })))
+          this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! })))
         )).subscribe({
           next: (machines) => {
-            const machinesById = new Map<string, any>();
+            const machinesById = new Map<string, Machinery>();
             machineryIds2.forEach((id, i) => {
               const m = machines[i]?.data;
               if (m) machinesById.set(id, m);
@@ -67,7 +67,6 @@ export class PaymentsList implements OnInit {
               const machine = booking ? machinesById.get(booking.maquinaria_id) : null;
               return {
                 ...p,
-                booking,
                 maquinaria_titulo: booking?.maquinaria_titulo || machine?.titulo || `Maquinaria #${p.reserva_id?.substring(0, 8) || ''}`,
                 maquinaria_precio: p.monto
               };
@@ -78,7 +77,7 @@ export class PaymentsList implements OnInit {
         });
       },
       error: () => {
-        this.payments = pagos.map(p => ({ ...p, booking: null }));
+        this.payments = pagos;
         this.loading = false;
         this.cdr.markForCheck();
       }
@@ -90,7 +89,7 @@ export class PaymentsList implements OnInit {
   formatId = formatId;
   estadoLabel = estadoLabel;
 
-  getBookingDateLabel(booking: any): string {
+  getBookingDateLabel(booking: Booking): string {
     if (!booking?.fecha_inicio && !booking?.fecha_fin) return 'Sin fecha';
     if (!booking?.fecha_fin) return formatDate(booking.fecha_inicio);
     return `${formatDate(booking.fecha_inicio)} → ${formatDate(booking.fecha_fin)}`;

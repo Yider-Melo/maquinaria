@@ -37,7 +37,7 @@
         <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
         Panel Admin
       </button>
-      <button mat-menu-item routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <button mat-menu-item routerLink="/machinery/new" *ngIf="auth.esTipo('propietario')">
         <mat-icon aria-hidden="true">add_circle</mat-icon>
         Publicar Maquinaria
       </button>

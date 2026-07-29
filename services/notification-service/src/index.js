@@ -3,8 +3,8 @@ const http = require('http');
 const helmet = require('helmet');
 const cors = require('cors');
 const routes = require('./routes');
-const { eventBus, errorHandler, correlationId, requestLogger } = require('shared');
-const { createNotificationDirect } = require('./services/notificationService');
+const { eventBus, errorHandler, correlationId, requestLogger, emailService } = require('shared');
+const { createNotificationDirect, getUserEmail } = require('./services/notificationService');
 const createServiceLogger = require('../../../shared/logger');
 
 const logger = createServiceLogger('notification-service');
@@ -50,23 +50,60 @@ function notifyGatewayViaHttp(userId, titulo, mensaje) {
     req.end();
 }
 
+function getEmailTemplate(tipo, data) {
+    const map = {
+        'booking.created': emailService.sendBookingCreated,
+        'booking.confirmed': emailService.sendBookingConfirmed,
+        'booking.rejected': emailService.sendBookingRejected,
+        'booking.cancelled': emailService.sendBookingCancelled,
+        'booking.completed': emailService.sendBookingCompleted,
+        'payment.confirmed': emailService.sendPaymentConfirmed,
+        'payment.released': emailService.sendPaymentReleased,
+    };
+    return map[tipo] || null;
+}
+
+async function sendEmailNotification(tipo, data) {
+    const sendFn = getEmailTemplate(tipo);
+    if (!sendFn) return;
+
+    if (!data.usuario_id) return;
+
+    try {
+        const user = await getUserEmail(data.usuario_id);
+        if (!user || !user.email) return;
+
+        const nombre = user.nombre || 'usuario';
+        await sendFn(user.email, nombre, data);
+    } catch (err) {
+        logger.error('Error enviando email de notificación:', { tipo, error: err.message });
+    }
+}
+
 app.listen(PORT, async () => {
+    try {
+        await emailService.configure();
+    } catch (err) {
+        logger.warn('Error configurando servicio de email:', { message: err.message });
+    }
+
     try {
         await eventBus.connect();
         logger.info('Conectado a RabbitMQ');
 
         eventBus.subscribeToEvent('booking.*', async (event) => {
-            const { data } = event;
+            const { data, event: tipo } = event;
             try {
                 await createNotificationDirect(
                     data.usuario_id,
-                    data.tipo,
+                    data.tipo || tipo,
                     data.titulo,
                     data.mensaje,
                     data.referencia_id,
                     data.referencia_tipo
                 );
                 notifyGatewayViaHttp(data.usuario_id, data.titulo, data.mensaje);
+                await sendEmailNotification(tipo || data.tipo, data);
                 logger.info('Notificación creada vía evento:', { usuarioId: data.usuario_id });
             } catch (err) {
                 logger.error('Error procesando evento de notificación:', { message: err.message, stack: err.stack });

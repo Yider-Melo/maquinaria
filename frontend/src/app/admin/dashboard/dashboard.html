@@ -33,6 +33,14 @@
         <span class="stat-sub">${{ (stats.payments?.resumen?.total_retenido || 0) | number }} retenido</span>
       </div>
     </mat-card>
+    <mat-card class="stat-card reports" routerLink="/admin/reports">
+      <mat-icon>assessment</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.users?.total || 0 }}</span>
+        <span class="stat-label">Gestión</span>
+        <span class="stat-sub">Usuarios, máquinas, reportes</span>
+      </div>
+    </mat-card>
   </div>
 
   <div class="charts-row">

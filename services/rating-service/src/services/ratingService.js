@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const { ConflictError, ValidationError, NotFoundError, ForbiddenError } = require('shared');
 const calificacionRepository = require('../repositories/calificacionRepository');
+const createServiceLogger = require('../../../shared/logger');
+const logger = createServiceLogger('rating-service');
 
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
@@ -16,7 +18,7 @@ async function actualizarRatingMaquinaria(maquinariaId) {
             body: JSON.stringify({ puntuacion_promedio: parseFloat(avg.puntuacion_promedio), total_resenas: parseInt(avg.total_resenas) })
         });
     } catch (err) {
-        console.warn('No se pudo actualizar rating de maquinaria:', err.message);
+        logger.warn('No se pudo actualizar rating de maquinaria', { maquinariaId, error: err.message });
     }
 }
 

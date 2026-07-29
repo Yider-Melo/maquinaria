@@ -57,17 +57,18 @@ router.use(api('/ratings'), validateToken, proxyWithTarget(RATING_SERVICE, { [`^
 
 router.use(api('/notifications'), validateToken, proxyWithTarget(NOTIFICATION_SERVICE, { [`^${API_PREFIX}/notifications`]: '' }));
 
-function adminProxy(target, prefix) {
-    return createProxyMiddleware({
-        target,
-        changeOrigin: true,
-        pathRewrite: (path) => path.replace(API_PREFIX + prefix, '')
-    });
-}
-router.use(api('/admin/payments'), validateToken, requireRole('admin'), adminProxy(PAYMENT_SERVICE, '/admin/payments'));
-router.use(api('/admin/users'), validateToken, requireRole('admin'), adminProxy(AUTH_SERVICE, '/admin/users'));
-router.use(api('/admin/bookings'), validateToken, requireRole('admin'), adminProxy(BOOKING_SERVICE, '/admin/bookings'));
-router.use(api('/admin/machinery'), validateToken, requireRole('admin'), adminProxy(MACHINERY_SERVICE, '/admin/machinery'));
-router.use(api('/admin/ratings'), validateToken, requireRole('admin'), adminProxy(RATING_SERVICE, '/admin/ratings'));
+const adminProxies = {
+    payments: createProxyMiddleware({ target: PAYMENT_SERVICE, changeOrigin: true, pathRewrite: (path) => path.replace(/^\/payments/, '') }),
+    users: createProxyMiddleware({ target: AUTH_SERVICE, changeOrigin: true }),
+    bookings: createProxyMiddleware({ target: BOOKING_SERVICE, changeOrigin: true, pathRewrite: (path) => path.replace(/^\/bookings/, '') }),
+    machinery: createProxyMiddleware({ target: MACHINERY_SERVICE, changeOrigin: true, pathRewrite: (path) => path.replace(/^\/machinery/, '') }),
+    ratings: createProxyMiddleware({ target: RATING_SERVICE, changeOrigin: true, pathRewrite: (path) => path.replace(/^\/ratings/, '') }),
+};
+router.use(api('/admin'), validateToken, requireRole('admin'), (req, res, next) => {
+    const prefix = req.path.split('/')[1];
+    const proxy = adminProxies[prefix];
+    if (!proxy) return next();
+    proxy(req, res, next);
+});
 
 module.exports = router;

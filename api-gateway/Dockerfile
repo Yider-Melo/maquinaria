@@ -7,6 +7,7 @@ RUN npm install --production
 FROM node:20-alpine
 WORKDIR /app
 COPY shared/ ./shared/
+COPY --from=shared-builder /app/shared/node_modules ./shared/node_modules/
 COPY api-gateway/package.json ./api-gateway/
 RUN cd api-gateway && npm install --production
 COPY api-gateway/src/ ./api-gateway/src/

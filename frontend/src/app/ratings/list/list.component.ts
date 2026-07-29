@@ -3,17 +3,18 @@ import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { RatingForm } from '../form/form';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
+import { Rating, Booking, Machinery, PaginatedResponse, ApiResponse } from '../../core/models';
 
 @Component({
   selector: 'app-ratings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
   standalone: false
 })
 export class RatingsList implements OnInit {
-  ratings: any[] = []; receivedRatings: any[] = []; completedBookings: any[] = []; loading = true; error = '';
+  ratings: Rating[] = []; receivedRatings: Rating[] = []; completedBookings: Booking[] = []; loading = true; error = '';
 
   constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
@@ -21,13 +22,14 @@ export class RatingsList implements OnInit {
     this.loading = true; this.error = '';
     const userId = this.auth.getUser()?.id;
     if (userId) {
-      const bookingCalls: any[] = [this.api.get<any>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ data: [] })))];
+      const myBookings$ = this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 200 } })));
+      const bookingCalls: Observable<ApiResponse<PaginatedResponse<Booking>>>[] = [myBookings$];
       if (this.auth.esTipo('propietario')) {
-        bookingCalls.push(this.api.get<any>('/bookings/my-listings?size=200').pipe(catchError(() => of({ data: [] }))));
+        bookingCalls.push(this.api.get<PaginatedResponse<Booking>>('/bookings/my-listings?size=200').pipe(catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 200 } }))));
       }
       forkJoin([
-        this.api.get<any>('/ratings/my').pipe(catchError(() => of({ data: [] }))),
-        this.api.get<any>('/ratings/user/' + userId).pipe(catchError(() => of({ data: [] }))),
+        this.api.get<Rating[]>('/ratings/my').pipe(catchError(() => of({ success: true, data: [] }))),
+        this.api.get<Rating[]>('/ratings/user/' + userId).pipe(catchError(() => of({ success: true, data: [] }))),
         ...bookingCalls
       ]).pipe(
         finalize(() => {
@@ -35,21 +37,20 @@ export class RatingsList implements OnInit {
           this.cdr.markForCheck();
         })
       ).subscribe({
-        next: (results: any[]) => {
+        next: (results) => {
           this.ratings = results[0]?.data || [];
           this.receivedRatings = results[1]?.data || [];
-          const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: any) => r.reserva_id));
-          const asArrendatario = results[2]?.data || [];
-          const asPropietario = results.length > 3 ? results[3]?.data || [] : [];
-          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: any) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
+          const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: Rating) => r.reserva_id));
+          const asArrendatario: Booking[] = (results[2] as any)?.data?.data || [];
+          const asPropietario: Booking[] = results.length > 3 ? (results[3] as any)?.data?.data || [] : [];
+          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: Booking) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
           this.completedBookings = allCompleted;
           this.enrichRatings(this.ratings);
           this.enrichBookingsWithMachinery(this.completedBookings);
           this.cdr.markForCheck();
         },
-        error: (err) => {
+        error: () => {
           this.error = 'No se pudieron cargar las calificaciones.';
-          console.error('Error loading ratings:', err);
           this.cdr.markForCheck();
         }
       });
@@ -58,19 +59,19 @@ export class RatingsList implements OnInit {
     }
   }
 
-  private enrichRatings(ratings: any[]): void {
-    const uniqueIds = [...new Set(ratings.filter((rating: any) => rating?.maquinaria_id).map((rating: any) => rating.maquinaria_id))];
+  private enrichRatings(ratings: Rating[]): void {
+    const uniqueIds = [...new Set(ratings.filter(r => r?.maquinaria_id).map(r => r.maquinaria_id))];
     if (uniqueIds.length === 0) return;
 
-    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
-      next: (results: any[]) => {
-        const machinesById = new Map<string, any>();
-        uniqueIds.forEach((id: string, index: number) => {
+    forkJoin(uniqueIds.map(id => this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! }))))).subscribe({
+      next: (results) => {
+        const machinesById = new Map<string, Machinery>();
+        uniqueIds.forEach((id, index) => {
           const machine = results[index]?.data;
           if (machine) machinesById.set(id, machine);
         });
 
-        this.ratings = ratings.map((rating: any) => ({
+        this.ratings = ratings.map(rating => ({
           ...rating,
           maquinaria_titulo: rating?.maquinaria_titulo || machinesById.get(rating.maquinaria_id)?.titulo || `Maquinaria #${rating?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`
         }));
@@ -79,22 +80,22 @@ export class RatingsList implements OnInit {
     });
   }
 
-  private enrichBookingsWithMachinery(bookings: any[]): void {
-    const uniqueIds = [...new Set(bookings.filter((booking: any) => booking?.maquinaria_id).map((booking: any) => booking.maquinaria_id))];
+  private enrichBookingsWithMachinery(bookings: Booking[]): void {
+    const uniqueIds = [...new Set(bookings.filter(b => b?.maquinaria_id).map(b => b.maquinaria_id))];
     if (uniqueIds.length === 0) {
       this.completedBookings = bookings;
       return;
     }
 
-    forkJoin(uniqueIds.map((id: string) => this.api.get<any>(`/machinery/${id}`).pipe(catchError(() => of({ data: null }))))).subscribe({
-      next: (results: any[]) => {
-        const machinesById = new Map<string, any>();
-        uniqueIds.forEach((id: string, index: number) => {
+    forkJoin(uniqueIds.map(id => this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! }))))).subscribe({
+      next: (results) => {
+        const machinesById = new Map<string, Machinery>();
+        uniqueIds.forEach((id, index) => {
           const machine = results[index]?.data;
           if (machine) machinesById.set(id, machine);
         });
 
-        this.completedBookings = bookings.map((booking: any) => ({
+        this.completedBookings = bookings.map(booking => ({
           ...booking,
           maquinaria_titulo: booking?.maquinaria_titulo || machinesById.get(booking.maquinaria_id)?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
           maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia
@@ -108,21 +109,21 @@ export class RatingsList implements OnInit {
   formatId = formatId;
   estadoLabel = estadoLabel;
 
-  getBookingDateLabel(booking: any): string {
+  getBookingDateLabel(booking: Booking): string {
     if (!booking?.fecha_inicio && !booking?.fecha_fin) return 'Sin fecha';
     if (!booking?.fecha_fin) return formatDate(booking.fecha_inicio);
     return `${formatDate(booking.fecha_inicio)} → ${formatDate(booking.fecha_fin)}`;
   }
 
-  getBookingTimeLabel(booking: any): string {
+  getBookingTimeLabel(booking: Booking): string {
     return booking?.fecha_inicio && booking?.fecha_fin ? 'Rango de días' : 'Sin horario';
   }
 
-  editarRating(rating: any): void {
+  editarRating(rating: Rating): void {
     const dialogRef = this.dialog.open(RatingForm, {
       data: {
         reserva_id: rating.reserva_id,
-        calificado_id: rating.calificado_id || rating.propietario_id,
+        calificado_id: rating.calificado_id || (rating as any).propietario_id,
         maquinaria_id: rating.maquinaria_id,
         editando: true,
         puntuacion_existente: rating.puntuacion,
@@ -132,7 +133,7 @@ export class RatingsList implements OnInit {
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.api.put(`/ratings/${rating.id}`, result).subscribe(() => this.ngOnInit());
+        this.api.put<Rating>(`/ratings/${rating.id}`, result).subscribe(() => this.ngOnInit());
       }
     });
   }
@@ -146,7 +147,7 @@ export class RatingsList implements OnInit {
     });
   }
 
-  openRatingDialog(booking: any): void {
+  openRatingDialog(booking: Booking): void {
     const userId = this.auth.getUser()?.id;
     const calificadoId = booking.propietario_id === userId ? booking.arrendatario_id : booking.propietario_id;
     const dialogRef = this.dialog.open(RatingForm, {
@@ -159,7 +160,7 @@ export class RatingsList implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         const { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario } = result;
-        this.api.post('/ratings', { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe(() => {
+        this.api.post<Rating>('/ratings', { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe(() => {
           this.ngOnInit();
         });
       }

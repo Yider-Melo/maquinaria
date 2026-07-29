@@ -33,7 +33,7 @@ async function publishEvent(routingKey, data) {
         if (loggerInstance) {
             loggerInstance.warn('No se pudo publicar evento', { routingKey, error: err.message });
         } else {
-            console.warn('No se pudo publicar evento:', routingKey, err.message);
+            console.warn('No se pudo publicar evento y logger no disponible:', routingKey, err.message);
         }
     }
 }

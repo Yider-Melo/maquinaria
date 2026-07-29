@@ -12,11 +12,12 @@ function buildPool(serviceName) {
         query_timeout: 10000
     };
 
-    if (!process.env.DB_PASSWORD && process.env.NODE_ENV === 'production') {
-        throw new Error('DB_PASSWORD no configurado');
-    }
     if (process.env.DB_PASSWORD) {
         config.password = process.env.DB_PASSWORD;
+    } else if (process.env.NODE_ENV !== 'production') {
+        config.password = 'postgres';
+    } else {
+        throw new Error('DB_PASSWORD no configurado');
     }
 
     const pool = new Pool(config);

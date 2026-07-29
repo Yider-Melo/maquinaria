@@ -2,14 +2,15 @@
 .page h1 { margin-bottom:24px; }
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
 .stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
-.stat-card.machinery, .stat-card.bookings, .stat-card.payments { cursor:pointer; transition:transform .2s; }
-.stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
+.stat-card.machinery, .stat-card.bookings, .stat-card.payments, .stat-card.reports { cursor:pointer; transition:transform .2s; }
+.stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
 .stat-card mat-icon { font-size:40px; width:40px; height:40px; }
 .stat-card.users mat-icon { color:var(--rm-primary); }
 .stat-card.machinery mat-icon { color:var(--rm-success); }
 .stat-card.bookings mat-icon { color:var(--rm-accent); }
 .stat-card.payments mat-icon { color:var(--rm-secondary); }
+.stat-card.reports mat-icon { color:#7b1fa2; }
 .stat-info { display:flex; flex-direction:column; }
 .stat-value { font-size:28px; font-weight:bold; line-height:1.2; color:var(--rm-ink); }
 .stat-label { font-size:14px; color:var(--rm-muted); }

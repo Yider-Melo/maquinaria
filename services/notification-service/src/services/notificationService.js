@@ -2,6 +2,26 @@ const { v4: uuidv4 } = require('uuid');
 const { ValidationError } = require('shared');
 const notificacionRepository = require('../repositories/notificacionRepository');
 
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
+async function getUserEmail(userId) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(`${AUTH_SERVICE_URL}/users/${userId}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
+        const body = await res.json();
+        return body.data || null;
+    } catch {
+        return null;
+    }
+}
+
 const TIPOS_NOTIFICACION = {
     NUEVA_RESERVA: 'nueva_reserva',
     RESERVA_CONFIRMADA: 'reserva_confirmada',
@@ -97,5 +117,5 @@ async function markAllAsRead(userId) {
 module.exports = {
     createNotification, createNotificationDirect,
     getNotificationsByUser, getUnreadCount, markAsRead, markAllAsRead,
-    TIPOS_NOTIFICACION
+    TIPOS_NOTIFICACION, getUserEmail
 };

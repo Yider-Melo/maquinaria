@@ -7,9 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../core/services/api.service';
-import { Auth } from '../../core/services/auth.service';
+import { Auth, Usuario } from '../../core/services/auth.service';
 import { RatingForm } from '../../ratings/form/form';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
+import { Booking, Machinery, Payment, PaymentCheckout, Rating, ApiResponse } from '../../core/models';
 
 @Component({
   standalone: true,
@@ -72,8 +73,8 @@ export class BookingsDetail implements OnInit {
   }
 
   private loadBooking(id: string): void {
-    this.api.get<any>(`/bookings/${id}`).subscribe({
-      next: (res: any) => {
+    this.api.get<Booking>(`/bookings/${id}`).subscribe({
+      next: (res: ApiResponse<Booking>) => {
         if (!res?.data) {
           this.error = 'No se pudo cargar la reserva.';
           this.loading = false;
@@ -82,10 +83,10 @@ export class BookingsDetail implements OnInit {
         }
         this.booking = res.data;
         if (this.booking?.maquinaria_id) {
-          this.api.get<any>(`/machinery/${this.booking.maquinaria_id}`).subscribe({
-            next: (machineRes: any) => {
+          this.api.get<Machinery>(`/machinery/${this.booking.maquinaria_id}`).subscribe({
+            next: (machineRes) => {
               const machine = machineRes?.data;
-              if (machine) {
+              if (machine && this.booking) {
                 this.booking.maquinaria_titulo = machine?.titulo || `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8)}`;
                 this.booking.maquinaria_precio = machine?.precio_por_dia;
               }
@@ -93,7 +94,9 @@ export class BookingsDetail implements OnInit {
               this.cdr.markForCheck();
             },
             error: () => {
-              this.booking.maquinaria_titulo = `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8) || 'sin asignar'}`;
+              if (this.booking) {
+                this.booking.maquinaria_titulo = `Maquinaria #${this.booking.maquinaria_id?.substring(0, 8) || 'sin asignar'}`;
+              }
               this.loading = false;
               this.cdr.markForCheck();
             }
@@ -104,7 +107,6 @@ export class BookingsDetail implements OnInit {
         }
       },
       error: () => {
-        console.error('Error en API /bookings/:id');
         this.error = 'No se pudo cargar la reserva.';
         this.loading = false;
         this.cdr.markForCheck();
@@ -115,9 +117,9 @@ export class BookingsDetail implements OnInit {
   cancel(): void {
     if (!this.booking) return;
     const dialogRef = this.dialog.open(CancelDetailDialog);
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (!result) return;
-      this.api.post(`/bookings/${this.booking.id}/cancel`, { motivo: result.motivo }).subscribe({
+    dialogRef.afterClosed().subscribe((result: { motivo: string } | false) => {
+      if (!result || !this.booking) return;
+      this.api.post<Booking>(`/bookings/${this.booking.id}/cancel`, { motivo: result.motivo }).subscribe({
         next: () => {
           this.snackBar.open('Reserva cancelada correctamente', 'Cerrar', { duration: 3000 });
           this.router.navigate(['/bookings']);
@@ -138,15 +140,15 @@ export class BookingsDetail implements OnInit {
         maquinaria_id: this.booking.maquinaria_id
       }
     });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result && this.booking) {
         const { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario } = result;
-        this.api.post('/ratings', { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe({
+        this.api.post<Rating>(`/ratings`, { reserva_id, calificado_id, maquinaria_id, puntuacion, comentario }).subscribe({
           next: () => {
             this.snackBar.open('Calificación guardada correctamente', 'Cerrar', { duration: 3000 });
             this.loadBooking(this.booking.id);
           },
-          error: (err: any) => this.snackBar.open(err.error?.error?.message || 'Error al guardar calificación', 'Cerrar', { duration: 4000 })
+          error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al guardar calificación', 'Cerrar', { duration: 4000 })
         });
       }
     });
@@ -158,12 +160,12 @@ export class BookingsDetail implements OnInit {
 
   confirm(): void {
     if (!this.booking) return;
-    this.api.post(`/bookings/${this.booking.id}/confirm`, {}).subscribe({
+    this.api.post<Booking>(`/bookings/${this.booking.id}/confirm`, {}).subscribe({
       next: () => {
         this.snackBar.open('Reserva confirmada correctamente', 'Cerrar', { duration: 3000 });
         this.loadBooking(this.booking.id);
       },
-      error: (err: any) => this.snackBar.open(err.error?.error?.message || 'Error al confirmar', 'Cerrar', { duration: 4000 })
+      error: (err) => this.snackBar.open(err.error?.error?.message || 'Error al confirmar', 'Cerrar', { duration: 4000 })
     });
   }
 
@@ -174,20 +176,20 @@ export class BookingsDetail implements OnInit {
       return;
     }
     this.paying = true;
-    this.api.post('/payments/checkout', { reserva_id: this.booking.id }).subscribe({
-        next: (res: any) => {
+    this.api.post<PaymentCheckout>('/payments/checkout', { reserva_id: this.booking.id }).subscribe({
+        next: (res) => {
           this.paying = false;
           const data = res.data;
           if (data?.checkout_url) {
             window.location.href = data.checkout_url;
           } else if (data?.pago_id) {
-            this.api.post(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe(() => {
+            this.api.post<Payment>(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe(() => {
               this.snackBar.open('Pago aprobado', 'Cerrar', { duration: 5000 });
-              this.loadBooking(this.booking.id);
+              this.loadBooking(this.booking.id!);
             });
           }
         },
-        error: (err: any) => {
+        error: (err) => {
           this.paying = false;
           const msg = err.error?.error?.message || 'Error al procesar el pago';
           this.snackBar.open(msg, 'Cerrar', { duration: 5000 });

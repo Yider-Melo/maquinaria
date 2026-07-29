@@ -1,19 +1,10 @@
-// Servicio de autenticación. Gestiona el inicio de sesión, registro,
-// cierre de sesión y almacenamiento en localStorage del token y los
-// datos del usuario autenticado.
 import { Injectable } from '@angular/core';
 import { Api } from './api.service';
 import { Observable, tap } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
+import { Usuario, LoginResponse, ApiResponse } from '../models';
 
-// Interfaz que representa un usuario de la plataforma.
-export interface Usuario {
-  id: string; email: string; nombre: string; apellido: string;
-  tipo_usuario: 'propietario' | 'arrendatario' | 'admin'; foto_url?: string;
-}
-
-// Interfaz para la respuesta del endpoint de login.
-export interface LoginResponse { token: string; refresh_token: string; usuario: Usuario; }
+export type { Usuario, LoginResponse };
 
 @Injectable({ providedIn: 'root' })
 export class Auth {
@@ -24,10 +15,9 @@ export class Auth {
 
   constructor(private api: Api) {}
 
-  // Inicia sesión. Almacena el token y el usuario en localStorage si la respuesta es exitosa.
-  login(email: string, password: string): Observable<any> {
+  login(email: string, password: string): Observable<ApiResponse<LoginResponse>> {
     return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
-      tap((res: any) => {
+      tap((res: ApiResponse<LoginResponse>) => {
         if (!res.success || !res.data?.token) {
           throw new Error('Respuesta inválida del servidor');
         }
@@ -39,10 +29,9 @@ export class Auth {
     );
   }
 
-  // Registra un nuevo usuario.
-  register(data: any): Observable<any> {
-    return this.api.post('/auth/register', data).pipe(
-      tap((res: any) => {
+  register(data: Record<string, any>): Observable<ApiResponse<Usuario>> {
+    return this.api.post<Usuario>('/auth/register', data).pipe(
+      tap((res: ApiResponse<Usuario>) => {
         if (!res.success) {
           throw new Error(res.error?.message || 'Error al registrarse');
         }

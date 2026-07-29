@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { formatDate, formatDateTime, formatId } from '../../shared/utils';
+import { Rating } from '../../core/models';
 
 @Component({
   standalone: false,
@@ -32,8 +33,8 @@ export class RatingsDetail implements OnInit {
   }
 
   private loadRating(id: string): void {
-    this.api.get<any>(`/ratings/${id}`).subscribe({
-      next: (res: any) => {
+    this.api.get<Rating>(`/ratings/${id}`).subscribe({
+      next: (res) => {
         this.rating = res?.data;
         if (!this.rating) {
           this.error = 'No se pudo cargar la calificación.';

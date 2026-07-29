@@ -4,6 +4,7 @@ import { Auth } from '../core/services/auth.service';
 import { Api } from '../core/services/api.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { Booking, Machinery, UnreadCount, PaginatedResponse } from '../core/models';
 
 @Component({
   selector: 'app-dashboard', templateUrl: './dashboard.html', styleUrls: ['./dashboard.css'],
@@ -12,8 +13,8 @@ import { catchError, finalize } from 'rxjs/operators';
 export class Dashboard implements OnInit {
   stats: any = {};
   loading = true;
-  ownerMachines: any[] = [];
-  ownerRequests: any[] = [];
+  ownerMachines: Machinery[] = [];
+  ownerRequests: Booking[] = [];
   ownerIncome = 0;
 
   constructor(public auth: Auth, private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
@@ -23,45 +24,41 @@ export class Dashboard implements OnInit {
       this.router.navigate(['/machinery']);
       return;
     }
+    if (this.auth.esTipo('admin')) {
+      this.router.navigate(['/admin']);
+      return;
+    }
     this.loadStats();
   }
 
   private loadStats(): void {
-    const calls: any[] = [];
+    const calls: import('rxjs').Observable<any>[] = [];
     
-    if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
+    if (this.auth.esTipo('propietario')) {
       calls.push(
-        this.api.get<any>('/bookings/my-listings').pipe(
-          catchError(() => of({ data: { data: [] } }))
+        this.api.get<PaginatedResponse<Booking>>('/bookings/my-listings').pipe(
+          catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
       calls.push(
-        this.api.get<any>('/machinery/owner').pipe(
-          catchError(() => of({ data: { data: [] } }))
+        this.api.get<PaginatedResponse<Machinery>>('/machinery/owner').pipe(
+          catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
     }
     
-    if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
+    if (this.auth.esTipo('arrendatario')) {
       calls.push(
-        this.api.get<any>('/bookings/my-bookings').pipe(
-          catchError(() => of({ data: { data: [] } }))
+        this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings').pipe(
+          catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
     }
 
     if (this.auth.isLoggedIn()) {
       calls.push(
-        this.api.get<any>('/notifications/unread-count').pipe(
-          catchError(() => of({ data: { no_leidas: 0 } }))
-        )
-      );
-    }
-    
-    if (this.auth.esTipo('admin')) {
-      calls.push(
-        this.api.get<any>('/search').pipe(
-          catchError(() => of({ data: { pagination: { total: 0 } } }))
+        this.api.get<UnreadCount>('/notifications/unread-count').pipe(
+          catchError(() => of({ success: true, data: { no_leidas: 0 } }))
         )
       );
     }
@@ -80,13 +77,13 @@ export class Dashboard implements OnInit {
       next: (results: any[]) => {
         let resultIndex = 0;
         
-        if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
+        if (this.auth.esTipo('propietario')) {
           let r = results[resultIndex]?.data;
           this.ownerRequests = Array.isArray(r) ? r : (r?.data || []);
-          this.stats.misListados = this.ownerRequests.filter((b: any) => ['pendiente', 'confirmada'].includes(b.estado)).length;
+          this.stats.misListados = this.ownerRequests.filter(b => ['pendiente', 'confirmada'].includes(b.estado)).length;
           this.ownerIncome = this.ownerRequests
-            .filter((b: any) => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
-            .reduce((sum: number, b: any) => sum + Number(b.precio_total || 0), 0);
+            .filter(b => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
+            .reduce((sum, b) => sum + Number(b.precio_total || 0), 0);
           resultIndex++;
           
           r = results[resultIndex]?.data;
@@ -94,14 +91,10 @@ export class Dashboard implements OnInit {
           resultIndex++;
         }
         
-        if (this.auth.esTipo('arrendatario') || this.auth.esTipo('admin')) {
+        if (this.auth.esTipo('arrendatario')) {
           const r = results[resultIndex]?.data;
           this.stats.misReservas = Array.isArray(r) ? r.length : (r?.data?.length || 0);
           resultIndex++;
-        }
-        
-        if (this.auth.esTipo('admin')) {
-          this.stats.totalMaquinaria = (results[resultIndex]?.data?.pagination?.total) || 0;
         }
         
         const lastIdx = results.length - 1;
@@ -111,8 +104,7 @@ export class Dashboard implements OnInit {
         
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error loading dashboard stats:', err);
+      error: () => {
         this.cdr.markForCheck();
       }
     });

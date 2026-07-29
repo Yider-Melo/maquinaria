@@ -14,6 +14,7 @@ import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
 import { SharedModule } from '../shared/shared.module';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
+import { Usuario, BankAccount, Machinery, MachineryImage, Booking, ApiResponse, PaginatedResponse } from '../core/models';
 
 @Component({
   selector: 'app-profile',
@@ -36,17 +37,17 @@ import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/uti
 })
 export class Profile implements OnInit {
   loading = true; saving = false; passwordSaving = false;
-  profile: any = { nombre: '', apellido: '', telefono: '', departamento: '', foto_url: '' };
+  profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', foto_url: '' };
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };
-  ownerMachines: any[] = [];
-  renterBookings: any[] = [];
-  bankAccount: any = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
+  ownerMachines: Machinery[] = [];
+  renterBookings: Booking[] = [];
+  bankAccount: BankAccount = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
   bancos = ['nequi', 'bancolombia', 'davivienda', 'bbva', 'popular', 'occidente', 'bogota', 'av_villas', 'colpatria', 'caja_social'];
   tiposDocumento = ['CC', 'CE', 'NIT'];
   bankLoading = false;
   selectedMachine: any = null;
-  machineImages: any[] = [];
+  machineImages: MachineryImage[] = [];
   imageUrl = '';
   imageLoading = false;
   error = '';
@@ -56,7 +57,7 @@ export class Profile implements OnInit {
   ngOnInit(): void { this.load(); }
 
   load(): void {
-    this.api.get<any>('/auth/profile').subscribe({
+    this.api.get<Usuario>('/auth/profile').subscribe({
       next: (res) => {
         this.profile = res.data;
         this.loading = false;
@@ -75,11 +76,11 @@ export class Profile implements OnInit {
     return this.profile?.tipo_usuario === 'arrendatario';
   }
 
-  get availableOwnerMachines(): any[] {
+  get availableOwnerMachines(): Machinery[] {
     return this.ownerMachines.filter(machine => machine.disponible !== false);
   }
 
-  get activeRenterBookings(): any[] {
+  get activeRenterBookings(): Booking[] {
     return this.renterBookings.filter(booking => ['pendiente', 'confirmada', 'en_curso'].includes(booking.estado));
   }
 
@@ -101,14 +102,14 @@ export class Profile implements OnInit {
   }
 
   loadRenterBookings(): void {
-    this.api.get<any>('/bookings/my-bookings', { size: 50 }).subscribe({
+    this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings', { size: 50 }).subscribe({
       next: (res) => this.renterBookings = res.data?.data || [],
       error: () => this.error = 'No se pudieron cargar tus reservas.'
     });
   }
 
   loadOwnerMachines(): void {
-    this.api.get<any>('/machinery/owner', { size: 50 }).subscribe({
+    this.api.get<PaginatedResponse<Machinery>>('/machinery/owner', { size: 50 }).subscribe({
       next: (res) => {
         this.ownerMachines = res.data?.data || [];
         if (this.ownerMachines.length) this.selectMachine(this.ownerMachines[0]);
@@ -117,7 +118,7 @@ export class Profile implements OnInit {
     });
   }
 
-  selectMachine(machine: any): void {
+  selectMachine(machine: Machinery): void {
     this.selectedMachine = machine;
     this.imageUrl = '';
     this.loadMachineImages();
@@ -126,7 +127,7 @@ export class Profile implements OnInit {
   loadMachineImages(): void {
     if (!this.selectedMachine) return;
     this.imageLoading = true;
-    this.api.get<any[]>(`/machinery/${this.selectedMachine.id}/images`).subscribe({
+    this.api.get<MachineryImage[]>(`/machinery/${this.selectedMachine.id}/images`).subscribe({
       next: (res) => { this.machineImages = res.data || []; this.imageLoading = false; },
       error: () => { this.error = 'No se pudieron cargar las fotos.'; this.imageLoading = false; }
     });
@@ -168,7 +169,7 @@ export class Profile implements OnInit {
   saveMachineImage(url: string): void {
     this.imageLoading = true;
     this.error = '';
-    this.api.post<any>(`/machinery/${this.selectedMachine.id}/images`, { url }).subscribe({
+    this.api.post<MachineryImage>(`/machinery/${this.selectedMachine!.id}/images`, { url }).subscribe({
       next: () => {
         this.imageUrl = '';
         this.snackBar.open('Foto agregada a la maquinaria.', 'Cerrar', { duration: 3000 });
@@ -181,7 +182,7 @@ export class Profile implements OnInit {
     });
   }
 
-  deleteMachineImage(image: any): void {
+  deleteMachineImage(image: MachineryImage): void {
     if (!this.selectedMachine || !image?.id) return;
     const dialogRef = this.dialog.open(ConfirmDeleteDialog, { data: { message: '¿Eliminar esta foto definitivamente?' } });
     dialogRef.afterClosed().subscribe(confirmed => {
@@ -200,7 +201,7 @@ export class Profile implements OnInit {
   saveProfile(): void {
     this.saving = true; this.error = '';
     const payload = { nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono, departamento: this.profile.departamento, foto_url: this.profile.foto_url };
-    this.api.put<any>('/auth/profile', payload).subscribe({
+    this.api.put<Usuario>('/auth/profile', payload).subscribe({
       next: (res) => {
         const current = this.auth.getUser();
         localStorage.setItem('rentamaq_user', JSON.stringify({ ...current, ...res.data }));
@@ -213,21 +214,21 @@ export class Profile implements OnInit {
 
   changePassword(): void {
     this.passwordSaving = true; this.error = '';
-    this.api.put('/auth/profile/password', this.password).subscribe({
+    this.api.put<Usuario>('/auth/profile/password', this.password).subscribe({
       next: () => { this.password = { currentPassword: '', newPassword: '' }; this.snackBar.open('Contraseña actualizada.', 'Cerrar', { duration: 3000 }); this.passwordSaving = false; },
       error: (err) => { this.error = err.error?.error?.message || 'No se pudo cambiar la contraseña.'; this.passwordSaving = false; }
     });
   }
 
   verifyEmail(): void {
-    this.api.post<any>('/auth/profile/verify-email', {}).subscribe({
+    this.api.post<Usuario>('/auth/profile/verify-email', {}).subscribe({
       next: (res) => { this.profile = res.data; this.snackBar.open('Correo verificado en modo demo.', 'Cerrar', { duration: 3000 }); },
       error: () => this.error = 'No se pudo verificar el correo.'
     });
   }
 
   loadBankAccount(): void {
-    this.api.get<any>('/auth/bank-account').subscribe({
+    this.api.get<BankAccount>('/auth/bank-account').subscribe({
       next: (res) => { if (res.data) this.bankAccount = res.data; },
       error: () => {}
     });
@@ -235,7 +236,7 @@ export class Profile implements OnInit {
 
   saveBankAccount(): void {
     this.bankLoading = true; this.error = '';
-    this.api.put<any>('/auth/bank-account', this.bankAccount).subscribe({
+    this.api.put<BankAccount>('/auth/bank-account', this.bankAccount).subscribe({
       next: (res) => {
         this.bankAccount = res.data;
         this.snackBar.open('Cuenta bancaria guardada.', 'Cerrar', { duration: 3000 });
