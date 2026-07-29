@@ -26,6 +26,9 @@ import { CommonModule } from '@angular/common';
           <a mat-button class="sidebar-link" routerLink="/admin/reports" routerLinkActive="active">
             <mat-icon>assessment</mat-icon> Gestión
           </a>
+          <a mat-button class="sidebar-link" routerLink="/admin/usuarios-maquinas" routerLinkActive="active">
+            <mat-icon>group_work</mat-icon> Usuarios y Máquinas
+          </a>
         </nav>
         <div class="sidebar-footer">
           <a mat-button class="sidebar-link" routerLink="/">

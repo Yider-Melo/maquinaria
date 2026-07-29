@@ -7,6 +7,7 @@ import { AdminDashboard } from './dashboard/dashboard.component';
 import { AdminAccounting } from './accounting/accounting.component';
 import { AdminPerformance } from './performance/performance.component';
 import { AdminReports } from './reports/reports.component';
+import { AdminUsuariosMaquinas } from './usuarios-maquinas/usuarios-maquinas.component';
 
 const routes: Routes = [
   {
@@ -18,7 +19,8 @@ const routes: Routes = [
       { path: '', component: AdminDashboard },
       { path: 'accounting', component: AdminAccounting },
       { path: 'performance', component: AdminPerformance },
-      { path: 'reports', component: AdminReports }
+      { path: 'reports', component: AdminReports },
+      { path: 'usuarios-maquinas', component: AdminUsuariosMaquinas }
     ]
   }
 ];

@@ -5,10 +5,11 @@ import { AdminDashboard } from './dashboard/dashboard.component';
 import { AdminAccounting } from './accounting/accounting.component';
 import { AdminPerformance } from './performance/performance.component';
 import { AdminReports } from './reports/reports.component';
+import { AdminUsuariosMaquinas } from './usuarios-maquinas/usuarios-maquinas.component';
 import { AdminRoutingModule } from './admin-routing.module';
 
 @NgModule({
-  declarations: [AdminLayout, AdminDashboard, AdminAccounting, AdminPerformance, AdminReports],
+  declarations: [AdminLayout, AdminDashboard, AdminAccounting, AdminPerformance, AdminReports, AdminUsuariosMaquinas],
   imports: [SharedModule, AdminRoutingModule]
 })
 export class AdminModule {}
