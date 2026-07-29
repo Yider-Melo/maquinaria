@@ -25,11 +25,15 @@
     </mat-tab>
     <mat-tab label="Maquinaria">
       <table class="admin-table">
-        <thead><tr><th>Máquina</th><th>Tipo</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>
+        <thead><tr><th>ID</th><th>Máquina</th><th>Tipo</th><th>Propietario</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>
         <tbody>
           <tr *ngFor="let m of machinery">
+            <td class="id-cell">{{ m.id.substring(0, 8) }}</td>
             <td><strong>{{ m.titulo }}</strong><small>{{ m.marca }} {{ m.modelo }}</small></td>
-            <td>{{ m.tipo }}</td><td>{{ m.ciudad }}</td><td>${{ m.precio_por_dia | number }}</td>
+            <td>{{ m.tipo }}</td>
+            <td>{{ userMap[m.propietario_id] || m.propietario_id.substring(0, 8) }}</td>
+            <td>{{ m.ciudad }}</td>
+            <td>${{ m.precio_por_dia | number }}</td>
             <td><span class="status" [class.ok]="m.activo">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
             <td><button mat-stroked-button (click)="toggleMachinery(m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button></td>
           </tr>

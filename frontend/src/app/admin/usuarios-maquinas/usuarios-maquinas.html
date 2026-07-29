@@ -31,10 +31,11 @@
               <h4 *ngIf="maquinasPorUsuario[u.id]?.length">Máquinas de {{ u.nombre }}</h4>
               <table class="sub-table" *ngIf="maquinasPorUsuario[u.id]?.length">
                 <thead>
-                  <tr><th>Máquina</th><th>Tipo</th><th>Precio/día</th><th>Calificación</th><th>Reseñas</th><th>Estado</th><th>Acción</th></tr>
+                  <tr><th>ID</th><th>Máquina</th><th>Tipo</th><th>Precio/día</th><th>Calificación</th><th>Reseñas</th><th>Estado</th><th>Acción</th></tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let m of maquinasPorUsuario[u.id]">
+                    <td class="id-cell">{{ m.id.substring(0, 8) }}</td>
                     <td>{{ m.titulo }}</td>
                     <td>{{ m.tipo }}</td>
                     <td>${{ m.precio_por_dia | number }}</td>

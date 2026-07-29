@@ -39,6 +39,7 @@ import { Usuario, Machinery } from '../../core/models';
     .status.ok { background: #e8f5e9; color: #2e7d32; }
     .status:not(.ok) { background: #ffebee; color: #c62828; }
     .admin-table button:hover:not(.user-row button) { background: #c96f2d; color: white; }
+    .id-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #999; }
     .empty-sub { color: #999; font-size: 13px; padding: 8px 0; }
   `],
   standalone: false

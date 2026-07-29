@@ -14,6 +14,7 @@ export class AdminReports implements OnInit {
   stats: any = {};
   ratingReportadas = 0;
   users: Usuario[] = [];
+  userMap: { [key: string]: string } = {};
   machinery: Machinery[] = [];
   recentBookings: Booking[] = [];
   payments: any[] = [];
@@ -39,6 +40,10 @@ export class AdminReports implements OnInit {
         this.stats = users?.data || {};
         this.ratingReportadas = ratings?.data?.resumen?.reportadas || 0;
         this.users = userList?.data || [];
+        this.userMap = {};
+        for (const u of this.users) {
+          this.userMap[u.id] = `${u.nombre} ${u.apellido}`.trim();
+        }
         this.machinery = machineryList?.data || [];
         this.recentBookings = bookings?.data || [];
         this.payments = payments?.data?.ultimos_pagos || [];

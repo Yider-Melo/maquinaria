@@ -7,6 +7,7 @@
 .report-grid span { color: var(--rm-muted); }
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: var(--rm-surface); border-radius: 14px; overflow: hidden; }
 .admin-table th, .admin-table td { padding: 12px; border-bottom: 1px solid var(--rm-border); text-align: left; vertical-align: middle; color: var(--rm-ink); }
+.id-cell { font-family: 'Courier New', monospace; font-size: 12px; color: #999; }
 .admin-table th { color: var(--rm-secondary); background: #fff3df; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .admin-table small { display: block; color: var(--rm-muted); margin-top: 3px; }
 .admin-table button:hover { background: var(--rm-primary); color: white; }
