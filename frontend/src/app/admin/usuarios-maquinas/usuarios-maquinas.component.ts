@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api.service';
 import { MatDialog } from '@angular/material/dialog';
-import { forkJoin, of, Observable } from 'rxjs';
+import { of, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { Usuario, Machinery } from '../../core/models';
@@ -49,7 +49,7 @@ export class AdminUsuariosMaquinas implements OnInit {
   maquinasPorUsuario: { [key: string]: Machinery[] } = {};
   expandidos: Set<string> = new Set();
 
-  constructor(private api: Api, private dialog: MatDialog) {}
+  constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
   private procesarMaquinas(lista: Machinery[]): void {
     this.maquinas = lista;
@@ -64,11 +64,11 @@ export class AdminUsuariosMaquinas implements OnInit {
   ngOnInit(): void {
     this.api.get<Usuario[]>('/admin/users?page=1&size=200').pipe(
       catchError(() => of({ success: true, data: [] } as any))
-    ).subscribe(res => this.usuarios = res?.data || []);
+    ).subscribe(res => { this.usuarios = res?.data || []; this.cdr.detectChanges(); });
 
     this.api.get<Machinery[]>('/admin/machinery/all?page=1&size=200').pipe(
       catchError(() => of({ success: true, data: [] } as any))
-    ).subscribe(res => this.procesarMaquinas(res?.data || []));
+    ).subscribe(res => { this.procesarMaquinas(res?.data || []); this.cdr.detectChanges(); });
   }
 
   toggleExpand(u: Usuario): void {

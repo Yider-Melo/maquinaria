@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { Api } from '../../core/services/api.service';
 
@@ -9,13 +9,13 @@ import { Api } from '../../core/services/api.service';
 export class AdminAccounting implements OnInit {
   dashboard: any = { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] };
 
-  constructor(private api: Api) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.api.get<any>('/admin/payments/dashboard').pipe(
       catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } }))
     ).subscribe({
-      next: (res) => { this.dashboard = res.data; }
+      next: (res) => { this.dashboard = res.data; this.cdr.detectChanges(); }
     });
   }
 }
