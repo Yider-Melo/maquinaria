@@ -74,7 +74,8 @@ async function createCheckout(bookingId, userId, metodoPago) {
     if (existingPayment) {
         id = existingPayment.id;
         externalReference = existingPayment.referencia_pasarela;
-        if (existingPayment.checkout_url && !existingPayment.checkout_url.includes('mercadopago')) {
+        if (existingPayment.checkout_url && !existingPayment.checkout_url.includes('mercadopago')
+            && PROVIDER !== 'wompi') {
             return {
                 pago_id: existingPayment.id,
                 checkout_url: existingPayment.checkout_url,
