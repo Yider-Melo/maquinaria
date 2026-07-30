@@ -73,7 +73,7 @@ async function createCheckout(bookingId, userId, metodoPago) {
     if (existingPayment) {
         id = existingPayment.id;
         externalReference = existingPayment.referencia_pasarela;
-        if (existingPayment.checkout_url) {
+        if (existingPayment.checkout_url && !existingPayment.checkout_url.includes('mercadopago')) {
             return {
                 pago_id: existingPayment.id,
                 checkout_url: existingPayment.checkout_url,
@@ -81,6 +81,16 @@ async function createCheckout(bookingId, userId, metodoPago) {
             };
         }
     } else {
+        id = uuidv4();
+        externalReference = `RENTAMAQ-${id}`;
+        await pagoRepository.insert({
+            id, bookingId, userId,
+            propietarioId: reserva.propietario_id,
+            monto: reserva.precio_total,
+            metodoPago: metodoPago || PROVIDER,
+            referenciaPasarela: externalReference
+        });
+    }
         id = uuidv4();
         externalReference = `RENTAMAQ-${id}`;
         await pagoRepository.insert({
