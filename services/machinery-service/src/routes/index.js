@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const machineryController = require('../controllers/machineryController');
 const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
-const createServiceLogger = require('../../../shared/logger');
+const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('machinery-routes');
 
 router.post('/', validateToken, requireRole('propietario'), validate(schemas.maquinaria), machineryController.create);

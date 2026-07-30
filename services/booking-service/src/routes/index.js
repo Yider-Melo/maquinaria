@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const { validate, validateParams, validateQuery, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
-const createServiceLogger = require('../../../shared/logger');
+const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('booking-routes');
 
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada en booking-service. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
