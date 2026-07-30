@@ -2,9 +2,29 @@
   <div class="page-header"><h1>Mis Reservas</h1></div>
   <app-skeleton-card *ngIf="loading; else bookingsContent" variant="list"></app-skeleton-card>
   <ng-template #bookingsContent>
+  <div class="search-bar">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Buscar reserva</mat-label>
+      <input matInput [(ngModel)]="searchQuery" placeholder="ID o nombre del equipo">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Estado</mat-label>
+      <mat-select [(ngModel)]="estadoFilter">
+        <mat-option value="">Todos</mat-option>
+        <mat-option value="pendiente">Pendiente</mat-option>
+        <mat-option value="confirmada">Confirmada</mat-option>
+        <mat-option value="pagada">Pagada</mat-option>
+        <mat-option value="en_curso">En curso</mat-option>
+        <mat-option value="completada">Completada</mat-option>
+        <mat-option value="cancelada">Cancelada</mat-option>
+        <mat-option value="rechazada">Rechazada</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of filteredAsArrendatario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>
@@ -46,7 +66,7 @@
         </div>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asPropietario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of filteredAsPropietario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>

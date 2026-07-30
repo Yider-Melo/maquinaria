@@ -53,12 +53,34 @@ export class BookingsList implements OnInit {
   error = '';
   tabIndex = 0;
   payingBookingId: string | null = null;
+  searchQuery = ''; estadoFilter = '';
 
   page = 1; size = 10; total = 0;
   propPage = 1; propTotal = 0;
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
   get propTotalPages(): number { return Math.ceil(this.propTotal / this.size) || 1; }
+
+  get filteredAsArrendatario(): Booking[] {
+    return this.filterBookings(this.asArrendatario);
+  }
+
+  get filteredAsPropietario(): Booking[] {
+    return this.filterBookings(this.asPropietario);
+  }
+
+  private filterBookings(list: Booking[]): Booking[] {
+    return list.filter(b => {
+      if (this.estadoFilter && b.estado !== this.estadoFilter) return false;
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        const matchId = b.id?.toLowerCase().includes(q);
+        const matchMachine = b.maquinaria_titulo?.toLowerCase().includes(q);
+        if (!matchId && !matchMachine) return false;
+      }
+      return true;
+    });
+  }
 
   trackById(_index: number, item: Booking): string { return item?.id || String(_index); }
 

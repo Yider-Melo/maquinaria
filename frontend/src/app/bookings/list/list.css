@@ -11,6 +11,8 @@
 .booking-status { display: flex; align-items: center; gap: 12px; }
 .booking-subtitle { display: flex; flex-direction: column; gap: 4px; }
 .booking-details { margin-top: 10px; display: grid; gap: 4px; color: #555; }
+.search-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.search-bar mat-form-field { flex: 1 1 200px; min-width: 140px; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; }
 .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
 .pagination span { color: #888; font-size: 14px; }

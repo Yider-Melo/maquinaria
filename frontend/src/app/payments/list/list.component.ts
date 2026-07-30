@@ -12,9 +12,25 @@ import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 })
 export class PaymentsList implements OnInit {
   payments: any[] = []; loading = true; error = '';
+  searchQuery = ''; estadoFilter = '';
   page = 1; size = 10; total = 0;
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
+
+  get filteredPayments(): any[] {
+    return this.payments.filter(p => {
+      if (this.estadoFilter && p.estado !== this.estadoFilter) return false;
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        if (p.id?.toLowerCase().includes(q)) return true;
+        if (p.referencia_pasarela?.toLowerCase().includes(q)) return true;
+        if (p.maquinaria_titulo?.toLowerCase().includes(q)) return true;
+        if (p.reserva_id?.toLowerCase().includes(q)) return true;
+        return false;
+      }
+      return true;
+    });
+  }
 
   constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
