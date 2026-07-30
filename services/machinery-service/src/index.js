@@ -27,6 +27,16 @@ app.get('/health', (_req, res) => {
     res.json({ success: true, service: 'machinery-service', status: 'running', db: 'connected' });
 });
 
+const pool = require('./db');
+pool.query(`
+    CREATE TABLE IF NOT EXISTS favoritos (
+        usuario_id UUID NOT NULL,
+        maquinaria_id UUID NOT NULL REFERENCES maquinaria(id) ON DELETE CASCADE,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (usuario_id, maquinaria_id)
+    );
+`).catch(err => logger.warn('Error creando tabla favoritos', { error: err.message }));
+
 app.use('/', routes);
 
 app.use(errorHandler);

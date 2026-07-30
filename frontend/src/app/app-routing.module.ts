@@ -13,6 +13,7 @@ const routes: Routes = [
   { path: 'bookings', data: { animation: 'bookings' }, loadChildren: () => import('./bookings/bookings.module').then(m => m.BookingsModule) },
   { path: 'payments', data: { animation: 'payments' }, loadChildren: () => import('./payments/payments.module').then(m => m.PaymentsModule) },
   { path: 'ratings', data: { animation: 'ratings' }, loadChildren: () => import('./ratings/ratings.module').then(m => m.RatingsModule) },
+  { path: 'favorites', data: { animation: 'favorites' }, loadComponent: () => import('./favorites/favorites.component').then(m => m.FavoritesComponent) },
   { path: 'notifications', data: { animation: 'notifications' }, loadChildren: () => import('./notifications/notifications.module').then(m => m.NotificationsModule) },
   { path: 'profile', data: { animation: 'profile' }, loadChildren: () => import('./profile/profile.module').then(m => m.ProfileModule) },
   { path: '404', data: { animation: 'notFound', preload: false }, loadChildren: () => import('./not-found/not-found.module').then(m => m.NotFoundModule) },

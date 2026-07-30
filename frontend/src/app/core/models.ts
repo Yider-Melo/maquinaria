@@ -50,6 +50,7 @@ export interface Machinery {
   imagen_portada?: string;
   puntuacion_promedio?: number;
   total_resenas?: number;
+  favorito?: boolean;
   creado_en?: string;
 }
 

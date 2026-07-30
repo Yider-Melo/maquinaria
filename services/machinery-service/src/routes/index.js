@@ -33,6 +33,11 @@ function internalAuth(req, res, next) {
 router.patch('/internal/:id/disponible', internalAuth, validateParams(uuidParam('id')), machineryController.internalSetDisponible);
 router.put('/internal/:id/rating', internalAuth, validateParams(uuidParam('id')), machineryController.internalUpdateRating);
 
+router.post('/:id/favorite', validateToken, validateParams(uuidParam('id')), machineryController.toggleFavorite);
+router.delete('/:id/favorite', validateToken, validateParams(uuidParam('id')), machineryController.toggleFavorite);
+router.get('/:id/favorite', validateToken, validateParams(uuidParam('id')), machineryController.checkFavorite);
+router.get('/favorites/list', validateToken, machineryController.getFavorites);
+
 router.use(errorHandler);
 
 module.exports = router;

@@ -1,0 +1,19 @@
+.container { padding: 32px 24px; max-width: 1240px; margin: 0 auto; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 24px; }
+.card { cursor: pointer; transition: transform .25s, box-shadow .25s; border-radius: 12px !important; overflow: hidden; }
+.card:hover { transform: translateY(-6px); box-shadow: 0 12px 35px var(--rm-shadow) !important; }
+.card-img-wrap { position: relative; }
+.card-img { height: 190px; width: 100%; object-fit: cover; background: #f1dfc9; display: block; }
+.fav-btn { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.85); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.fav-btn:hover { transform: scale(1.1); background: #fff; }
+.fav-btn mat-icon { font-size: 20px; width: 20px; height: 20px; color: #e74c3c; }
+.card-content { padding: 16px !important; }
+.card-content h3 { font-size: 18px; font-weight: 700; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.price { font-size: 20px; font-weight: 800; color: var(--rm-primary-dark); margin: 8px 0 4px; }
+.price small { font-size: 13px; font-weight: 400; color: var(--rm-muted); }
+.location { color: var(--rm-muted); font-size: 13px; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.loading-wrap { text-align: center; padding: 60px; color: var(--rm-muted); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.hint { color: var(--rm-muted); margin: 4px 0 16px; }
+@media (max-width: 480px) { .grid { grid-template-columns: 1fr; gap: 16px; } }

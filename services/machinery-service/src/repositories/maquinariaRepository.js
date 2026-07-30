@@ -184,9 +184,50 @@ async function setActiveAdmin(id, active) {
     return result.rows[0] || null;
 }
 
+async function addFavorite(userId, machineryId) {
+    await pool.query(
+        'INSERT INTO favoritos (usuario_id, maquinaria_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [userId, machineryId]
+    );
+}
+
+async function removeFavorite(userId, machineryId) {
+    await pool.query(
+        'DELETE FROM favoritos WHERE usuario_id = $1 AND maquinaria_id = $2',
+        [userId, machineryId]
+    );
+}
+
+async function findFavorites(userId, page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        'SELECT COUNT(*) FROM favoritos WHERE usuario_id = $1',
+        [userId]
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+    const result = await pool.query(
+        `SELECT m.* FROM maquinaria m
+         INNER JOIN favoritos f ON f.maquinaria_id = m.id
+         WHERE f.usuario_id = $1 AND m.activo = true
+         ORDER BY f.creado_en DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, size, offset]
+    );
+    return { data: result.rows, total };
+}
+
+async function isFavorite(userId, machineryId) {
+    const result = await pool.query(
+        'SELECT 1 FROM favoritos WHERE usuario_id = $1 AND maquinaria_id = $2',
+        [userId, machineryId]
+    );
+    return result.rows.length > 0;
+}
+
 module.exports = {
     insert, findActiveById, findByOwner, findActive, update, softDelete,
     countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
     upsertAvailability, batchUpsertAvailability, findAvailability,
-    getAdminStats, findAllAdmin, setActiveAdmin
+    getAdminStats, findAllAdmin, setActiveAdmin,
+    addFavorite, removeFavorite, findFavorites, isFavorite
 };

@@ -120,6 +120,29 @@ async function internalUpdateRating(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function toggleFavorite(req, res, next) {
+    try {
+        const result = await machineryService.toggleFavorite(req.user.id, req.params.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getFavorites(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const { data, total } = await machineryService.getFavorites(req.user.id, page, size);
+        paginated(res, data, total, page, size);
+    } catch (err) { next(err); }
+}
+
+async function checkFavorite(req, res, next) {
+    try {
+        const result = await machineryService.checkFavorite(req.user.id, req.params.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     create,
     listActive,
@@ -137,4 +160,7 @@ module.exports = {
     getAvailability,
     internalSetDisponible,
     internalUpdateRating,
+    toggleFavorite,
+    getFavorites,
+    checkFavorite,
 };

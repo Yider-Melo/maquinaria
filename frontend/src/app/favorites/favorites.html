@@ -1,0 +1,32 @@
+<div class="container">
+  <div class="page-header"><h1>Mis Favoritos</h1></div>
+  <ng-container *ngIf="!loading; else loadingTmpl">
+    <div class="grid" *ngIf="items.length > 0">
+      <mat-card *ngFor="let item of items" class="card" matRipple [routerLink]="['/machinery', item.id]">
+        <div class="card-img-wrap">
+          <img class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
+          <button class="fav-btn active" (click)="remove(item, $event)" matRipple aria-label="Quitar de favoritos">
+            <mat-icon>favorite</mat-icon>
+          </button>
+        </div>
+        <mat-card-content class="card-content">
+          <h3>{{ item.titulo }}</h3>
+          <p class="price">${{ item.precio_por_dia | number }} <small>/d&iacute;a</small></p>
+          <p class="location"><mat-icon style="font-size:16px;width:16px;height:16px;">location_on</mat-icon> {{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="empty-state" *ngIf="items.length === 0">
+      <mat-icon>favorite_border</mat-icon>
+      <p>No tienes m&aacute;quinas favoritas</p>
+      <p class="hint">Explora el cat&aacute;logo y marca &#10084; para guardar aqu&iacute;</p>
+      <button mat-raised-button color="primary" routerLink="/machinery">Explorar maquinaria</button>
+    </div>
+    <div class="pagination" *ngIf="total > size">
+      <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+      <span>P&aacute;gina {{ page }} de {{ totalPages }}</span>
+      <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+    </div>
+  </ng-container>
+  <ng-template #loadingTmpl><div class="loading-wrap"><mat-icon>hourglass_top</mat-icon> Cargando favoritos...</div></ng-template>
+</div>

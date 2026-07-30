@@ -121,6 +121,7 @@ export class MachineryDetail implements OnInit {
         this.loadOccupiedDates();
         this.loadRatings();
         this.loadMachineBookings();
+        if (this.auth.isLoggedIn()) this.checkFavorite();
         this.cdr.detectChanges();
       },
       error: () => {
@@ -158,6 +159,20 @@ export class MachineryDetail implements OnInit {
   }
 
   isOwner(): boolean { return this.auth.getUser()?.id === this.item?.propietario_id; }
+
+  private checkFavorite(): void {
+    this.api.get<{ favorito: boolean }>(`/machinery/${this.item.id}/favorite`).subscribe({
+      next: (res) => { this.item.favorito = res.data?.favorito; this.cdr.markForCheck(); }
+    });
+  }
+
+  toggleFavorite(event: Event): void {
+    event.stopPropagation();
+    const method = this.item.favorito ? 'delete' : 'post';
+    this.api[method](`/machinery/${this.item.id}/favorite`).subscribe({
+      next: () => { this.item.favorito = !this.item.favorito; this.cdr.markForCheck(); }
+    });
+  }
 
   prevMonth(): void {
     this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);

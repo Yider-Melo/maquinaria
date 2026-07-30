@@ -203,6 +203,15 @@ export class MachineryList implements OnInit, OnDestroy {
   prevPage(): void { if (this.page > 1) { this.page--; this.load(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.load(); } }
 
+  toggleFavorite(item: Machinery, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    const method = item.favorito ? 'delete' : 'post';
+    this.api[method](`/machinery/${item.id}/favorite`).subscribe({
+      next: () => { item.favorito = !item.favorito; this.cdr.markForCheck(); }
+    });
+  }
+
   private cleanFilters(): any {
     const cleaned: any = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
     if (cleaned['ciudad']) cleaned['ciudad'] = this.normalize(cleaned['ciudad']);

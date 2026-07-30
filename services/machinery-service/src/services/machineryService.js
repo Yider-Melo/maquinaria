@@ -155,9 +155,29 @@ async function setDisponible(id, disponible) {
     return updated;
 }
 
+async function toggleFavorite(userId, machineryId) {
+    const existing = await maquinariaRepository.isFavorite(userId, machineryId);
+    if (existing) {
+        await maquinariaRepository.removeFavorite(userId, machineryId);
+        return { favorito: false };
+    }
+    await maquinariaRepository.addFavorite(userId, machineryId);
+    return { favorito: true };
+}
+
+async function getFavorites(userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
+    return await maquinariaRepository.findFavorites(userId, page, size);
+}
+
+async function checkFavorite(userId, machineryId) {
+    return { favorito: await maquinariaRepository.isFavorite(userId, machineryId) };
+}
+
 module.exports = {
     create, getById, getByOwner, listActive, update, remove,
     addImage, deleteImage, getImages,
     updateAvailability, getAvailability,
-    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, updateRating, setDisponible
+    adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, updateRating, setDisponible,
+    toggleFavorite, getFavorites, checkFavorite
 };

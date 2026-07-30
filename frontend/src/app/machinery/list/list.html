@@ -78,7 +78,12 @@
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
       <mat-card *ngFor="let item of items; trackBy: trackById" class="card" tabindex="0" role="link" matRipple [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
-        <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
+        <div class="card-img-wrap">
+          <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
+          <button class="fav-btn" [class.active]="item.favorito" (click)="toggleFavorite(item, $event)" matRipple aria-label="Marcar como favorito">
+            <mat-icon>{{ item.favorito ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+        </div>
         <mat-card-content class="card-content">
           <h3>{{ item.titulo }}</h3>
           <p class="card-subtitle"><mat-icon style="font-size:16px;width:16px;height:16px;">category</mat-icon> {{ item.tipo }} - {{ item.marca }} {{ item.modelo }}</p>
