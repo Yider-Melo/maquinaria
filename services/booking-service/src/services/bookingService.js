@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const { NotFoundError, ForbiddenError, ConflictError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
 const reservaRepository = require('../repositories/reservaRepository');
-const createServiceLogger = require('../../../shared/logger');
+const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('booking-service');
 
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
