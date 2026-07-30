@@ -24,6 +24,8 @@
 }
 .nav-link:hover { background: rgba(0,0,0,0.3) !important; color: white !important; }
 .active-link { background: rgba(0,0,0,0.25) !important; border-bottom: 3px solid var(--rm-accent); }
+.main-nav { display: flex; align-items: center; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.main-nav::-webkit-scrollbar { display: none; }
 .nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; color: white !important; }
 .badge {
   background: #e2a84b; color: #3b2416; border-radius: 50%;

@@ -22,3 +22,24 @@ CREATE INDEX IF NOT EXISTS idx_pago_referencia ON pago(referencia_pasarela);
 ALTER TABLE pago ADD COLUMN IF NOT EXISTS propietario_id UUID;
 ALTER TABLE pago ADD COLUMN IF NOT EXISTS referencia_pasarela_mp VARCHAR(255);
 ALTER TABLE pago ADD COLUMN IF NOT EXISTS checkout_url TEXT;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS comision DECIMAL(12, 2) DEFAULT 0;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS monto_propietario DECIMAL(12, 2) DEFAULT 0;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_estado VARCHAR(20) DEFAULT 'pendiente';
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_intentos INTEGER DEFAULT 0;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_error TEXT;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_completado_en TIMESTAMP;
+ALTER TABLE pago ADD COLUMN IF NOT EXISTS liberado_en TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS movimiento (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    pago_id UUID NOT NULL REFERENCES pago(id) ON DELETE CASCADE,
+    reserva_id UUID NOT NULL,
+    tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('comision_plataforma', 'pago_propietario', 'reembolso', 'ajuste')),
+    monto DECIMAL(12, 2) NOT NULL,
+    descripcion TEXT,
+    referencia_tipo VARCHAR(50),
+    referencia_id VARCHAR(255),
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_movimiento_pago ON movimiento(pago_id);
+CREATE INDEX IF NOT EXISTS idx_movimiento_tipo ON movimiento(tipo);

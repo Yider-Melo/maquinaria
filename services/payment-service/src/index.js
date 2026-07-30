@@ -5,7 +5,7 @@ const routes = require('./routes');
 const pool = require('./db');
 const { errorHandler, correlationId, requestLogger } = require('shared');
 const createServiceLogger = require('../../../shared/logger');
-const mercadopago = require('./config/mercadopago');
+const paymentProvider = require('./config/paymentProvider');
 
 const logger = createServiceLogger('payment-service');
 
@@ -38,14 +38,36 @@ app.use(errorHandler);
 
 async function ensurePaymentSchema() {
     await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS propietario_id UUID');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS comision DECIMAL(12, 2) DEFAULT 0');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS monto_propietario DECIMAL(12, 2) DEFAULT 0');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_estado VARCHAR(20) DEFAULT \'pendiente\'');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_intentos INTEGER DEFAULT 0');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_error TEXT');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_completado_en TIMESTAMP');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS liberado_en TIMESTAMP');
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS movimiento (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            pago_id UUID NOT NULL REFERENCES pago(id) ON DELETE CASCADE,
+            reserva_id UUID NOT NULL,
+            tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('comision_plataforma','pago_propietario','reembolso','ajuste')),
+            monto DECIMAL(12, 2) NOT NULL,
+            descripcion TEXT,
+            referencia_tipo VARCHAR(50),
+            referencia_id VARCHAR(255),
+            creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_movimiento_pago ON movimiento(pago_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_movimiento_tipo ON movimiento(tipo)');
 }
 
 logger.info('Payment Service modo: consulta directa (sin RabbitMQ)');
 
-if (mercadopago.configure()) {
-    logger.info('Mercado Pago habilitado con token real');
+if (paymentProvider.configure()) {
+    logger.info(`Proveedor de pagos: ${paymentProvider.PROVIDER} configurado correctamente`);
 } else {
-    logger.warn('Mercado Pago en modo simulado (sin token)');
+    logger.warn(`Proveedor de pagos: ${paymentProvider.PROVIDER} en modo simulado`);
 }
 
 ensurePaymentSchema()

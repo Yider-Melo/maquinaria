@@ -71,6 +71,34 @@ async function refund(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function retryPayout(req, res, next) {
+    try {
+        const result = await paymentService.retryPayout(req.params.id, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getPendingPayouts(req, res, next) {
+    try {
+        const result = await paymentService.getPendingPayouts();
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function getFailedPayouts(req, res, next) {
+    try {
+        const result = await paymentService.getFailedPayouts();
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
+async function markPayoutCompleted(req, res, next) {
+    try {
+        const result = await paymentService.markPayoutManuallyCompleted(req.params.id, req.user.id);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 module.exports = {
     getDashboard,
     createCheckout,
@@ -82,4 +110,8 @@ module.exports = {
     releaseFunds,
     refund,
     releaseByBooking,
+    retryPayout,
+    getPendingPayouts,
+    getFailedPayouts,
+    markPayoutCompleted,
 };

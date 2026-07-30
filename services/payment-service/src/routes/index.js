@@ -5,6 +5,10 @@ const paymentController = require('../controllers/paymentController');
 const { validate, validateParams, uuidParam, validateToken, requireRole, errorHandler, schemas } = require('shared');
 
 router.get('/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
+router.get('/admin/payouts/pending', validateToken, requireRole('admin'), paymentController.getPendingPayouts);
+router.get('/admin/payouts/failed', validateToken, requireRole('admin'), paymentController.getFailedPayouts);
+router.post('/admin/payouts/:id/retry', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.retryPayout);
+router.post('/admin/payouts/:id/mark-completed', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.markPayoutCompleted);
 router.post('/checkout', validateToken, validate(schemas.pago), paymentController.createCheckout);
 function internalAuth(req, res, next) {
     const apiKey = req.headers['x-api-key'];
@@ -14,6 +18,10 @@ function internalAuth(req, res, next) {
     next();
 }
 function webhookAuth(req, res, next) {
+    const provider = (process.env.PAYMENT_PROVIDER || 'mercadopago').toLowerCase();
+    if (provider === 'wompi') {
+        return next();
+    }
     const signature = req.headers['x-signature'];
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
     if (!secret) {

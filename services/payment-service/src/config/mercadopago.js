@@ -4,6 +4,9 @@ const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('mercadopago');
 
 const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+const PAYOUT_MODE = (process.env.PAYOUT_MODE || 'auto').toLowerCase();
+const MERCADOPAGO_USER_ID = process.env.MERCADOPAGO_COLLECTOR_ID;
+
 let client = null;
 
 function isConfigured() {
@@ -16,8 +19,37 @@ function configure() {
         return false;
     }
     client = new MercadoPagoConfig({ accessToken: ACCESS_TOKEN });
-    logger.info('Mercado Pago SDK configurado correctamente');
+    logger.info('Mercado Pago SDK configurado correctamente', {
+        payoutMode: PAYOUT_MODE,
+        hasCollectorId: !!MERCADOPAGO_USER_ID
+    });
     return true;
+}
+
+const BANK_ID_MAP = {
+    nequi: 'nequi',
+    bancolombia: 'bancolombia_transfer',
+    davivienda: 'davivienda_transfer',
+    bbva: 'bbva_transfer',
+    popular: 'popular_transfer',
+    occidente: 'occidente_transfer',
+    bogota: 'bogota_transfer',
+    av_villas: 'av_villas_transfer',
+    colpatria: 'colpatria_transfer',
+    caja_social: 'caja_social_transfer'
+};
+
+async function getPaymentMethodIds() {
+    if (!isConfigured()) return null;
+    try {
+        const response = await fetch('https://api.mercadopago.com/v1/payment_methods', {
+            headers: { 'Authorization': `Bearer ${ACCESS_TOKEN}` }
+        });
+        if (!response.ok) return null;
+        return await response.json();
+    } catch {
+        return null;
+    }
 }
 
 async function createPreference({ externalReference, title, unitPrice, quantity, payerEmail, backUrls, notificationUrl }) {
@@ -105,43 +137,22 @@ async function refundPayment(paymentId) {
 
 async function createPayout({ amount, description, bankId, accountNumber, holderName, holderDocType, holderDocNumber, holderEmail, externalRef }) {
     if (!isConfigured()) {
-        logger.warn('Modo simulado: payout no ejecutado', { amount, bankId });
-        return { simulated: true, amount, message: 'Payout simulado' };
+        logger.warn('Payout simulado (sin token MP):', { amount, bankId });
+        return { simulated: true, amount, bankId, message: 'Payout simulado' };
     }
-    try {
-        const body = {
-            transaction_amount: amount,
-            description: description || 'Pago al propietario RentaMaq',
-            payment_method_id: bankId,
-            payer: {
-                email: holderEmail,
-                identification: {
-                    type: holderDocType || 'CC',
-                    number: holderDocNumber
-                }
-            },
-            external_reference: externalRef
-        };
-        const response = await fetch('https://api.mercadopago.com/v1/payments', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${ACCESS_TOKEN}`,
-                'Content-Type': 'application/json',
-                'X-Idempotency-Key': externalRef
-            },
-            body: JSON.stringify(body)
-        });
-        const result = await response.json();
-        if (!response.ok) {
-            logger.error('Error en payout MP:', { status: response.status, result });
-            return null;
-        }
-        logger.info('Payout creado en MP:', { id: result.id, amount, bankId });
-        return { id: result.id, status: result.status, amount };
-    } catch (err) {
-        logger.error('Error creando payout MP:', { message: err.message });
-        return null;
+
+    if (PAYOUT_MODE === 'simulated') {
+        logger.info('PAYOUT_MODE=simulated:', { amount, bankId, externalRef });
+        return { simulated: true, amount, bankId, message: 'Payout simulado' };
     }
+
+    logger.info('PAYOUT_MODE=manual, registrar para pago manual:', { amount, bankId, externalRef });
+    return {
+        manual: true,
+        amount,
+        bankId,
+        message: 'Pago debe realizarse manualmente por transferencia bancaria (Nequi/Bancolombia/etc.)'
+    };
 }
 
-module.exports = { configure, isConfigured, createPreference, getPayment, capturePayment, refundPayment, createPayout };
+module.exports = { configure, isConfigured, createPreference, getPayment, capturePayment, refundPayment, createPayout, PAYOUT_MODE };
