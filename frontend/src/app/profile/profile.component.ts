@@ -15,6 +15,7 @@ import { Auth } from '../core/services/auth.service';
 import { SharedModule } from '../shared/shared.module';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
 import { Usuario, BankAccount, Machinery, MachineryImage, Booking, ApiResponse, PaginatedResponse } from '../core/models';
+import { compressImage } from '../shared/image-utils';
 
 @Component({
   selector: 'app-profile',
@@ -159,22 +160,19 @@ export class Profile implements OnInit {
       input.value = '';
       return;
     }
-    if (file.size > 900 * 1024) {
-      this.error = 'La imagen no puede superar 900 KB en este modo demo.';
+    if (file.size > 10 * 1024 * 1024) {
+      this.error = 'La imagen no puede superar 10 MB.';
       input.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') this.saveMachineImage(reader.result);
+    compressImage(file, 1200, 0.8).then(url => {
+      this.saveMachineImage(url);
       input.value = '';
-    };
-    reader.onerror = () => {
-      this.error = 'No se pudo leer la imagen seleccionada.';
+    }).catch(() => {
+      this.error = 'No se pudo procesar la imagen seleccionada.';
       input.value = '';
-    };
-    reader.readAsDataURL(file);
+    });
   }
 
   saveMachineImage(url: string): void {

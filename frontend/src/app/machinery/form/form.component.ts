@@ -8,6 +8,7 @@ import { catchError } from 'rxjs/operators';
 import { CanComponentDeactivate } from '../../core/guards/can-deactivate.guard';
 import { colombiaData, machineryTypes, capacidadUnidades } from './form-data';
 import { Machinery, MachineryImage, ApiResponse } from '../../core/models';
+import { compressImage } from '../../shared/image-utils';
 
 @Component({
   selector: 'app-machinery-form', templateUrl: './form.html', styleUrls: ['./form.css'],
@@ -122,16 +123,17 @@ export class MachineryForm implements OnInit, CanComponentDeactivate {
   private addPhotoFiles(files: FileList | null | undefined): void {
     if (!files) return;
     this.error = '';
-    Array.from(files).filter(file => file.type.startsWith('image/')).forEach(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        this.error = 'Cada foto debe pesar máximo 5 MB.';
+    Array.from(files).filter(file => file.type.startsWith('image/')).forEach(async file => {
+      if (file.size > 10 * 1024 * 1024) {
+        this.error = 'Cada foto debe pesar máximo 10 MB.';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') this.photos.push({ file, preview: reader.result });
-      };
-      reader.readAsDataURL(file);
+      try {
+        const preview = await compressImage(file, 1200, 0.8);
+        this.photos.push({ file, preview });
+      } catch {
+        this.error = 'Error al procesar una imagen.';
+      }
     });
   }
 
