@@ -114,7 +114,6 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
     }
 }
 
-async function getTransaction(transactionId) {
 
 async function getTransaction(transactionId) {
     try {
