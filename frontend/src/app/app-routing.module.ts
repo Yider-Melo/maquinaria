@@ -2,11 +2,12 @@
 // con carga diferida (lazy loading) para cada módulo feature.
 // La ruta por defecto redirige al listado de maquinaria.
 import { NgModule } from '@angular/core';
-import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
+import { DelayedPreloadingStrategy } from './preloading-strategy';
 
 const routes: Routes = [
   { path: '', data: { animation: 'dashboard' }, loadChildren: () => import('./dashboard/dashboard.module').then(m => m.DashboardModule) },
-  { path: 'admin', data: { animation: 'admin' }, loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule) },
+  { path: 'admin', data: { animation: 'admin', preload: false }, loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule) },
   { path: 'auth', data: { animation: 'auth' }, loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule) },
   { path: 'machinery', data: { animation: 'machinery' }, loadChildren: () => import('./machinery/machinery.module').then(m => m.MachineryModule) },
   { path: 'bookings', data: { animation: 'bookings' }, loadChildren: () => import('./bookings/bookings.module').then(m => m.BookingsModule) },
@@ -14,9 +15,9 @@ const routes: Routes = [
   { path: 'ratings', data: { animation: 'ratings' }, loadChildren: () => import('./ratings/ratings.module').then(m => m.RatingsModule) },
   { path: 'notifications', data: { animation: 'notifications' }, loadChildren: () => import('./notifications/notifications.module').then(m => m.NotificationsModule) },
   { path: 'profile', data: { animation: 'profile' }, loadChildren: () => import('./profile/profile.module').then(m => m.ProfileModule) },
-  { path: '404', data: { animation: 'notFound' }, loadChildren: () => import('./not-found/not-found.module').then(m => m.NotFoundModule) },
+  { path: '404', data: { animation: 'notFound', preload: false }, loadChildren: () => import('./not-found/not-found.module').then(m => m.NotFoundModule) },
   { path: '**', redirectTo: '/404' }
 ];
 
-@NgModule({ imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })], exports: [RouterModule] })
+@NgModule({ imports: [RouterModule.forRoot(routes, { preloadingStrategy: DelayedPreloadingStrategy })], exports: [RouterModule] })
 export class AppRoutingModule {}
