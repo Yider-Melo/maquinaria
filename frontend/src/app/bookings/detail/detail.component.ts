@@ -217,7 +217,6 @@ export class BookingsDetail implements OnInit {
           customer_email: this.booking.arrendatario_email || '',
           acceptance_token: data.wompi.acceptance_token,
           redirect_url: window.location.origin + '/bookings/' + this.booking.id,
-          webhook_url: window.location.origin + '/api/v1/payments/webhook',
         },
         public_key: data.wompi.public_key,
         onSuccess: () => {
