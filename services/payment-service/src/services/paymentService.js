@@ -98,7 +98,9 @@ async function createCheckout(bookingId, userId, metodoPago) {
         unitPrice: reserva.precio_total,
         quantity: 1,
         payerEmail: reserva.arrendatario_email,
-        notificationUrl: `${PUBLIC_URL}/api/v1/payments/webhook`,
+        notificationUrl: PROVIDER === 'wompi'
+            ? `${PUBLIC_URL}/webhook`
+            : `${PUBLIC_URL}/api/v1/payments/webhook`,
         backUrls: {
             success: `${PUBLIC_URL}/payments/success?external_ref=${externalReference}`,
             failure: `${PUBLIC_URL}/payments/failure?external_ref=${externalReference}`,
