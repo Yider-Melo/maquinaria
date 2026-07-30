@@ -80,7 +80,6 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
     }
 
     logger.info('Preferencia Wompi preparada para widget:', { externalReference, amountInCents });
-    await pagoRepository.updateReferenciaPasarela(externalReference, externalReference);
 
     return {
         id: externalReference,
