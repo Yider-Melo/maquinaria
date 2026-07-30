@@ -2,12 +2,9 @@ const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('wompi');
 
 const WOMPI_API = 'https://api.wompi.co/v1';
-const crypto = require('crypto');
 
 const PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY;
-const EVENT_SECRET = process.env.WOMPI_EVENT_SECRET;
-const INTEGRITY_SECRET = process.env.WOMPI_INTEGRITY_SECRET;
 
 function isConfigured() {
     return !!PUBLIC_KEY && !!PRIVATE_KEY;
@@ -60,39 +57,67 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
             id: `SIMULATED-${externalReference}`,
             init_point: null,
             simulated: true,
-            wompi_id: null,
-            public_key: PUBLIC_KEY,
-            signature: null
+            wompi_id: null
         };
-    }
-
-    const acceptanceToken = await getAcceptanceToken();
-    if (!acceptanceToken) {
-        throw new Error('No se pudo obtener acceptance token de Wompi');
     }
 
     const amountInCents = Math.round(unitPrice * 100);
 
-    let integritySignature = null;
-    if (INTEGRITY_SECRET) {
-        const signStr = `${INTEGRITY_SECRET}${externalReference}${amountInCents}COP`;
-        integritySignature = crypto.createHash('sha256').update(signStr).digest('hex');
+    try {
+        const body = {
+            name: title || 'Reserva RentaMaq',
+            description: title || 'Pago de alquiler de maquinaria',
+            amount_in_cents: amountInCents,
+            currency: 'COP',
+            reference: externalReference,
+            redirect_url: backUrls?.success || `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/success`,
+            single_use: true,
+            collect_shipping: false
+        };
+
+        const response = await fetch(`${WOMPI_API}/payment_links`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${PRIVATE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const result = await response.json();
+        const errorText = JSON.stringify(result);
+
+        if (!response.ok) {
+            let errorDetail;
+            try {
+                const errObj = JSON.parse(errorText);
+                errorDetail = errObj.error?.messages
+                    ? Object.entries(errObj.error.messages).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+                    : errorText;
+            } catch {
+                errorDetail = errorText;
+            }
+            logger.error('Error creando link de pago Wompi:', { status: response.status, error: errorDetail });
+            throw new Error(`Wompi rechazó el pago (${response.status}): ${errorDetail}`);
+        }
+
+        const linkId = result.data?.id;
+        const checkoutUrl = `https://checkout.wompi.co/link/${linkId}`;
+
+        logger.info('Link de pago Wompi creado:', { id: linkId, externalReference, checkoutUrl });
+
+        return {
+            id: linkId,
+            init_point: checkoutUrl,
+            sandbox_init_point: null,
+            simulated: false,
+            wompi_id: linkId
+        };
+    } catch (err) {
+        if (err.message.includes('Wompi rechazó')) throw err;
+        logger.error('Error creando link Wompi:', { message: err.message });
+        throw new Error('Error al crear el link de pago en Wompi');
     }
-
-    logger.info('Preferencia Wompi preparada para widget:', { externalReference, amountInCents });
-
-    return {
-        id: externalReference,
-        init_point: null,
-        sandbox_init_point: null,
-        simulated: false,
-        wompi_id: externalReference,
-        public_key: PUBLIC_KEY,
-        acceptance_token: acceptanceToken,
-        signature: integritySignature,
-        amount_in_cents: amountInCents,
-        currency: 'COP'
-    };
 }
 
 
@@ -176,13 +201,7 @@ async function getBankList() {
     }
 }
 
-async function verifyWebhookSignature(payload, signature) {
-    if (!EVENT_SECRET) return true;
-    const expected = crypto.createHmac('sha256', EVENT_SECRET).update(JSON.stringify(payload)).digest('hex');
-    return signature === expected;
-}
-
 module.exports = {
     configure, isConfigured, createPreference, getTransaction,
-    createTransfer, getBankList, verifyWebhookSignature, getAcceptanceToken
+    createTransfer, getBankList
 };
