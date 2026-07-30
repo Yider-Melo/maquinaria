@@ -148,6 +148,15 @@ export interface CheckAvailability {
 export interface PaymentCheckout {
   checkout_url?: string;
   pago_id?: string;
+  proveedor?: string;
+  wompi?: {
+    public_key: string;
+    signature: string;
+    acceptance_token: string;
+    amount_in_cents: number;
+    currency: string;
+    reference: string;
+  };
 }
 
 export interface PaginatedResponse<T> {
