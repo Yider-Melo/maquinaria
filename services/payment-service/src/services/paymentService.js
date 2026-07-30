@@ -12,6 +12,7 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http:/
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://api-gateway:3000';
 const PUBLIC_URL = process.env.PUBLIC_URL || GATEWAY_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 const COMISION_PLATAFORMA = parseFloat(process.env.COMISION_PLATAFORMA_PORCENTAJE || '10') / 100;
 const { PROVIDER } = paymentProvider;
@@ -102,9 +103,9 @@ async function createCheckout(bookingId, userId, metodoPago) {
             ? `${PUBLIC_URL}/webhook`
             : `${PUBLIC_URL}/api/v1/payments/webhook`,
         backUrls: {
-            success: `${PUBLIC_URL}/payments/success?external_ref=${externalReference}`,
-            failure: `${PUBLIC_URL}/payments/failure?external_ref=${externalReference}`,
-            pending: `${PUBLIC_URL}/payments/pending?external_ref=${externalReference}`
+            success: `${FRONTEND_URL}/payments/success?external_ref=${externalReference}`,
+            failure: `${FRONTEND_URL}/payments/failure?external_ref=${externalReference}`,
+            pending: `${FRONTEND_URL}/payments/pending?external_ref=${externalReference}`
         }
     });
 
