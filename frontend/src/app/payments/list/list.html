@@ -1,7 +1,7 @@
 <div class="container">
   <div class="page-header"><h1>{{ auth.esTipo('propietario') ? 'Pagos recibidos' : 'Mis Pagos' }}</h1></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let p of payments" class="payment-card" [routerLink]="['/payments', p.id]">
+    <mat-card *ngFor="let p of payments" class="payment-card" matRipple [routerLink]="['/payments', p.id]">
       <mat-card-header>
         <mat-card-title>
           <mat-icon style="vertical-align:middle;margin-right:8px;color:#1976d2;">receipt</mat-icon>
@@ -27,6 +27,11 @@
         </div>
       </mat-card-content>
     </mat-card>
+    <div class="pagination">
+      <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+      <span>Página {{ page }} de {{ totalPages }}</span>
+      <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+    </div>
     <div class="empty-state" *ngIf="payments.length===0">
       <mat-icon>payments</mat-icon>
       <p>Sin pagos registrados</p>

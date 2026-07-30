@@ -58,4 +58,9 @@
       </ng-container>
     </tbody>
   </table>
+  <div class="pagination" *ngIf="userTotal > userSize">
+    <button mat-stroked-button (click)="prevUserPage()" [disabled]="userPage===1">Anterior</button>
+    <span>Página {{ userPage }} de {{ userTotalPages }}</span>
+    <button mat-stroked-button (click)="nextUserPage()" [disabled]="userPage*userSize>=userTotal">Siguiente</button>
+  </div>
 </div>

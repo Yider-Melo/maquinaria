@@ -15,48 +15,88 @@ import { Rating, Booking, Machinery, PaginatedResponse, ApiResponse } from '../.
 })
 export class RatingsList implements OnInit {
   ratings: Rating[] = []; receivedRatings: Rating[] = []; completedBookings: Booking[] = []; loading = true; error = '';
+  pageMy = 1; size = 10; totalMy = 0;
+  pageReceived = 1; totalReceived = 0;
+  pendingPage = 1; pendingSize = 10; pendingTotal = 0;
+
+  get totalPagesMy(): number { return Math.ceil(this.totalMy / this.size) || 1; }
+  get totalPagesReceived(): number { return Math.ceil(this.totalReceived / this.size) || 1; }
+  get totalPagesPending(): number { return Math.ceil(this.pendingTotal / this.pendingSize) || 1; }
 
   constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.loadAll(); }
+
+  prevPageMy(): void { if (this.pageMy > 1) { this.pageMy--; this.loadRatings(); } }
+  nextPageMy(): void { if (this.pageMy * this.size < this.totalMy) { this.pageMy++; this.loadRatings(); } }
+  prevPageReceived(): void { if (this.pageReceived > 1) { this.pageReceived--; this.loadReceived(); } }
+  nextPageReceived(): void { if (this.pageReceived * this.size < this.totalReceived) { this.pageReceived++; this.loadReceived(); } }
+  prevPagePending(): void { if (this.pendingPage > 1) { this.pendingPage--; this.loadAll(); } }
+  nextPagePending(): void { if (this.pendingPage * this.pendingSize < this.pendingTotal) { this.pendingPage++; this.loadAll(); } }
+
+  private loadAll(): void {
     this.loading = true; this.error = '';
-    const userId = this.auth.getUser()?.id;
-    if (userId) {
-      const myBookings$ = this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings?size=200').pipe(catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 200 } })));
-      const bookingCalls: Observable<ApiResponse<PaginatedResponse<Booking>>>[] = [myBookings$];
-      if (this.auth.esTipo('propietario')) {
-        bookingCalls.push(this.api.get<PaginatedResponse<Booking>>('/bookings/my-listings?size=200').pipe(catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 200 } }))));
+    this.loadRatings();
+    this.loadReceived();
+    this.loadPending();
+  }
+
+  private loadRatings(): void {
+    this.api.get<Rating[]>(`/ratings/my?page=${this.pageMy}&size=${this.size}`).pipe(
+      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any))
+    ).subscribe({
+      next: (res) => {
+        const r = res as any;
+        this.totalMy = r?.pagination?.total || 0;
+        this.ratings = (r?.data || []).map((x: Rating) => ({ ...x }));
+        this.enrichRatings(this.ratings);
       }
-      forkJoin([
-        this.api.get<Rating[]>('/ratings/my').pipe(catchError(() => of({ success: true, data: [] }))),
-        this.api.get<Rating[]>('/ratings/user/' + userId).pipe(catchError(() => of({ success: true, data: [] }))),
-        ...bookingCalls
-      ]).pipe(
-        finalize(() => {
-          this.loading = false;
-          this.cdr.markForCheck();
-        })
-      ).subscribe({
-        next: (results) => {
-          this.ratings = results[0]?.data || [];
-          this.receivedRatings = results[1]?.data || [];
-          const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: Rating) => r.reserva_id));
-          const asArrendatario: Booking[] = (results[2] as any)?.data?.data || [];
-          const asPropietario: Booking[] = results.length > 3 ? (results[3] as any)?.data?.data || [] : [];
-          const allCompleted = [...asArrendatario, ...asPropietario].filter((b: Booking) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
-          this.completedBookings = allCompleted;
-          this.enrichRatings(this.ratings);
-          this.enrichBookingsWithMachinery(this.completedBookings);
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.error = 'No se pudieron cargar las calificaciones.';
-          this.cdr.markForCheck();
-        }
-      });
-    } else {
-      this.loading = false;
+    });
+  }
+
+  private loadReceived(): void {
+    const userId = this.auth.getUser()?.id;
+    if (!userId) return;
+    this.api.get<Rating[]>(`/ratings/user/${userId}?page=${this.pageReceived}&size=${this.size}`).pipe(
+      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any))
+    ).subscribe({
+      next: (res) => {
+        const r = res as any;
+        this.totalReceived = r?.pagination?.total || 0;
+        this.receivedRatings = (r?.data || []).map((x: Rating) => ({ ...x }));
+      }
+    });
+  }
+
+  private loadPending(): void {
+    const userId = this.auth.getUser()?.id;
+    if (!userId) { this.loading = false; this.cdr.markForCheck(); return; }
+    const myBookings$ = this.api.get<Booking[]>(`/bookings/my-bookings?page=${this.pendingPage}&size=${this.pendingSize}`).pipe(
+      catchError(() => of({ success: true, data: [], pagination: { total: 0 } } as any))
+    );
+    const bookingCalls = [myBookings$];
+    if (this.auth.esTipo('propietario')) {
+      bookingCalls.push(this.api.get<Booking[]>(`/bookings/my-listings?page=${this.pendingPage}&size=${this.pendingSize}`).pipe(
+        catchError(() => of({ success: true, data: [], pagination: { total: 0 } } as any))
+      ));
     }
+    forkJoin(bookingCalls).pipe(
+      finalize(() => { this.loading = false; this.cdr.markForCheck(); })
+    ).subscribe({
+      next: (results) => {
+        const r0 = results[0] as any;
+        const r1 = results[1] as any;
+        const asArrendatario = r0?.data || [];
+        const arrendatarioTotal = r0?.pagination?.total || 0;
+        const asPropietario = r1?.data || [];
+        const propietarioTotal = r1?.pagination?.total || 0;
+        const all = [...asArrendatario, ...asPropietario];
+        this.pendingTotal = arrendatarioTotal + propietarioTotal;
+        const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: Rating) => r.reserva_id));
+        this.completedBookings = all.filter((b: Booking) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
+        this.enrichBookingsWithMachinery(this.completedBookings);
+      }
+    });
   }
 
   private enrichRatings(ratings: Rating[]): void {

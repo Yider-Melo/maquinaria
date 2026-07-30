@@ -4,7 +4,7 @@
   <ng-template #bookingsContent>
   <mat-tab-group animationDuration="300ms">
     <mat-tab label="Como Arrendatario" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [class]="'booking-card ' + b.estado" (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of asArrendatario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>
@@ -35,13 +35,18 @@
             </button>
           </mat-card-actions>
         </mat-card>
+        <div class="pagination">
+          <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+          <span>Página {{ page }} de {{ totalPages }}</span>
+          <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+        </div>
         <div class="empty-state" *ngIf="asArrendatario.length===0">
           <mat-icon>book_online</mat-icon>
           <p>Sin reservas como arrendatario</p>
         </div>
     </mat-tab>
     <mat-tab label="Como Propietario" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
-        <mat-card *ngFor="let b of asPropietario" class="booking-card" [class]="'booking-card ' + b.estado" (click)="openBookingDetail(b)">
+        <mat-card *ngFor="let b of asPropietario" class="booking-card" [class]="'booking-card ' + b.estado" matRipple (click)="openBookingDetail(b)">
           <mat-card-header>
             <mat-card-title>{{ formatId(b.id, 'ID') }}</mat-card-title>
             <mat-card-subtitle>
@@ -75,6 +80,11 @@
             </button>
           </mat-card-actions>
         </mat-card>
+        <div class="pagination">
+          <button mat-stroked-button (click)="propPrevPage()" [disabled]="propPage===1">Anterior</button>
+          <span>Página {{ propPage }} de {{ propTotalPages }}</span>
+          <button mat-stroked-button (click)="propNextPage()" [disabled]="propPage*size>=propTotal">Siguiente</button>
+        </div>
         <div class="empty-state" *ngIf="asPropietario.length===0">
           <mat-icon>list_alt</mat-icon>
           <p>Sin reservas como propietario</p>

@@ -77,7 +77,7 @@
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
-      <mat-card *ngFor="let item of items; trackBy: trackById" class="card" tabindex="0" role="link" [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
+      <mat-card *ngFor="let item of items; trackBy: trackById" class="card" tabindex="0" role="link" matRipple [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
         <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
         <mat-card-content class="card-content">
           <h3>{{ item.titulo }}</h3>

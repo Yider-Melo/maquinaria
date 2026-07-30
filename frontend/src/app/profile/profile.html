@@ -38,8 +38,13 @@
         <p class="delete-warning">Esta acción es irreversible. Se eliminarán tus datos personales y se cerrarán todas las sesiones.</p>
       </mat-card-content>
       <mat-card-actions><button mat-raised-button color="warn" (click)="deleteAccount()">Eliminar mi cuenta</button></mat-card-actions>
-    </mat-card>
-  </div>
+      </mat-card>
+      <div class="pagination" *ngIf="ownerMachTotal > ownerMachSize">
+        <button mat-stroked-button (click)="ownerMachPrevPage()" [disabled]="ownerMachPage===1">Anterior</button>
+        <span>Página {{ ownerMachPage }} de {{ ownerMachTotalPages }}</span>
+        <button mat-stroked-button (click)="ownerMachNextPage()" [disabled]="ownerMachPage*ownerMachSize>=ownerMachTotal">Siguiente</button>
+      </div>
+    </div>
 
   <section class="renter-profile" *ngIf="canUseRenterProfile">
     <div class="renter-summary">
@@ -100,7 +105,7 @@
     <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no has publicado maquinaria. Publica tu primer equipo para empezar a recibir solicitudes de arriendo.</p>
 
     <div class="machine-catalog" *ngIf="ownerMachines.length > 0">
-      <h3>Tus equipos ({{ ownerMachines.length }})</h3>
+      <h3>Tus equipos ({{ ownerMachTotal }})</h3>
       <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
         <div class="machine-image">
           <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo">

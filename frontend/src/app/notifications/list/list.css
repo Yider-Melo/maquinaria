@@ -14,3 +14,6 @@
 .notif-card.unread .notif-mensaje { color: #333; }
 .notif-tipo { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-top: 6px; }
 .notif-card.unread .notif-tipo { color: #bf360c; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { color: #888; font-size: 14px; }

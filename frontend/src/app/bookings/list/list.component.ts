@@ -54,25 +54,36 @@ export class BookingsList implements OnInit {
   tabIndex = 0;
   payingBookingId: string | null = null;
 
+  page = 1; size = 10; total = 0;
+  propPage = 1; propTotal = 0;
+
+  get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
+  get propTotalPages(): number { return Math.ceil(this.propTotal / this.size) || 1; }
+
   trackById(_index: number, item: Booking): string { return item?.id || String(_index); }
 
   constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
 
   ngOnInit(): void { this.loadBookings(true); }
 
+  prevPage(): void { if (this.page > 1) { this.page--; this.loadBookings(); } }
+  nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadBookings(); } }
+  propPrevPage(): void { if (this.propPage > 1) { this.propPage--; this.loadBookings(); } }
+  propNextPage(): void { if (this.propPage * this.size < this.propTotal) { this.propPage++; this.loadBookings(); } }
+
   private loadBookings(showLoading = false): void {
     if (showLoading) this.loading = true;
     this.error = '';
 
     const calls: Observable<ApiResponse<PaginatedResponse<Booking>>>[] = [
-      this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings').pipe(
+      this.api.get<PaginatedResponse<Booking>>(`/bookings/my-bookings?page=${this.page}&size=${this.size}`).pipe(
         catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
       )
     ];
 
     if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
       calls.push(
-        this.api.get<PaginatedResponse<Booking>>('/bookings/my-listings').pipe(
+        this.api.get<PaginatedResponse<Booking>>(`/bookings/my-listings?page=${this.propPage}&size=${this.size}`).pipe(
           catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
@@ -86,10 +97,12 @@ export class BookingsList implements OnInit {
       })
     ).subscribe({
       next: (results) => {
-        const r0 = results[0]?.data;
-        const asArrendatario: Booking[] = Array.isArray(r0) ? r0 : (r0?.data || []);
-        const r1 = results[1]?.data;
-        const asPropietario: Booking[] = calls.length > 1 ? (Array.isArray(r1) ? r1 : (r1?.data || [])) : [];
+        const r0 = results[0] as any;
+        this.total = r0?.pagination?.total || 0;
+        const asArrendatario: Booking[] = r0?.data || [];
+        const r1 = results[1] as any;
+        this.propTotal = r1?.pagination?.total || 0;
+        const asPropietario: Booking[] = calls.length > 1 ? (r1?.data || []) : [];
         this.asArrendatario = asArrendatario.map((b) => this.attachMachineDetails(b, null));
         this.asPropietario = asPropietario.map((b) => this.attachMachineDetails(b, null));
         this.cdr.markForCheck();

@@ -3,7 +3,7 @@
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-tab-group animationDuration="300ms">
       <mat-tab label="Recibidas">
-        <mat-card *ngFor="let r of receivedRatings" class="rating-card" [routerLink]="['/ratings', r.id]">
+        <mat-card *ngFor="let r of receivedRatings" class="rating-card" matRipple [routerLink]="['/ratings', r.id]">
           <mat-card-content>
             <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
               <ng-container *ngFor="let star of [1,2,3,4,5]">
@@ -18,13 +18,18 @@
             </div>
           </mat-card-content>
         </mat-card>
+        <div class="pagination">
+          <button mat-stroked-button (click)="prevPageReceived()" [disabled]="pageReceived===1">Anterior</button>
+          <span>Página {{ pageReceived }} de {{ totalPagesReceived }}</span>
+          <button mat-stroked-button (click)="nextPageReceived()" [disabled]="pageReceived*size>=totalReceived">Siguiente</button>
+        </div>
         <div class="empty-state" *ngIf="receivedRatings.length===0">
           <mat-icon>star_outline</mat-icon>
           <p>Sin calificaciones recibidas</p>
         </div>
       </mat-tab>
       <mat-tab label="Escritas por mí">
-        <mat-card *ngFor="let r of ratings" class="rating-card" [routerLink]="['/ratings', r.id]">
+        <mat-card *ngFor="let r of ratings" class="rating-card" matRipple [routerLink]="['/ratings', r.id]">
           <mat-card-content>
             <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
               <ng-container *ngFor="let star of [1,2,3,4,5]">
@@ -48,6 +53,11 @@
             </button>
           </mat-card-actions>
         </mat-card>
+        <div class="pagination">
+          <button mat-stroked-button (click)="prevPageMy()" [disabled]="pageMy===1">Anterior</button>
+          <span>Página {{ pageMy }} de {{ totalPagesMy }}</span>
+          <button mat-stroked-button (click)="nextPageMy()" [disabled]="pageMy*size>=totalMy">Siguiente</button>
+        </div>
         <div class="empty-state" *ngIf="ratings.length===0">
           <mat-icon>rate_review</mat-icon>
           <p>No has escrito ninguna calificación</p>
@@ -70,6 +80,11 @@
             </button>
           </mat-card-actions>
         </mat-card>
+        <div class="pagination">
+          <button mat-stroked-button (click)="prevPagePending()" [disabled]="pendingPage===1">Anterior</button>
+          <span>Página {{ pendingPage }} de {{ totalPagesPending }}</span>
+          <button mat-stroked-button (click)="nextPagePending()" [disabled]="pendingPage*pendingSize>=pendingTotal">Siguiente</button>
+        </div>
         <div class="empty-state" *ngIf="completedBookings.length===0">
           <mat-icon>check_circle</mat-icon>
           <p>No hay reservas pendientes de calificar</p>

@@ -254,8 +254,8 @@ async function getPaymentsByBooking(bookingId, userId) {
     return await pagoRepository.findByBooking(bookingId, userId);
 }
 
-async function getMyPayments(userId) {
-    return await pagoRepository.findByUser(userId);
+async function getMyPayments(userId, page = 1, size = 20) {
+    return await pagoRepository.findByUser(userId, page, size);
 }
 
 async function releaseFunds(pagoId, userId) {

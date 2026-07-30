@@ -1,7 +1,11 @@
 .container { padding: 32px 24px; max-width: 800px; margin: 0 auto; }
-.rating-card { margin: 12px 0; border-radius: 12px !important; cursor: pointer; }
+.rating-card { margin: 12px 0; border-radius: 12px !important; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+.rating-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--rm-shadow) !important; }
 .stars { display: inline-flex; gap: 3px; font-size: 18px; letter-spacing: 2px; }
 .star { display: inline-block; width: 16px; height: 16px; background: gray; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .star.full { background: gold; }
 .star.half { background: linear-gradient(90deg, gold 50%, gray 50%); }
 .rating-comment { color: #555; line-height: 1.6; margin-top: 8px; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { color: #888; font-size: 14px; }

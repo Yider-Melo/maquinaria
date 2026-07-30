@@ -12,14 +12,24 @@ import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 })
 export class PaymentsList implements OnInit {
   payments: any[] = []; loading = true; error = '';
+  page = 1; size = 10; total = 0;
+
+  get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
   constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.loadPayments(); }
+
+  prevPage(): void { if (this.page > 1) { this.page--; this.loadPayments(); } }
+  nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadPayments(); } }
+
+  private loadPayments(): void {
     this.loading = true; this.error = '';
-    this.api.get<Payment[]>('/payments/my-payments').subscribe({
+    this.api.get<Payment[]>(`/payments/my-payments?page=${this.page}&size=${this.size}`).subscribe({
       next: (res) => {
-        const pagos: Payment[] = res?.data || [];
+        const r = res as any;
+        const pagos: Payment[] = r?.data || [];
+        this.total = r?.pagination?.total || 0;
         if (pagos.length === 0) {
           this.payments = [];
           this.loading = false;

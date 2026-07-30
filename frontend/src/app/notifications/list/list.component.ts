@@ -12,14 +12,24 @@ export class NotificationsList implements OnInit {
   formatDateTime = formatDateTime;
   formatDateRelative = formatDateRelative;
   notifications: Notification[] = []; loading = true; error = '';
+  page = 1; size = 20; total = 0;
+
+  get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
   constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.loadNotifications(); }
+
+  prevPage(): void { if (this.page > 1) { this.page--; this.loadNotifications(); } }
+  nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadNotifications(); } }
+
+  private loadNotifications(): void {
     this.loading = true; this.error = '';
-    this.api.get<PaginatedResponse<Notification>>('/notifications').subscribe({
+    this.api.get<Notification[]>(`/notifications?page=${this.page}&size=${this.size}`).subscribe({
       next: (res) => {
-        this.notifications = res.data?.data || [];
+        const r = res as any;
+        this.notifications = r?.data?.data || [];
+        this.total = r?.data?.total || 0;
         this.loading = false;
         this.cdr.markForCheck();
       },

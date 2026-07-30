@@ -14,8 +14,10 @@ import { Usuario, Machinery } from '../../core/models';
     .page h1 { margin-bottom: 24px; }
     .admin-table { width: 100%; border-collapse: collapse; }
     .admin-table th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #ddd; font-weight: 800; font-size: 13px; color: #666; }
+    .admin-table tbody tr:nth-child(even) { background: rgba(201, 111, 45, .04); }
+    .admin-table tbody tr:nth-child(even) .user-row.expanded, .admin-table tbody tr:nth-child(odd) .user-row.expanded { background: #f8f4f0; }
     .user-row { cursor: pointer; }
-    .user-row:hover { background: rgba(0,0,0,0.03); }
+    .user-row:hover { background: rgba(201, 111, 45, .10) !important; }
     .user-row.expanded { background: #f8f4f0; }
     .user-row td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 14px; }
     .user-row mat-icon { vertical-align: middle; color: #999; }
@@ -25,7 +27,8 @@ import { Usuario, Machinery } from '../../core/models';
     .sub-table { width: 100%; border-collapse: collapse; }
     .sub-table th { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; font-size: 12px; color: #888; font-weight: 700; }
     .sub-table td { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
-    .sub-table tr:hover { background: rgba(0,0,0,0.02); }
+    .sub-table tbody tr:nth-child(even) { background: rgba(201, 111, 45, .04); }
+    .sub-table tbody tr:hover { background: rgba(201, 111, 45, .10); }
     .sub-table button { font-size: 12px; padding: 2px 8px; line-height: 28px; }
     .sub-table button:hover { background: #c96f2d; color: white; }
     .rating-cell { font-size: 16px; }
@@ -50,6 +53,11 @@ export class AdminUsuariosMaquinas implements OnInit {
   maquinasPorUsuario: { [key: string]: Machinery[] } = {};
   expandidos: Set<string> = new Set();
 
+  userPage = 1; userSize = 20; userTotal = 0;
+  machPage = 1; machSize = 50; machTotal = 0;
+
+  get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
+
   constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
   private procesarMaquinas(lista: Machinery[]): void {
@@ -62,12 +70,24 @@ export class AdminUsuariosMaquinas implements OnInit {
     }
   }
 
-  ngOnInit(): void {
-    this.api.get<Usuario[]>('/admin/users?page=1&size=200').pipe(
-      catchError(() => of({ success: true, data: [] } as any))
-    ).subscribe(res => { this.usuarios = res?.data || []; this.cdr.detectChanges(); });
+  ngOnInit(): void { this.loadUsers(); this.loadAllMachinery(); }
 
-    this.api.get<Machinery[]>('/admin/machinery/all?page=1&size=200').pipe(
+  prevUserPage(): void { if (this.userPage > 1) { this.userPage--; this.loadUsers(); } }
+  nextUserPage(): void { if (this.userPage * this.userSize < this.userTotal) { this.userPage++; this.loadUsers(); } }
+
+  private loadUsers(): void {
+    this.api.get<Usuario[]>(`/admin/users?page=${this.userPage}&size=${this.userSize}`).pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe(res => {
+      const r = res as any;
+      this.usuarios = r?.data || [];
+      this.userTotal = r?.pagination?.total || 0;
+      this.cdr.detectChanges();
+    });
+  }
+
+  private loadAllMachinery(): void {
+    this.api.get<Machinery[]>(`/admin/machinery/all?page=1&size=500`).pipe(
       catchError(() => of({ success: true, data: [] } as any))
     ).subscribe(res => { this.procesarMaquinas(res?.data || []); this.cdr.detectChanges(); });
   }

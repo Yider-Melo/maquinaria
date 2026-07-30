@@ -38,8 +38,11 @@ async function getPaymentsByBooking(req, res, next) {
 
 async function getMyPayments(req, res, next) {
     try {
-        const payments = await paymentService.getMyPayments(req.user.id);
-        success(res, payments);
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const result = await paymentService.getMyPayments(req.user.id, page, size);
+        const { paginated } = require('shared');
+        paginated(res, result.data, result.total, page, size);
     } catch (err) { next(err); }
 }
 

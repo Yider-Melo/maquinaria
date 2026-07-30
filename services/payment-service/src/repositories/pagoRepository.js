@@ -69,14 +69,21 @@ async function findByBooking(bookingId, userId) {
     return result.rows;
 }
 
-async function findByUser(userId) {
+async function findByUser(userId, page = 1, size = 20) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        `SELECT COUNT(*) FROM pago WHERE usuario_id = $1 OR propietario_id = $1`,
+        [userId]
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
     const result = await pool.query(
         `SELECT ${PAGO_COLUMNS} FROM pago
          WHERE usuario_id = $1 OR propietario_id = $1
-         ORDER BY creado_en DESC`,
-        [userId]
+         ORDER BY creado_en DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, size, offset]
     );
-    return result.rows;
+    return { data: result.rows, total };
 }
 
 async function findByIdSimple(pagoId) {

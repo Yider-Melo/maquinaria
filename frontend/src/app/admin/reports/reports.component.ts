@@ -20,36 +20,65 @@ export class AdminReports implements OnInit {
   payments: any[] = [];
   loading = true;
 
+  userPage = 1; userSize = 20; userTotal = 0;
+  machPage = 1; machSize = 20; machTotal = 0;
+
+  get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
+  get machTotalPages(): number { return Math.ceil(this.machTotal / this.machSize) || 1; }
+
   constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.loadAll(); }
+
+  prevUserPage(): void { if (this.userPage > 1) { this.userPage--; this.loadUsers(); } }
+  nextUserPage(): void { if (this.userPage * this.userSize < this.userTotal) { this.userPage++; this.loadUsers(); } }
+  prevMachPage(): void { if (this.machPage > 1) { this.machPage--; this.loadMachinery(); } }
+  nextMachPage(): void { if (this.machPage * this.machSize < this.machTotal) { this.machPage++; this.loadMachinery(); } }
+
+  private loadAll(): void {
     forkJoin([
       this.api.get<UserStats>('/admin/users/stats').pipe(catchError(() => of({ success: true, data: { total: 0, propietarios: 0, arrendatarios: 0 } }))),
       this.api.get<RatingStats>('/admin/ratings/stats').pipe(catchError(() => of({ success: true, data: { resumen: { total: 0, puntuacion_promedio: 0, reportadas: 0 }, reportadas: [] } }))),
-      this.api.get<Usuario[]>('/admin/users?page=1&size=50').pipe(catchError(() => of({ success: true, data: [] }))),
-      this.api.get<Machinery[]>('/admin/machinery/all?page=1&size=50').pipe(catchError(() => of({ success: true, data: [] }))),
-      this.api.get<Booking[]>('/admin/bookings/recent?limit=20').pipe(catchError(() => of({ success: true, data: [] }))),
-      this.api.get<PaymentDashboard>('/admin/payments/dashboard').pipe(catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } })))
-    ]).pipe(
-      finalize(() => {
-        this.loading = false;
-        this.cdr.markForCheck();
-      })
-    ).subscribe({
-      next: ([users, ratings, userList, machineryList, bookings, payments]) => {
+      this.api.get<PaymentDashboard>('/admin/payments/dashboard').pipe(catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } }))),
+      this.api.get<Booking[]>('/admin/bookings/recent?limit=10').pipe(catchError(() => of({ success: true, data: [] } as any)))
+    ]).pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); })).subscribe({
+      next: ([users, ratings, payments, bookings]) => {
         this.stats = users?.data || {};
         this.ratingReportadas = ratings?.data?.resumen?.reportadas || 0;
-        this.users = userList?.data || [];
-        this.userMap = {};
-        for (const u of this.users) {
-          this.userMap[u.id] = `${u.nombre} ${u.apellido}`.trim();
-        }
-        this.machinery = machineryList?.data || [];
-        this.recentBookings = bookings?.data || [];
         this.payments = payments?.data?.ultimos_pagos || [];
+        if ((bookings as any)?.data) { this.recentBookings = (bookings as any).data; }
+        else { this.recentBookings = (bookings as any) || []; }
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: () => this.cdr.markForCheck()
+    });
+    this.loadUsers();
+    this.loadMachinery();
+  }
+
+  private loadUsers(): void {
+    this.api.get<Usuario[]>(`/admin/users?page=${this.userPage}&size=${this.userSize}`).pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe({
+      next: (res) => {
+        const r = res as any;
+        this.users = r?.data || [];
+        this.userTotal = r?.pagination?.total || 0;
+        this.userMap = {};
+        for (const u of this.users) { this.userMap[u.id] = `${u.nombre} ${u.apellido}`.trim(); }
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadMachinery(): void {
+    this.api.get<Machinery[]>(`/admin/machinery/all?page=${this.machPage}&size=${this.machSize}`).pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe({
+      next: (res) => {
+        const r = res as any;
+        this.machinery = r?.data || [];
+        this.machTotal = r?.pagination?.total || 0;
         this.cdr.markForCheck();
       }
     });

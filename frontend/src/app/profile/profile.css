@@ -47,6 +47,9 @@
 .empty-state { color: var(--rm-muted); margin: 8px 0; }
 .bank-card { margin-top: 24px; }
 .delete-card { margin-top: 18px; border-color: #efc7a5 !important; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { color: #888; font-size: 14px; }
 .delete-warning { color: var(--rm-danger); font-size: 13px; line-height: 1.6; }
 .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 600px) { .bank-grid { grid-template-columns: 1fr; } }

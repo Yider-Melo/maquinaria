@@ -7,7 +7,7 @@
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" (click)="goToNotification(n)">
+    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" matRipple (click)="goToNotification(n)">
       <mat-card-content style="padding:16px;">
         <div class="notif-header">
           <mat-icon class="notif-icon" [class]="getIconClase(n.tipo)">{{ getIcon(n.tipo) }}</mat-icon>
@@ -20,6 +20,11 @@
         <div class="notif-tipo">{{ getTipoLabel(n.tipo) }}</div>
       </mat-card-content>
     </mat-card>
+    <div class="pagination">
+      <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+      <span>Página {{ page }} de {{ totalPages }}</span>
+      <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+    </div>
     <div class="empty-state" *ngIf="notifications.length===0">
       <mat-icon>notifications_none</mat-icon>
       <p>No tienes notificaciones</p>

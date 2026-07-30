@@ -41,7 +41,10 @@ export class Profile implements OnInit {
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };
   ownerMachines: Machinery[] = [];
+  ownerMachPage = 1; ownerMachSize = 6; ownerMachTotal = 0;
   renterBookings: Booking[] = [];
+
+  get ownerMachTotalPages(): number { return Math.ceil(this.ownerMachTotal / this.ownerMachSize) || 1; }
   bankAccount: BankAccount = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
   bancos = ['nequi', 'bancolombia', 'davivienda', 'bbva', 'popular', 'occidente', 'bogota', 'av_villas', 'colpatria', 'caja_social'];
   tiposDocumento = ['CC', 'CE', 'NIT'];
@@ -109,14 +112,22 @@ export class Profile implements OnInit {
   }
 
   loadOwnerMachines(): void {
-    this.api.get<PaginatedResponse<Machinery>>('/machinery/owner', { size: 50 }).subscribe({
+    this.api.get<Machinery[]>(`/machinery/owner?page=${this.ownerMachPage}&size=${this.ownerMachSize}`).subscribe({
       next: (res) => {
-        this.ownerMachines = res.data?.data || [];
-        if (this.ownerMachines.length) this.selectMachine(this.ownerMachines[0]);
+        const r = res as any;
+        this.ownerMachTotal = r?.pagination?.total || 0;
+        this.ownerMachines = r?.data || [];
+        if (this.ownerMachines.length && !this.selectedMachine) this.selectMachine(this.ownerMachines[0]);
+        if (this.ownerMachines.length && this.selectedMachine && !this.ownerMachines.find(m => m.id === this.selectedMachine.id)) {
+          this.selectMachine(this.ownerMachines[0]);
+        }
       },
       error: () => this.error = 'No se pudieron cargar tus maquinarias.'
     });
   }
+
+  ownerMachPrevPage(): void { if (this.ownerMachPage > 1) { this.ownerMachPage--; this.loadOwnerMachines(); } }
+  ownerMachNextPage(): void { if (this.ownerMachPage * this.ownerMachSize < this.ownerMachTotal) { this.ownerMachPage++; this.loadOwnerMachines(); } }
 
   selectMachine(machine: Machinery): void {
     this.selectedMachine = machine;

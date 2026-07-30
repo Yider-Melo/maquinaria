@@ -22,6 +22,11 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination" *ngIf="userTotal > userSize">
+        <button mat-stroked-button (click)="prevUserPage()" [disabled]="userPage===1">Anterior</button>
+        <span>Página {{ userPage }} de {{ userTotalPages }}</span>
+        <button mat-stroked-button (click)="nextUserPage()" [disabled]="userPage*userSize>=userTotal">Siguiente</button>
+      </div>
     </mat-tab>
     <mat-tab label="Maquinaria">
       <table class="admin-table">
@@ -39,6 +44,11 @@
           </tr>
         </tbody>
       </table>
+      <div class="pagination" *ngIf="machTotal > machSize">
+        <button mat-stroked-button (click)="prevMachPage()" [disabled]="machPage===1">Anterior</button>
+        <span>Página {{ machPage }} de {{ machTotalPages }}</span>
+        <button mat-stroked-button (click)="nextMachPage()" [disabled]="machPage*machSize>=machTotal">Siguiente</button>
+      </div>
     </mat-tab>
     <mat-tab label="Reservas">
       <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>

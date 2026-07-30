@@ -20,6 +20,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatRippleModule } from '@angular/material/core';
 
 import { Header } from './header/header.component';
 import { Footer } from './footer/footer.component';
@@ -52,13 +53,14 @@ import { FormatIdPipe } from './pipes/format-id.pipe';
     MatSnackBarModule,
     MatBadgeModule,
     MatCheckboxModule,
-    MatTabsModule
+    MatTabsModule,
+    MatRippleModule
   ],
   exports: [
     CommonModule, RouterModule, FormsModule, ReactiveFormsModule,
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
-    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatCheckboxModule, MatDividerModule,
+    MatDialogModule, MatSnackBarModule, MatBadgeModule, MatCheckboxModule, MatDividerModule, MatRippleModule,
     Header, Footer, Loading, SkeletonCard, FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe
   ]
 })
