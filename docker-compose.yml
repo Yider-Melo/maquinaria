@@ -249,6 +249,7 @@ services:
       # - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
       # - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
       - PUBLIC_URL=${PUBLIC_URL}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
       - GATEWAY_URL=http://api-gateway:3000
       - BOOKING_SERVICE_URL=http://booking-service:3004
       - AUTH_SERVICE_URL=http://auth-service:3001

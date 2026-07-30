@@ -70,7 +70,7 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
             amount_in_cents: amountInCents,
             currency: 'COP',
             reference: externalReference,
-            redirect_url: backUrls?.success || `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/success`,
+            redirect_url: `${process.env.FRONTEND_URL || 'http://localhost:4200'}/bookings`,
             single_use: true,
             collect_shipping: false
         };
