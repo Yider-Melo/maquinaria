@@ -91,8 +91,18 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         const result = await response.json();
 
         if (!response.ok) {
-            logger.error('Error creando transaccion Wompi:', { status: response.status, error: result });
-            throw new Error('Error al crear el pago en Wompi: ' + (result.error?.messages || JSON.stringify(result)));
+            const errorText = await response.text();
+            let errorDetail;
+            try {
+                const errObj = JSON.parse(errorText);
+                errorDetail = errObj.error?.messages
+                    ? Object.entries(errObj.error.messages).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
+                    : errorText;
+            } catch {
+                errorDetail = errorText;
+            }
+            logger.error('Error creando transaccion Wompi:', { status: response.status, error: errorDetail });
+            throw new Error(`Wompi rechazó la transacción (${response.status}): ${errorDetail}`);
         }
 
         const transactionId = result.data?.id;
