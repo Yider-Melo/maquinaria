@@ -91,16 +91,6 @@ async function createCheckout(bookingId, userId, metodoPago) {
             referenciaPasarela: externalReference
         });
     }
-        id = uuidv4();
-        externalReference = `RENTAMAQ-${id}`;
-        await pagoRepository.insert({
-            id, bookingId, userId,
-            propietarioId: reserva.propietario_id,
-            monto: reserva.precio_total,
-            metodoPago: metodoPago || PROVIDER,
-            referenciaPasarela: externalReference
-        });
-    }
 
     const preference = await paymentProvider.createPreference({
         externalReference,
