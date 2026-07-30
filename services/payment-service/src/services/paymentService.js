@@ -81,6 +81,16 @@ async function createCheckout(bookingId, userId, metodoPago) {
                 estado: existingPayment.estado
             };
         }
+        await pagoRepository.updateEstado(existingPayment.id, 'fallido');
+        id = uuidv4();
+        externalReference = `RENTAMAQ-${id}`;
+        await pagoRepository.insert({
+            id, bookingId, userId,
+            propietarioId: reserva.propietario_id,
+            monto: reserva.precio_total,
+            metodoPago: metodoPago || PROVIDER,
+            referenciaPasarela: externalReference
+        });
     } else {
         id = uuidv4();
         externalReference = `RENTAMAQ-${id}`;
