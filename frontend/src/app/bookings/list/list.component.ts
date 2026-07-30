@@ -211,7 +211,9 @@ export class BookingsList implements OnInit {
     ).subscribe({
       next: (res) => {
         const data = res.data;
-        if (data?.checkout_url) {
+        if (data?.wompi?.public_key) {
+          this.openWompiCheckout(data, booking);
+        } else if (data?.checkout_url) {
           window.location.href = data.checkout_url;
         } else if (data?.pago_id) {
           this.api.post<Payment>(`/payments/${data.pago_id}/simulate-approval`, {}).subscribe({
@@ -229,5 +231,41 @@ export class BookingsList implements OnInit {
         this.snackBar.open(err.error?.error?.message || 'No se pudo iniciar el pago.', 'Cerrar', { duration: 4000 });
       }
     });
+  }
+
+  private openWompiCheckout(data: any, booking: Booking): void {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.wompi.co/widget.js';
+    script.onload = () => {
+      const wompi = (window as any).Wompi;
+      if (!wompi) {
+        this.snackBar.open('Error al cargar Wompi Checkout', 'Cerrar', { duration: 5000 });
+        return;
+      }
+      wompi.checkout({
+        data: {
+          reference: data.wompi.reference,
+          amount_in_cents: data.wompi.amount_in_cents,
+          currency: data.wompi.currency,
+          signature: data.wompi.signature,
+          customer_email: booking.arrendatario_email || '',
+          acceptance_token: data.wompi.acceptance_token,
+          redirect_url: window.location.origin + '/bookings/' + booking.id,
+          webhook_url: window.location.origin + '/api/v1/payments/webhook',
+        },
+        public_key: data.wompi.public_key,
+        onSuccess: () => {
+          this.snackBar.open('Pago exitoso', 'Cerrar', { duration: 5000 });
+          this.loadBookings();
+        },
+        onError: (err: any) => {
+          this.snackBar.open('Error en el pago: ' + (err?.message || 'Desconocido'), 'Cerrar', { duration: 5000 });
+        },
+        onClose: () => {
+          this.loadBookings();
+        }
+      });
+    };
+    document.body.appendChild(script);
   }
 }

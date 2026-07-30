@@ -2,10 +2,12 @@ const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('wompi');
 
 const WOMPI_API = 'https://api.wompi.co/v1';
+const crypto = require('crypto');
 
 const PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY;
 const EVENT_SECRET = process.env.WOMPI_EVENT_SECRET;
+const INTEGRITY_SECRET = process.env.WOMPI_INTEGRITY_SECRET;
 
 function isConfigured() {
     return !!PUBLIC_KEY && !!PRIVATE_KEY;
@@ -58,7 +60,9 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
             id: `SIMULATED-${externalReference}`,
             init_point: null,
             simulated: true,
-            wompi_id: null
+            wompi_id: null,
+            public_key: PUBLIC_KEY,
+            signature: null
         };
     }
 
@@ -67,61 +71,29 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         throw new Error('No se pudo obtener acceptance token de Wompi');
     }
 
-    try {
-        const body = {
-            acceptance_token: acceptanceToken,
-            amount_in_cents: Math.round(unitPrice * 100),
-            currency: 'COP',
-            reference: externalReference,
-            customer_email: payerEmail || '',
-            payment_method: { type: 'CARD', installments: 1 },
-            redirect_url: backUrls?.success || `${process.env.PUBLIC_URL || 'http://localhost:4200'}/payments/success`,
-            webhook_url: notificationUrl
-        };
+    const amountInCents = Math.round(unitPrice * 100);
 
-        const response = await fetch(`${WOMPI_API}/transactions`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${PRIVATE_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            let errorDetail;
-            try {
-                const errObj = JSON.parse(errorText);
-                errorDetail = errObj.error?.messages
-                    ? Object.entries(errObj.error.messages).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
-                    : errorText;
-            } catch {
-                errorDetail = errorText;
-            }
-            logger.error('Error creando transaccion Wompi:', { status: response.status, error: errorDetail });
-            throw new Error(`Wompi rechazó la transacción (${response.status}): ${errorDetail}`);
-        }
-
-        const transactionId = result.data?.id;
-        const checkoutUrl = `https://checkout.wompi.co/p/${transactionId}`;
-
-        logger.info('Transaccion Wompi creada:', { id: transactionId, externalReference, checkoutUrl });
-
-        return {
-            id: transactionId,
-            init_point: checkoutUrl,
-            sandbox_init_point: null,
-            simulated: false,
-            wompi_id: transactionId
-        };
-    } catch (err) {
-        if (err.message.includes('Error al crear')) throw err;
-        logger.error('Error creando preferencia Wompi:', { message: err.message });
-        throw new Error('Error al crear el pago en Wompi');
+    let integritySignature = null;
+    if (INTEGRITY_SECRET) {
+        const signStr = `${INTEGRITY_SECRET}${externalReference}${amountInCents}COP`;
+        integritySignature = crypto.createHash('sha256').update(signStr).digest('hex');
     }
+
+    logger.info('Preferencia Wompi preparada para widget:', { externalReference, amountInCents });
+    await pagoRepository.updateReferenciaPasarela(externalReference, externalReference);
+
+    return {
+        id: externalReference,
+        init_point: null,
+        sandbox_init_point: null,
+        simulated: false,
+        wompi_id: externalReference,
+        public_key: PUBLIC_KEY,
+        acceptance_token: acceptanceToken,
+        signature: integritySignature,
+        amount_in_cents: amountInCents,
+        currency: 'COP'
+    };
 }
 
 
@@ -207,7 +179,6 @@ async function getBankList() {
 
 async function verifyWebhookSignature(payload, signature) {
     if (!EVENT_SECRET) return true;
-    const crypto = require('crypto');
     const expected = crypto.createHmac('sha256', EVENT_SECRET).update(JSON.stringify(payload)).digest('hex');
     return signature === expected;
 }

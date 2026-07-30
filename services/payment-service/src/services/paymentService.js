@@ -108,7 +108,28 @@ async function createCheckout(bookingId, userId, metodoPago) {
         }
     });
 
-    await pagoRepository.updateCheckoutUrl(id, preference.id);
+    await pagoRepository.updateCheckoutUrl(id, preference.wompi_id || preference.id);
+
+    if (PROVIDER === 'wompi') {
+        return {
+            pago_id: id,
+            referencia: externalReference,
+            monto: reserva.precio_total,
+            estado: 'pendiente',
+            checkout_url: null,
+            proveedor: PROVIDER,
+            wompi: {
+                public_key: preference.public_key,
+                signature: preference.signature,
+                acceptance_token: preference.acceptance_token,
+                amount_in_cents: preference.amount_in_cents,
+                currency: preference.currency,
+                reference: externalReference
+            },
+            simulated: preference.simulated || false,
+            message: preference.simulated ? 'Modo simulado.' : 'Abriendo Wompi Checkout...'
+        };
+    }
 
     return {
         pago_id: id,
@@ -122,9 +143,7 @@ async function createCheckout(bookingId, userId, metodoPago) {
         proveedor: PROVIDER,
         message: preference.simulated
             ? 'Modo simulado.'
-            : PROVIDER === 'wompi'
-                ? 'Transaccion creada en Wompi. Procede con el checkout.'
-                : 'Redirigiendo a Mercado Pago...'
+            : 'Redirigiendo a Mercado Pago...'
     };
 }
 
