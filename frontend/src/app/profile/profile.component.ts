@@ -16,6 +16,7 @@ import { SharedModule } from '../shared/shared.module';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
 import { Usuario, BankAccount, Machinery, MachineryImage, Booking, ApiResponse, PaginatedResponse } from '../core/models';
 import { compressImage } from '../shared/image-utils';
+import { MachineBookingsDialog } from './machine-bookings-dialog';
 
 @Component({
   selector: 'app-profile',
@@ -33,7 +34,8 @@ import { compressImage } from '../shared/image-utils';
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    SharedModule
+    SharedModule,
+    MachineBookingsDialog
   ]
 })
 export class Profile implements OnInit {
@@ -129,6 +131,13 @@ export class Profile implements OnInit {
 
   ownerMachPrevPage(): void { if (this.ownerMachPage > 1) { this.ownerMachPage--; this.loadOwnerMachines(); } }
   ownerMachNextPage(): void { if (this.ownerMachPage * this.ownerMachSize < this.ownerMachTotal) { this.ownerMachPage++; this.loadOwnerMachines(); } }
+
+  openMachineBookings(machine: Machinery): void {
+    this.dialog.open(MachineBookingsDialog, {
+      width: '560px',
+      data: { machine }
+    });
+  }
 
   selectMachine(machine: Machinery): void {
     this.selectedMachine = machine;

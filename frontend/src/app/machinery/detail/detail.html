@@ -144,13 +144,6 @@
         </button>
         <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>
       </div>
-      <div class="bookings-section" *ngIf="isOwner() && machineBookings.length > 0">
-        <h3><mat-icon>book_online</mat-icon> Reservas de este equipo</h3>
-        <div class="booking-chip" *ngFor="let r of machineBookings">
-          {{ r.fecha_inicio }} → {{ r.fecha_fin }} <span class="status-badge mini" [class]="r.estado">{{ estadoLabel(r.estado) }}</span>
-        </div>
-        <button mat-button color="accent" [routerLink]="['/bookings']">Ver todas las reservas</button>
-      </div>
       <div class="ratings-section" *ngIf="ratings.length > 0">
         <h3><mat-icon>star</mat-icon> Calificaciones ({{ ratingCount }})</h3>
         <div class="rating-average" *ngIf="ratingAverage > 0">★ {{ ratingAverage | number:'1.1-1' }} promedio</div>

@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Reservas de {{ data.machine.titulo }}</h2>
+<mat-dialog-content>
+  <app-loading *ngIf="loading"></app-loading>
+  <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon>{{ error }}</div>
+  <div class="booking-list" *ngIf="!loading && bookings.length > 0">
+    <mat-card class="booking-mini" *ngFor="let b of bookings">
+      <div>
+        <strong>{{ formatId(b.id, 'ID') }}</strong>
+        <span>{{ formatDate(b.fecha_inicio) }} → {{ formatDate(b.fecha_fin) }}</span>
+        <span *ngIf="b.arrendatario_nombre">Arrendatario: {{ b.arrendatario_nombre }}</span>
+      </div>
+      <div>
+        <span class="booking-state" [class]="b.estado">{{ estadoLabel(b.estado) }}</span>
+        <strong>${{ b.precio_total | number }}</strong>
+      </div>
+    </mat-card>
+  </div>
+  <p class="empty-state" *ngIf="!loading && bookings.length === 0">Esta maquinaria no tiene reservas todavía.</p>
+  <div class="pagination" *ngIf="!loading && total > size">
+    <button mat-stroked-button (click)="prevPage()" [disabled]="page===1">Anterior</button>
+    <span>Página {{ page }} de {{ totalPages }}</span>
+    <button mat-stroked-button (click)="nextPage()" [disabled]="page*size>=total">Siguiente</button>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button [mat-dialog-close]="false">Cerrar</button>
+</mat-dialog-actions>

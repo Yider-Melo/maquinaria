@@ -18,6 +18,7 @@ services:
       - RATING_SERVICE_URL=http://rating-service:3006
       - NOTIFICATION_SERVICE_URL=http://notification-service:3007
       - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
     depends_on:
       - auth-service
       - machinery-service

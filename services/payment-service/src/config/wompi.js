@@ -1,13 +1,18 @@
 const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('wompi');
 
-const WOMPI_API = 'https://api.wompi.co/v1';
-
 const PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY;
 
+const IS_SANDBOX = (PUBLIC_KEY || '').startsWith('pub_test_');
+const WOMPI_API = IS_SANDBOX ? 'https://sandbox.wompi.co/v1' : 'https://api.wompi.co/v1';
+
 function isConfigured() {
     return !!PUBLIC_KEY && !!PRIVATE_KEY;
+}
+
+function isSandboxMode() {
+    return IS_SANDBOX;
 }
 
 function configure() {
@@ -102,7 +107,7 @@ async function createPreference({ externalReference, title, unitPrice, quantity,
         }
 
         const linkId = result.data?.id;
-        const checkoutUrl = `https://checkout.wompi.co/link/${linkId}`;
+        const checkoutUrl = `https://checkout.wompi.co/l/${linkId}`;
 
         logger.info('Link de pago Wompi creado:', { id: linkId, externalReference, checkoutUrl });
 
@@ -202,6 +207,6 @@ async function getBankList() {
 }
 
 module.exports = {
-    configure, isConfigured, createPreference, getTransaction,
+    configure, isConfigured, isSandboxMode, createPreference, getTransaction,
     createTransfer, getBankList
 };

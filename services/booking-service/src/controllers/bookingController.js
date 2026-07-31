@@ -62,6 +62,15 @@ async function getMyListings(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getByMachinery(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const { data, total } = await bookingService.getByMachinery(req.params.machineryId, req.user.id, page, size);
+        paginated(res, data, total, page, size);
+    } catch (err) { next(err); }
+}
+
 async function getById(req, res, next) {
     try {
         const booking = await bookingService.getById(req.params.id, req.user.id);
@@ -120,6 +129,7 @@ module.exports = {
     getOccupiedDates,
     getInternalById,
     getMyListings,
+    getByMachinery,
     getById,
     confirm,
     reject,

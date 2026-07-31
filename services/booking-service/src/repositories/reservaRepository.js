@@ -70,6 +70,17 @@ async function findByOwner(ownerId, page, size) {
     return { data: result.rows, total };
 }
 
+async function findByMachinery(machineryId, page, size) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query('SELECT COUNT(*) FROM reserva WHERE maquinaria_id = $1', [machineryId]);
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query(
+        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE maquinaria_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        [machineryId, size, offset]
+    );
+    return { data: result.rows, total };
+}
+
 async function updateEstado(id, estado, client) {
     const db = client || pool;
     const result = await db.query(
@@ -144,6 +155,6 @@ async function withTransaction(callback) {
 
 module.exports = {
     getClient, insert, findConflictingBookings, findOccupiedRanges, findById,
-    findByUser, findByOwner, updateEstado, cancel,
+    findByUser, findByOwner, findByMachinery, updateEstado, cancel,
     getAdminStats, findRecent, findExpiredBookings, withTransaction
 };

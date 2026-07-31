@@ -80,6 +80,25 @@ async function sendEmailNotification(tipo, data) {
     }
 }
 
+async function handleBookingEvent(event) {
+    const { data, event: tipo } = event;
+    try {
+        await createNotificationDirect(
+            data.usuario_id,
+            data.tipo || tipo,
+            data.titulo,
+            data.mensaje,
+            data.referencia_id,
+            data.referencia_tipo
+        );
+        notifyGatewayViaHttp(data.usuario_id, data.titulo, data.mensaje);
+        await sendEmailNotification(tipo || data.tipo, data);
+        logger.info('Notificación creada vía evento:', { usuarioId: data.usuario_id, tipo: data.tipo || tipo });
+    } catch (err) {
+        logger.error('Error procesando evento de notificación:', { message: err.message, stack: err.stack });
+    }
+}
+
 app.listen(PORT, async () => {
     try {
         await emailService.configure();
@@ -90,29 +109,12 @@ app.listen(PORT, async () => {
     try {
         await eventBus.connect();
         logger.info('Conectado a RabbitMQ');
-
-        eventBus.subscribeToEvent('booking.*', async (event) => {
-            const { data, event: tipo } = event;
-            try {
-                await createNotificationDirect(
-                    data.usuario_id,
-                    data.tipo || tipo,
-                    data.titulo,
-                    data.mensaje,
-                    data.referencia_id,
-                    data.referencia_tipo
-                );
-                notifyGatewayViaHttp(data.usuario_id, data.titulo, data.mensaje);
-                await sendEmailNotification(tipo || data.tipo, data);
-                logger.info('Notificación creada vía evento:', { usuarioId: data.usuario_id });
-            } catch (err) {
-                logger.error('Error procesando evento de notificación:', { message: err.message, stack: err.stack });
-            }
-        }, 'notification-booking-queue');
-
     } catch (err) {
         logger.warn('RabbitMQ no disponible, usando endpoint HTTP directo:', { message: err.message });
     }
+
+    eventBus.subscribeToEvent('booking.*', handleBookingEvent, 'notification-booking-queue');
+
     logger.info('Notification Service iniciado', { port: PORT });
 });
 

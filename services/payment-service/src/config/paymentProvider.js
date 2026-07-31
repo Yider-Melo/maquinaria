@@ -24,6 +24,11 @@ function isConfigured() {
     return getProvider().isConfigured();
 }
 
+function isSandboxMode() {
+    const prov = getProvider();
+    return prov.isSandboxMode ? prov.isSandboxMode() : false;
+}
+
 function configure() {
     return getProvider().configure();
 }
@@ -76,7 +81,7 @@ async function createPayout(options) {
 
 module.exports = {
     getProvider,
-    configure, isConfigured,
+    configure, isConfigured, isSandboxMode,
     createPreference, getPayment,
     capturePayment, refundPayment, createPayout,
     PROVIDER

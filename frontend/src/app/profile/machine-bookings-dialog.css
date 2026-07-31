@@ -1,0 +1,12 @@
+mat-dialog-content { min-width: min(520px, 80vw); }
+.error-box { display: flex; align-items: center; gap: 8px; color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 12px; margin-bottom: 16px; }
+.booking-list { display: grid; gap: 10px; }
+.booking-mini { display: flex !important; justify-content: space-between; gap: 14px; padding: 16px; }
+.booking-mini span { color: var(--rm-muted); }
+.booking-mini strong:last-child { color: var(--rm-primary-dark); }
+.booking-state { padding: 6px 10px; border-radius: 999px; font-weight: 900; }
+.empty-state { color: var(--rm-muted); margin: 8px 0; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 20px; }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination span { color: #888; font-size: 14px; }
+@media (max-width: 480px) { .booking-mini { flex-direction: column; } }

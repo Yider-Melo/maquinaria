@@ -206,6 +206,23 @@ async function getByOwner(ownerId, page = 1, size = 20) {
     return { data: enriched, total, page, size };
 }
 
+async function getByMachinery(machineryId, userId, page = 1, size = 20) {
+    size = Math.min(size, 100);
+    let propietario_id;
+    try {
+        const res = await axios.get(`${MACHINERY_SERVICE_URL}/${machineryId}`);
+        propietario_id = res.data?.data?.propietario_id;
+    } catch (err) {
+        throw new NotFoundError('Maquinaria no encontrada');
+    }
+    if (propietario_id !== userId) {
+        throw new ForbiddenError('Solo el propietario puede ver las reservas de esta maquinaria');
+    }
+    const { data, total } = await reservaRepository.findByMachinery(machineryId, page, size);
+    const enriched = await Promise.all(data.map(b => enrichBookingWithUsers(b)));
+    return { data: enriched, total, page, size };
+}
+
 async function enrichBookingWithUsers(reserva) {
     try {
         const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
@@ -374,7 +391,7 @@ async function adminRecentBookings(limit = 10) {
 }
 
 module.exports = {
-    create, checkAvailability, getOccupiedDates, getById, getInternalById, getByUser, getByOwner,
+    create, checkAvailability, getOccupiedDates, getById, getInternalById, getByUser, getByOwner, getByMachinery,
     confirm, reject, cancel, startRental, complete, markAsPaid,
     adminBookingStats, adminRecentBookings
 };

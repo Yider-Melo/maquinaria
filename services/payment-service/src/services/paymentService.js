@@ -110,9 +110,7 @@ async function createCheckout(bookingId, userId, metodoPago) {
         unitPrice: reserva.precio_total,
         quantity: 1,
         payerEmail: reserva.arrendatario_email,
-        notificationUrl: PROVIDER === 'wompi'
-            ? `${PUBLIC_URL}/webhook`
-            : `${PUBLIC_URL}/api/v1/payments/webhook`,
+        notificationUrl: `${PUBLIC_URL}/api/v1/payments/webhook`,
         backUrls: {
             success: `${FRONTEND_URL}/payments/success?external_ref=${externalReference}`,
             failure: `${FRONTEND_URL}/payments/failure?external_ref=${externalReference}`,
@@ -131,6 +129,7 @@ async function createCheckout(bookingId, userId, metodoPago) {
         transaction_id: preference.wompi_id || null,
         sandbox_checkout_url: preference.sandbox_init_point || null,
         simulated: preference.simulated || false,
+        sandbox: paymentProvider.isSandboxMode(),
         proveedor: PROVIDER,
         message: preference.simulated
             ? 'Modo simulado.'

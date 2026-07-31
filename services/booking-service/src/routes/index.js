@@ -20,6 +20,7 @@ router.get('/my-bookings', validateToken, bookingController.getMyBookings);
 router.get('/stats', validateToken, requireRole('admin'), bookingController.adminBookingStats);
 router.get('/recent', validateToken, requireRole('admin'), bookingController.adminRecentBookings);
 router.get('/machinery/:machineryId/occupied', validateParams(uuidParam('machineryId')), bookingController.getOccupiedDates);
+router.get('/machinery/:machineryId/bookings', validateToken, validateParams(uuidParam('machineryId')), bookingController.getByMachinery);
 router.get('/internal/:id', internalAuth, validateParams(uuidParam('id')), bookingController.getInternalById);
 router.post('/internal/:id/mark-paid', internalAuth, validateParams(uuidParam('id')), bookingController.markAsPaid);
 router.get('/my-listings', validateToken, bookingController.getMyListings);

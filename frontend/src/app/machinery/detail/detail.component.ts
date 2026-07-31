@@ -6,7 +6,6 @@ import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
-import { estadoLabel } from '../../shared/utils';
 import { Machinery, MachineryImage, Rating, Booking, OccupiedDates, CheckAvailability, ApiResponse, PaginatedResponse, Usuario } from '../../core/models';
 
 interface CalendarDay {
@@ -29,8 +28,7 @@ interface CalendarDay {
 export class MachineryDetail implements OnInit {
   item: any = null; images: MachineryImage[] = []; loading = true; error = '';
   selectedImage = this.fallbackImage;
-  ratings: Rating[] = []; ratingAverage = 0; ratingCount = 0;   machineBookings: any[] = [];
-  estadoLabel = estadoLabel;
+  ratings: Rating[] = []; ratingAverage = 0; ratingCount = 0;
   propietarioNombre = '';
   booking = { fecha_inicio: '', fecha_fin: '', modalidad: 'dia' };
   bookingLoading = false; checkingAvailability = false;
@@ -57,18 +55,6 @@ export class MachineryDetail implements OnInit {
     const idx = this.images.findIndex(i => i.url === this.selectedImage);
     const next = (idx + 1) % this.images.length;
     this.selectedImage = this.images[next].url;
-  }
-
-  private loadMachineBookings(): void {
-    if (!this.item?.id || !this.isOwner()) return;
-    const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 1);
-    this.api.get<OccupiedDates>('/bookings/machinery/' + this.item.id + '/occupied', { start: new Date().toISOString().slice(0, 10), end: endDate.toISOString().slice(0, 10) }).subscribe({
-      next: (res) => {
-        this.machineBookings = res.data?.ranges || [];
-        this.cdr.detectChanges();
-      }
-    });
   }
 
   private loadRatings(): void {
@@ -120,7 +106,6 @@ export class MachineryDetail implements OnInit {
         this.buildCalendar();
         this.loadOccupiedDates();
         this.loadRatings();
-        this.loadMachineBookings();
         if (this.auth.isLoggedIn()) this.checkFavorite();
         this.cdr.detectChanges();
       },
