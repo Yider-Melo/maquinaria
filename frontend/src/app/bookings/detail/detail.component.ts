@@ -158,6 +158,10 @@ export class BookingsDetail implements OnInit {
     return this.booking?.estado === 'pendiente' && this.booking?.propietario_id === this.auth.getUser()?.id;
   }
 
+  canPay(): boolean {
+    return this.booking?.estado === 'confirmada' && this.booking?.arrendatario_id === this.auth.getUser()?.id;
+  }
+
   confirm(): void {
     if (!this.booking) return;
     this.api.post<Booking>(`/bookings/${this.booking.id}/confirm`, {}).subscribe({

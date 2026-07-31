@@ -4,7 +4,7 @@ import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { RatingForm } from '../form/form';
 import { forkJoin, of, Observable } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, tap } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 import { Rating, Booking, Machinery, PaginatedResponse, ApiResponse } from '../../core/models';
@@ -36,41 +36,37 @@ export class RatingsList implements OnInit {
 
   private loadAll(): void {
     this.loading = true; this.error = '';
-    this.loadRatings();
-    this.loadReceived();
-    this.loadPending();
+    forkJoin([this.loadRatings(), this.loadReceived(), this.loadPending()]).pipe(
+      finalize(() => { this.loading = false; this.cdr.markForCheck(); })
+    ).subscribe();
   }
 
-  private loadRatings(): void {
-    this.api.get<Rating[]>(`/ratings/my?page=${this.pageMy}&size=${this.size}`).pipe(
-      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any))
-    ).subscribe({
-      next: (res) => {
-        const r = res as any;
-        this.totalMy = r?.pagination?.total || 0;
-        this.ratings = (r?.data || []).map((x: Rating) => ({ ...x }));
+  private loadRatings(): Observable<any> {
+    return this.api.get<Rating[]>(`/ratings/my?page=${this.pageMy}&size=${this.size}`).pipe(
+      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any)),
+      tap((res: any) => {
+        this.totalMy = res?.pagination?.total || 0;
+        this.ratings = (res?.data || []).map((x: Rating) => ({ ...x }));
         this.enrichRatings(this.ratings);
-      }
-    });
+      })
+    );
   }
 
-  private loadReceived(): void {
+  private loadReceived(): Observable<any> {
     const userId = this.auth.getUser()?.id;
-    if (!userId) return;
-    this.api.get<Rating[]>(`/ratings/user/${userId}?page=${this.pageReceived}&size=${this.size}`).pipe(
-      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any))
-    ).subscribe({
-      next: (res) => {
-        const r = res as any;
-        this.totalReceived = r?.pagination?.total || 0;
-        this.receivedRatings = (r?.data || []).map((x: Rating) => ({ ...x }));
-      }
-    });
+    if (!userId) return of(null);
+    return this.api.get<Rating[]>(`/ratings/user/${userId}?page=${this.pageReceived}&size=${this.size}`).pipe(
+      catchError(() => of({ success: true, data: [], pagination: { total: 0, page: 1, size: 20, totalPages: 1 } } as any)),
+      tap((res: any) => {
+        this.totalReceived = res?.pagination?.total || 0;
+        this.receivedRatings = (res?.data || []).map((x: Rating) => ({ ...x }));
+      })
+    );
   }
 
-  private loadPending(): void {
+  private loadPending(): Observable<any> {
     const userId = this.auth.getUser()?.id;
-    if (!userId) { this.loading = false; this.cdr.markForCheck(); return; }
+    if (!userId) return of(null);
     const myBookings$ = this.api.get<Booking[]>(`/bookings/my-bookings?page=${this.pendingPage}&size=${this.pendingSize}`).pipe(
       catchError(() => of({ success: true, data: [], pagination: { total: 0 } } as any))
     );
@@ -80,10 +76,8 @@ export class RatingsList implements OnInit {
         catchError(() => of({ success: true, data: [], pagination: { total: 0 } } as any))
       ));
     }
-    forkJoin(bookingCalls).pipe(
-      finalize(() => { this.loading = false; this.cdr.markForCheck(); })
-    ).subscribe({
-      next: (results) => {
+    return forkJoin(bookingCalls).pipe(
+      tap((results) => {
         const r0 = results[0] as any;
         const r1 = results[1] as any;
         const asArrendatario = r0?.data || [];
@@ -95,8 +89,8 @@ export class RatingsList implements OnInit {
         const ratedBookingIds = new Set([...this.ratings, ...this.receivedRatings].map((r: Rating) => r.reserva_id));
         this.completedBookings = all.filter((b: Booking) => (b.estado === 'completada' || b.estado === 'pagada') && !ratedBookingIds.has(b.id));
         this.enrichBookingsWithMachinery(this.completedBookings);
-      }
-    });
+      })
+    );
   }
 
   private enrichRatings(ratings: Rating[]): void {
@@ -105,17 +99,19 @@ export class RatingsList implements OnInit {
 
     forkJoin(uniqueIds.map(id => this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! }))))).subscribe({
       next: (results) => {
-        const machinesById = new Map<string, Machinery>();
-        uniqueIds.forEach((id, index) => {
-          const machine = results[index]?.data;
-          if (machine) machinesById.set(id, machine);
-        });
+        setTimeout(() => {
+          const machinesById = new Map<string, Machinery>();
+          uniqueIds.forEach((id, index) => {
+            const machine = results[index]?.data;
+            if (machine) machinesById.set(id, machine);
+          });
 
-        this.ratings = ratings.map(rating => ({
-          ...rating,
-          maquinaria_titulo: rating?.maquinaria_titulo || machinesById.get(rating.maquinaria_id)?.titulo || `Maquinaria #${rating?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`
-        }));
-        this.cdr.markForCheck();
+          this.ratings = ratings.map(rating => ({
+            ...rating,
+            maquinaria_titulo: rating?.maquinaria_titulo || machinesById.get(rating.maquinaria_id)?.titulo || `Maquinaria #${rating?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`
+          }));
+          this.cdr.markForCheck();
+        }, 0);
       }
     });
   }
@@ -129,18 +125,20 @@ export class RatingsList implements OnInit {
 
     forkJoin(uniqueIds.map(id => this.api.get<Machinery>(`/machinery/${id}`).pipe(catchError(() => of({ success: true, data: null! }))))).subscribe({
       next: (results) => {
-        const machinesById = new Map<string, Machinery>();
-        uniqueIds.forEach((id, index) => {
-          const machine = results[index]?.data;
-          if (machine) machinesById.set(id, machine);
-        });
+        setTimeout(() => {
+          const machinesById = new Map<string, Machinery>();
+          uniqueIds.forEach((id, index) => {
+            const machine = results[index]?.data;
+            if (machine) machinesById.set(id, machine);
+          });
 
-        this.completedBookings = bookings.map(booking => ({
-          ...booking,
-          maquinaria_titulo: booking?.maquinaria_titulo || machinesById.get(booking.maquinaria_id)?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
-          maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia
-        }));
-        this.cdr.markForCheck();
+          this.completedBookings = bookings.map(booking => ({
+            ...booking,
+            maquinaria_titulo: booking?.maquinaria_titulo || machinesById.get(booking.maquinaria_id)?.titulo || `Maquinaria #${booking?.maquinaria_id?.substring(0, 8) || 'sin asignar'}`,
+            maquinaria_precio: booking?.precio_total ?? machinesById.get(booking.maquinaria_id)?.precio_por_dia
+          }));
+          this.cdr.markForCheck();
+        }, 0);
       }
     });
   }

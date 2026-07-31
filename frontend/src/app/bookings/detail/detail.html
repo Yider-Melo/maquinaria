@@ -22,7 +22,7 @@
       <button mat-raised-button color="primary" (click)="confirm()" *ngIf="canConfirm()">
         <mat-icon>check_circle</mat-icon> Confirmar reserva
       </button>
-      <button mat-raised-button color="primary" (click)="pay()" *ngIf="booking.estado==='confirmada'" [disabled]="paying">
+      <button mat-raised-button color="primary" (click)="pay()" *ngIf="canPay()" [disabled]="paying">
         <mat-icon *ngIf="paying" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
         <mat-icon *ngIf="!paying">payment</mat-icon>
         {{ paying ? 'Procesando pago...' : 'Pagar' }}
