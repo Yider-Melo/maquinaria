@@ -1,11 +1,16 @@
 <div class="dashboard">
   <div class="welcome">
-    <span class="eyebrow">RentaMaq operativo</span>
-    <h1>{{ roleTitle }}</h1>
-    <p>{{ roleDescription }}</p>
-    <span class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
-      {{ auth.esTipo('propietario') ? 'Propietario' : auth.esTipo('admin') ? 'Administrador' : 'Arrendatario' }}: {{ auth.getUser()?.nombre }}
-    </span>
+    <div class="welcome-text">
+      <span class="eyebrow">RentaMaq operativo</span>
+      <h1>{{ roleTitle }}</h1>
+      <p>{{ roleDescription }}</p>
+      <span class="role-badge" [class.propietario]="auth.esTipo('propietario')" [class.arrendatario]="auth.esTipo('arrendatario')" [class.admin]="auth.esTipo('admin')">
+        {{ auth.esTipo('propietario') ? 'Propietario' : auth.esTipo('admin') ? 'Administrador' : 'Arrendatario' }}: {{ auth.getUser()?.nombre }}
+      </span>
+    </div>
+    <button mat-raised-button class="rent-now-btn" routerLink="/machinery" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+      <mat-icon>bolt</mat-icon> Alquila ahora
+    </button>
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
@@ -45,7 +50,10 @@
         <mat-icon>travel_explore</mat-icon>
         <h3>Para alquilar más rápido</h3>
         <p>Usa filtros por ciudad, categoría y precio. En el detalle puedes solicitar la reserva con fechas y total estimado.</p>
-        <button mat-stroked-button routerLink="/machinery">Explorar catálogo</button>
+        <div class="panel-actions">
+          <button mat-raised-button color="primary" routerLink="/machinery"><mat-icon>bolt</mat-icon> Alquila ahora</button>
+          <button mat-stroked-button routerLink="/machinery">Explorar catálogo</button>
+        </div>
       </div>
       <div class="panel-card" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon>inventory_2</mat-icon>
