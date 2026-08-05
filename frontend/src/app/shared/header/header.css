@@ -63,6 +63,7 @@
   .header-toolbar::-webkit-scrollbar { display: none; }
   .brand { font-size: 18px; margin-right: 8px; flex: 0 0 auto; }
   .nav-link span { display: none; }
+  .nav-link .badge { display: inline-block; }
   .nav-link { min-width: 42px; padding: 0 8px !important; flex: 0 0 auto; }
   .nav-link mat-icon { margin-right: 0; }
   .publish-nav { padding: 0 10px !important; }

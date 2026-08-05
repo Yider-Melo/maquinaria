@@ -17,6 +17,11 @@
     <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" *ngIf="auth.esTipo('admin')">
       <mat-icon aria-hidden="true">admin_panel_settings</mat-icon> <span>Admin</span>
     </a>
+    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
+      <mat-icon aria-hidden="true">notifications</mat-icon>
+      <span>Notificaciones</span>
+      <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </a>
     <button mat-button class="nav-link more-btn" [matMenuTriggerFor]="moreMenu" *ngIf="!auth.esTipo('admin')" aria-label="Más opciones">
       <mat-icon aria-hidden="true">more_vert</mat-icon> <span>Más</span>
     </button>
@@ -30,10 +35,6 @@
     </button>
     <button mat-menu-item routerLink="/ratings">
       <mat-icon aria-hidden="true">star</mat-icon> Calificaciones
-    </button>
-    <button mat-menu-item routerLink="/notifications">
-      <mat-icon aria-hidden="true">notifications</mat-icon> Notificaciones
-      <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
     </button>
   </mat-menu>
   <span class="spacer"></span>
