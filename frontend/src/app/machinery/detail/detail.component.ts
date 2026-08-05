@@ -59,7 +59,7 @@ export class MachineryDetail implements OnInit {
 
   private loadRatings(): void {
     if (!this.item?.id) return;
-    this.api.get<Rating[]>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
+    this.api.get<Rating[]>(`/ratings/machinery/${this.item.id}`, { size: 100 }).subscribe({
       next: (res) => {
         this.ratings = res.data || [];
         this.ratingAverage = this.item?.puntuacion_promedio || 0;
@@ -68,6 +68,39 @@ export class MachineryDetail implements OnInit {
       }
     });
   }
+
+  ratingsPage = 1;
+  ratingsPerPage = 4;
+
+  get visibleRatings(): Rating[] {
+    const start = (this.ratingsPage - 1) * this.ratingsPerPage;
+    return this.ratings.slice(start, start + this.ratingsPerPage);
+  }
+
+  get ratingsTotalPages(): number { return Math.max(1, Math.ceil(this.ratings.length / this.ratingsPerPage)); }
+
+  prevRatingsPage(): void { if (this.ratingsPage > 1) { this.ratingsPage--; } }
+  nextRatingsPage(): void { if (this.ratingsPage < this.ratingsTotalPages) { this.ratingsPage++; } }
+
+  get roundedAverage(): number { return Math.round(this.ratingAverage); }
+
+  get ratingLevels(): number[] { return [5, 4, 3, 2, 1]; }
+
+  ratingCountFor(level: number): number {
+    return this.ratings.filter(r => Math.round(r.puntuacion) === level).length;
+  }
+
+  ratingPct(level: number): number {
+    if (this.ratings.length === 0) return 0;
+    return Math.round((this.ratingCountFor(level) / this.ratings.length) * 100);
+  }
+
+  initials(name?: string): string {
+    if (!name) return 'U';
+    return name.split(/\s+/).slice(0, 2).map(n => n[0]?.toUpperCase() || '').join('');
+  }
+
+  trackByRating(_: number, r: Rating): string { return r.id; }
 
   constructor(
     private route: ActivatedRoute, public router: Router,

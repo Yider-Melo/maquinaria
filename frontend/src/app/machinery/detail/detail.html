@@ -148,13 +148,50 @@
         </button>
         <p class="booking-hint" *ngIf="!auth.isLoggedIn()"><mat-icon>info</mat-icon> Debes <a [routerLink]="['/auth/login']">iniciar sesión</a> como arrendatario para reservar.</p>
       </div>
-      <div class="ratings-section" *ngIf="ratings.length > 0">
-        <h3><mat-icon>star</mat-icon> Calificaciones ({{ ratingCount }})</h3>
-        <div class="rating-average" *ngIf="ratingAverage > 0">★ {{ ratingAverage | number:'1.1-1' }} promedio</div>
-        <div class="rating-card" *ngFor="let r of ratings">
-          <div class="rating-stars">★ {{ r.puntuacion }}/5</div>
-          <p *ngIf="r.comentario" class="rating-comment">"{{ r.comentario }}"</p>
-          <small>{{ r.creado_en | date:'shortDate':'':'es-CO' }}</small>
+      <div class="ratings-section" *ngIf="ratings.length > 0" appReveal>
+        <div class="ratings-head">
+          <h3><mat-icon>star</mat-icon> Calificaciones</h3>
+          <span class="ratings-count-badge">{{ ratingCount }} opinione{{ ratingCount === 1 ? '' : 's' }}</span>
+        </div>
+
+        <div class="ratings-summary" *ngIf="ratingAverage > 0">
+          <div class="big-score">
+            <strong>{{ ratingAverage | number:'1.1-1' }}</strong>
+            <div class="stars-display">
+              <mat-icon *ngFor="let star of [1,2,3,4,5]" [class.filled]="star <= roundedAverage">star</mat-icon>
+            </div>
+            <span>Promedio general</span>
+          </div>
+          <div class="score-bars">
+            <div class="bar-row" *ngFor="let level of ratingLevels">
+              <span class="bar-label">{{ level }}</span>
+              <mat-icon class="bar-star">star</mat-icon>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="ratingPct(level)"></div></div>
+              <span class="bar-count">{{ ratingCountFor(level) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ratings-list">
+          <div class="rating-card" *ngFor="let r of visibleRatings; let i = index; trackBy: trackByRating" appReveal [appReveal]="i * 70">
+            <div class="rating-avatar">{{ initials(r.calificador_nombre) }}</div>
+            <div class="rating-body">
+              <div class="rating-top">
+                <strong>{{ r.calificador_nombre || 'Usuario' }}</strong>
+                <span class="rating-date">{{ r.creado_en | date:'mediumDate':'':'es-CO' }}</span>
+              </div>
+              <div class="stars-display small">
+                <mat-icon *ngFor="let star of [1,2,3,4,5]" [class.filled]="star <= r.puntuacion">star</mat-icon>
+              </div>
+              <p *ngIf="r.comentario" class="rating-comment">"{{ r.comentario }}"</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="ratings-pager" *ngIf="ratings.length > ratingsPerPage">
+          <button mat-stroked-button (click)="prevRatingsPage()" [disabled]="ratingsPage === 1"><mat-icon>chevron_left</mat-icon> Anterior</button>
+          <span>Página {{ ratingsPage }} de {{ ratingsTotalPages }}</span>
+          <button mat-stroked-button (click)="nextRatingsPage()" [disabled]="ratingsPage >= ratingsTotalPages">Siguiente <mat-icon>chevron_right</mat-icon></button>
         </div>
       </div>
       <div class="actions" *ngIf="auth.isLoggedIn()">
