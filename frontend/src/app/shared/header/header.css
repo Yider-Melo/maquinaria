@@ -27,6 +27,20 @@
 .main-nav { display: flex; align-items: center; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .main-nav::-webkit-scrollbar { display: none; }
 .nav-link mat-icon { margin-right: 4px; font-size: 20px; width: 20px; height: 20px; vertical-align: middle; color: white !important; }
+.more-btn { min-width: 40px !important; }
+.publish-nav {
+  border: 1.5px solid rgba(255,248,236,.55); border-radius: 999px !important;
+  background: rgba(255,248,236,.12); font-weight: 700 !important; padding: 0 14px !important;
+}
+.publish-nav:hover { background: rgba(255,248,236,.28) !important; }
+.rent-cta {
+  height: 42px; margin-left: 8px; padding: 0 18px !important;
+  border-radius: 999px !important; font-weight: 800 !important;
+  background: linear-gradient(135deg, #e2a84b 0%, #c96f2d 100%) !important;
+  color: #3b2416 !important; box-shadow: 0 6px 18px rgba(0,0,0,.22) !important;
+}
+.rent-cta:hover { filter: brightness(1.08) !important; }
+.rent-cta mat-icon { margin-right: 6px; font-size: 20px; width: 20px; height: 20px; color: #3b2416 !important; }
 .badge {
   background: #e2a84b; color: #3b2416; border-radius: 50%;
   padding: 1px 7px; font-size: 11px; font-weight: 700;
@@ -51,6 +65,9 @@
   .nav-link span { display: none; }
   .nav-link { min-width: 42px; padding: 0 8px !important; flex: 0 0 auto; }
   .nav-link mat-icon { margin-right: 0; }
+  .publish-nav { padding: 0 10px !important; }
+  .rent-cta { height: 40px; padding: 0 14px !important; }
+  .rent-cta .cta-sub { display: none; }
   .user-btn { min-width: 44px; padding: 0 10px !important; flex: 0 0 auto; }
   .user-btn mat-icon { margin-right: 0; }
 }

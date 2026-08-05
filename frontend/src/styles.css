@@ -66,6 +66,7 @@ mat-form-field { width: 100%; }
 
 button[mat-raised-button] { border-radius: 10px !important; font-weight: 700 !important; }
 button[mat-button] { border-radius: 10px !important; }
+button[mat-raised-button], button[mat-stroked-button], button[mat-flat-button], button[mat-button] { min-height: 44px; }
 
 .mat-mdc-raised-button.mat-primary, .mat-mdc-unelevated-button.mat-primary { background-color: var(--rm-primary) !important; color: #fffaf2 !important; }
 .mat-mdc-raised-button.mat-accent, .mat-mdc-unelevated-button.mat-accent { background-color: var(--rm-accent) !important; color: #3b2416 !important; }
@@ -140,6 +141,6 @@ table { width: 100%; }
   .container, .page, .dashboard, .profile-page { padding: 16px 12px !important; }
   .empty-state { padding: 32px 12px; }
   .empty-state mat-icon { font-size: 44px; width: 44px; height: 44px; }
-  button[mat-raised-button], button[mat-stroked-button], button[mat-button] { min-height: 42px; }
+  button[mat-raised-button], button[mat-stroked-button], button[mat-button] { min-height: 44px; }
 .admin-table th, .admin-table td { padding: 10px 12px !important; font-size: 13px; }
 }

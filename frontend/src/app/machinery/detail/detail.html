@@ -37,10 +37,14 @@
         {{ item.disponible !== false ? 'Disponible para solicitud' : 'No disponible temporalmente' }}
       </div>
       <p class="type"><mat-icon style="font-size:18px;width:18px;height:18px;">category</mat-icon> {{ item.tipo }} | {{ item.marca }} {{ item.modelo }} ({{ item.anio }})</p>
-      <div class="detail-meta">
-        <div class="meta-item"><mat-icon>handyman</mat-icon><span>Estado: <strong>{{ item.estado }}</strong></span></div>
-        <div class="meta-item" *ngIf="item.capacidad"><mat-icon>speed</mat-icon><span>Capacidad: <strong>{{ item.capacidad }}</strong></span></div>
-        <div class="meta-item" *ngIf="propietarioNombre"><mat-icon>person</mat-icon><span>Propietario: <strong>{{ propietarioNombre }}</strong></span></div>
+      <div class="key-facts">
+        <h2 class="facts-title"><mat-icon>fact_check</mat-icon> Ficha técnica</h2>
+        <ul>
+          <li><mat-icon>handyman</mat-icon><span class="kf-label">Estado</span><strong>{{ item.estado }}</strong></li>
+          <li *ngIf="item.capacidad"><mat-icon>speed</mat-icon><span class="kf-label">Capacidad</span><strong>{{ item.capacidad }}</strong></li>
+          <li *ngIf="propietarioNombre"><mat-icon>person</mat-icon><span class="kf-label">Propietario</span><strong>{{ propietarioNombre }}</strong></li>
+          <li><mat-icon>location_on</mat-icon><span class="kf-label">Ubicación</span><strong>{{ item.ciudad }}{{ item.departamento ? ', ' + item.departamento : '' }}</strong></li>
+        </ul>
       </div>
       <p class="price">${{ item.precio_por_dia | number }} <small>/día</small></p>
       <p class="location"><mat-icon>location_on</mat-icon> {{ item.direccion }}, {{ item.ciudad }}, {{ item.departamento }}</p>

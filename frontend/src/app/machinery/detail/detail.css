@@ -3,7 +3,7 @@
 .detail-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 34px; margin-top: 8px; }
 .title-row { display: flex; align-items: center; gap: 12px; }
 .title-row h1 { flex: 1; margin: 0; }
-.title-row .fav-btn { flex-shrink: 0; background: none; border: 1px solid var(--rm-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
+.title-row .fav-btn { flex-shrink: 0; background: none; border: 1px solid var(--rm-border); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s; }
 .title-row .fav-btn:hover { border-color: var(--rm-primary); background: #fff5e4; }
 .title-row .fav-btn mat-icon { font-size: 22px; width: 22px; height: 22px; color: #bbb; transition: color .2s; }
 .title-row .fav-btn.active mat-icon { color: #e74c3c; }
@@ -36,7 +36,14 @@
 .info .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 .info .actions button { border-radius: 8px !important; padding: 6px 24px !important; }
 .detail-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
-.meta-item { display: flex; align-items: center; gap: 8px; padding: 12px; background: #fff7e8; border-radius: 8px; }
+.key-facts { margin: 16px 0 4px; padding: 16px 18px; background: #fff7e8; border: 1px solid #f0ddc0; border-radius: 14px; }
+.facts-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: var(--rm-secondary); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 12px; }
+.facts-title mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--rm-primary); }
+.key-facts ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 18px; margin: 0; padding: 0; }
+.key-facts li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.key-facts li mat-icon { color: var(--rm-primary); font-size: 20px; width: 20px; height: 20px; }
+.kf-label { color: var(--rm-muted); }
+.key-facts li strong { color: var(--rm-ink); font-weight: 800; margin-left: auto; text-align: right; }
 .meta-item mat-icon { color: var(--rm-primary); font-size: 20px; width: 20px; height: 20px; }
 .meta-item span { font-size: 14px; color: var(--rm-muted); }
 .meta-item strong { color: var(--rm-ink); font-weight: 700; margin-left: 4px; }

@@ -9,28 +9,38 @@
       <mat-icon aria-hidden="true">precision_manufacturing</mat-icon> <span>Maquinaria</span>
     </a>
     <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">book_online</mat-icon> <span>Reservas</span>
+      <mat-icon aria-hidden="true">book_online</mat-icon> <span>Mis Reservas</span>
     </a>
-    <a mat-button class="nav-link" routerLink="/payments" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">payments</mat-icon> <span>Pagos</span>
-    </a>
-    <a mat-button class="nav-link" routerLink="/favorites" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">favorite</mat-icon> <span>Favoritos</span>
-    </a>
-    <a mat-button class="nav-link" routerLink="/ratings" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">star</mat-icon> <span>Calificaciones</span>
-    </a>
-    <a mat-button class="nav-link" routerLink="/notifications" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">notifications</mat-icon>
-      <span>Notificaciones</span>
-      <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    <a mat-button class="nav-link publish-nav" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario')">
+      <mat-icon aria-hidden="true">add_circle</mat-icon> <span>Publicar</span>
     </a>
     <a mat-button class="nav-link" routerLink="/admin" routerLinkActive="active-link" *ngIf="auth.esTipo('admin')">
       <mat-icon aria-hidden="true">admin_panel_settings</mat-icon> <span>Admin</span>
     </a>
+    <button mat-button class="nav-link more-btn" [matMenuTriggerFor]="moreMenu" *ngIf="!auth.esTipo('admin')" aria-label="Más opciones">
+      <mat-icon aria-hidden="true">more_vert</mat-icon> <span>Más</span>
+    </button>
   </nav>
+  <mat-menu #moreMenu="matMenu">
+    <button mat-menu-item routerLink="/payments">
+      <mat-icon aria-hidden="true">payments</mat-icon> Mis Pagos
+    </button>
+    <button mat-menu-item routerLink="/favorites">
+      <mat-icon aria-hidden="true">favorite</mat-icon> Favoritos
+    </button>
+    <button mat-menu-item routerLink="/ratings">
+      <mat-icon aria-hidden="true">star</mat-icon> Calificaciones
+    </button>
+    <button mat-menu-item routerLink="/notifications">
+      <mat-icon aria-hidden="true">notifications</mat-icon> Notificaciones
+      <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+    </button>
+  </mat-menu>
   <span class="spacer"></span>
   <ng-container *ngIf="auth.isLoggedIn()">
+    <button mat-raised-button class="rent-cta" routerLink="/machinery" *ngIf="auth.esTipo('arrendatario')" [attr.aria-label]="'Alquilar ahora'">
+      <mat-icon aria-hidden="true">bolt</mat-icon> <span class="cta-text">Alquilar</span><span class="cta-sub"> ahora</span>
+    </button>
     <button mat-button class="user-btn" [matMenuTriggerFor]="menu" [attr.aria-label]="'Menú de ' + (auth.getUser()?.nombre || 'usuario')">
       <mat-icon aria-hidden="true">account_circle</mat-icon> {{ auth.getUser()?.nombre }}
     </button>
@@ -47,10 +57,6 @@
       <button mat-menu-item routerLink="/admin" *ngIf="auth.esTipo('admin')">
         <mat-icon aria-hidden="true">admin_panel_settings</mat-icon>
         Panel Admin
-      </button>
-      <button mat-menu-item routerLink="/machinery/new" *ngIf="auth.esTipo('propietario')">
-        <mat-icon aria-hidden="true">add_circle</mat-icon>
-        Publicar Maquinaria
       </button>
       <button mat-menu-item (click)="logout()">
         <mat-icon aria-hidden="true">exit_to_app</mat-icon>
