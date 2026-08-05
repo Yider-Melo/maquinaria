@@ -203,6 +203,7 @@ async function resetPassword(token, newPassword) {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await usuarioRepository.updatePassword(user.id, passwordHash);
+    await refreshTokenRepository.revokeAllByUser(user.id);
 
     return { success: true };
 }

@@ -27,6 +27,7 @@
           </mat-form-field>
         </div>
         <p class="auth-hint">Usa el correo con el que te registraste. Si falla, se mostrará el motivo aquí.</p>
+        <p class="forgot-link"><a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a></p>
         <div class="error-box" *ngIf="error">
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>
