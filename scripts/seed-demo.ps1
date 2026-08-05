@@ -25,7 +25,7 @@ VALUES
   ('a3000000-0000-0000-0000-000000000001', 'maria@rentamaq.com',          '$hash', 'María',    'Gómez',     '3000000007', 'arrendatario', true, true, 'Cundinamarca'),
   ('a3000000-0000-0000-0000-000000000002', 'andres@rentamaq.com',         '$hash', 'Andrés',   'Vega',      '3000000008', 'arrendatario', true, true, 'Antioquia'),
   ('a3000000-0000-0000-0000-000000000003', 'sofia@rentamaq.com',          '$hash', 'Sofía',    'López',     '3000000009', 'arrendatario', true, true, 'Valle del Cauca')
-ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nombre = EXCLUDED.nombre, apellido = EXCLUDED.apellido, tipo_usuario = EXCLUDED.tipo_usuario, activo = true;
+ON CONFLICT (email) DO UPDATE SET nombre = EXCLUDED.nombre, apellido = EXCLUDED.apellido, tipo_usuario = EXCLUDED.tipo_usuario, activo = true;
 "@
 
 # ============================================================
@@ -34,43 +34,43 @@ ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, nombre = EXCLUDED.nombre,
 # Propietarios: b1xx = Carlos, b2xx = Laura, b3xx = Pedro, b4xx = Ana, b5xx = Jorge
 # ============================================================
 $machinerySql = @"
-INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, precio_por_hora, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento, disponible, activo)
+INSERT INTO maquinaria (id, propietario_id, titulo, descripcion, tipo, marca, modelo, anio, capacidad, estado, precio_por_dia, ubicacion_lat, ubicacion_lng, direccion, ciudad, departamento, disponible, activo)
 VALUES
 -- Carlos (5 máquinas)
-('b1000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000001', 'Excavadora CAT 320', 'Excavadora hidráulica de 22 toneladas para movimiento de tierra.', 'excavadora', 'Caterpillar', '320', 2021, '22 ton', 'excelente', 680000, 95000, 6.2442, -75.5812, 'Cra 42 #18-30', 'Medellín', 'Antioquia', true, true),
-('b1000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000001', 'Retroexcavadora JCB 3CX', 'Equipo versátil para excavación y cargue.', 'retroexcavadora', 'JCB', '3CX', 2020, '1 m³', 'bueno', 420000, 65000, 6.2500, -75.5900, 'Av Oriental #25-10', 'Medellín', 'Antioquia', true, true),
-('b1000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000001', 'Bulldozer Komatsu D65', 'Topador para explanación y trabajos pesados.', 'bulldozer', 'Komatsu', 'D65', 2019, '21 ton', 'excelente', 890000, 130000, 6.2000, -75.5500, 'Zona Ind. Belén', 'Medellín', 'Antioquia', true, true),
-('b1000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000001', 'Montacargas Toyota 8FG', 'Montacargas a gas para bodega.', 'montacargas', 'Toyota', '8FG25', 2022, '2.5 ton', 'nuevo', 260000, 42000, 6.2300, -75.5700, 'Bodega 12', 'Medellín', 'Antioquia', true, true),
-('b1000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000001', 'Rodillo Dynapac CA250', 'Rodillo compactador para asfalto y base.', 'rodillo', 'Dynapac', 'CA250', 2020, '10 ton', 'bueno', 550000, 80000, 6.2600, -75.5600, 'Vía Las Palmas', 'Medellín', 'Antioquia', true, true),
+('b1000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000001', 'Excavadora CAT 320', 'Excavadora hidráulica de 22 toneladas para movimiento de tierra.', 'excavadora', 'Caterpillar', '320', 2021, '22 ton', 'excelente', 680000, 6.2442, -75.5812, 'Cra 42 #18-30', 'Medellín', 'Antioquia', true, true),
+('b1000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000001', 'Retroexcavadora JCB 3CX', 'Equipo versátil para excavación y cargue.', 'retroexcavadora', 'JCB', '3CX', 2020, '1 m³', 'bueno', 420000, 6.2500, -75.5900, 'Av Oriental #25-10', 'Medellín', 'Antioquia', true, true),
+('b1000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000001', 'Bulldozer Komatsu D65', 'Topador para explanación y trabajos pesados.', 'bulldozer', 'Komatsu', 'D65', 2019, '21 ton', 'excelente', 890000, 6.2000, -75.5500, 'Zona Ind. Belén', 'Medellín', 'Antioquia', true, true),
+('b1000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000001', 'Montacargas Toyota 8FG', 'Montacargas a gas para bodega.', 'montacargas', 'Toyota', '8FG25', 2022, '2.5 ton', 'nuevo', 260000, 6.2300, -75.5700, 'Bodega 12', 'Medellín', 'Antioquia', true, true),
+('b1000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000001', 'Rodillo Dynapac CA250', 'Rodillo compactador para asfalto y base.', 'rodillo', 'Dynapac', 'CA250', 2020, '10 ton', 'bueno', 550000, 6.2600, -75.5600, 'Vía Las Palmas', 'Medellín', 'Antioquia', true, true),
 
 -- Laura (5 máquinas)
-('b2000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000002', 'Grúa Liebherr LTM 1050', 'Grúa telescópica para montajes industriales.', 'grua', 'Liebherr', 'LTM 1050', 2019, '50 ton', 'excelente', 1250000, 180000, 3.4516, -76.5320, 'Acopi Yumbo', 'Cali', 'Valle del Cauca', true, true),
-('b2000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000002', 'Minicargador Bobcat S70', 'Cargador compacto para espacios reducidos.', 'minicargador', 'Bobcat', 'S70', 2021, '0.5 m³', 'nuevo', 320000, 50000, 3.4700, -76.5100, 'Carrera 15 #30-20', 'Cali', 'Valle del Cauca', true, true),
-('b2000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000002', 'Motobomba Honda WB30', 'Bomba de agua para achique y riego.', 'motobomba', 'Honda', 'WB30', 2022, '30 m³/h', 'nuevo', 85000, 15000, 3.4300, -76.5400, 'Cl 5 #12-45', 'Cali', 'Valle del Cauca', true, true),
-('b2000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000002', 'Compresor Ingersoll Rand', 'Compresor de aire portátil para herramientas neumáticas.', 'compresor', 'Ingersoll Rand', 'P185W', 2020, '185 CFM', 'excelente', 190000, 30000, 3.4600, -76.5200, 'Zona Ind. Palmira', 'Palmira', 'Valle del Cauca', true, true),
-('b2000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000002', 'Vibroapisonador Wacker', 'Apisonador para compactación de zanjas.', 'apisonador', 'Wacker Neuson', 'BS60', 2021, '60 kg', 'bueno', 65000, 10000, 3.4400, -76.5500, 'Vía Jamundí', 'Jamundí', 'Valle del Cauca', true, true),
+('b2000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000002', 'Grúa Liebherr LTM 1050', 'Grúa telescópica para montajes industriales.', 'grua', 'Liebherr', 'LTM 1050', 2019, '50 ton', 'excelente', 1250000, 3.4516, -76.5320, 'Acopi Yumbo', 'Cali', 'Valle del Cauca', true, true),
+('b2000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000002', 'Minicargador Bobcat S70', 'Cargador compacto para espacios reducidos.', 'minicargador', 'Bobcat', 'S70', 2021, '0.5 m³', 'nuevo', 320000, 3.4700, -76.5100, 'Carrera 15 #30-20', 'Cali', 'Valle del Cauca', true, true),
+('b2000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000002', 'Motobomba Honda WB30', 'Bomba de agua para achique y riego.', 'motobomba', 'Honda', 'WB30', 2022, '30 m³/h', 'nuevo', 85000, 3.4300, -76.5400, 'Cl 5 #12-45', 'Cali', 'Valle del Cauca', true, true),
+('b2000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000002', 'Compresor Ingersoll Rand', 'Compresor de aire portátil para herramientas neumáticas.', 'compresor', 'Ingersoll Rand', 'P185W', 2020, '185 CFM', 'excelente', 190000, 3.4600, -76.5200, 'Zona Ind. Palmira', 'Palmira', 'Valle del Cauca', true, true),
+('b2000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000002', 'Vibroapisonador Wacker', 'Apisonador para compactación de zanjas.', 'apisonador', 'Wacker Neuson', 'BS60', 2021, '60 kg', 'bueno', 65000, 3.4400, -76.5500, 'Vía Jamundí', 'Jamundí', 'Valle del Cauca', true, true),
 
 -- Pedro (5 máquinas)
-('b3000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000003', 'Cargador frontal CAT 950', 'Cargador de ruedas para minería y construcción.', 'cargador', 'Caterpillar', '950', 2020, '3.5 m³', 'bueno', 750000, 110000, 10.3910, -75.4794, 'Mamonal', 'Cartagena', 'Bolívar', true, true),
-('b3000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000003', 'Martillo hidráulico Montabert', 'Martillo para demolición acoplable a excavadora.', 'martillo', 'Montabert', 'V1200', 2021, '1.2 ton', 'excelente', 380000, 55000, 10.4000, -75.4800, 'Zona Franca', 'Cartagena', 'Bolívar', true, true),
-('b3000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000003', 'Planta eléctrica Cummins', 'Generador diésel de respaldo.', 'planta', 'Cummins', 'C200D5', 2022, '200 kVA', 'nuevo', 480000, 70000, 10.3700, -75.4600, 'Barrio El Bosque', 'Cartagena', 'Bolívar', true, true),
-('b3000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000003', 'Motocultor Yanmar YM359', 'Tractor pequeño para labranza y agricultura.', 'motocultor', 'Yanmar', 'YM359', 2021, '35 HP', 'excelente', 210000, 35000, 10.4200, -75.5000, 'Vía Turbaco', 'Turbaco', 'Bolívar', true, true),
-('b3000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000003', 'Andamio tubular', 'Juego de andamios metálicos para construcción.', 'andamio', 'Genérico', '2m', 2023, '500 kg', 'nuevo', 45000, 8000, 10.3800, -75.4900, 'Centro Histórico', 'Cartagena', 'Bolívar', true, true),
+('b3000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000003', 'Cargador frontal CAT 950', 'Cargador de ruedas para minería y construcción.', 'cargador', 'Caterpillar', '950', 2020, '3.5 m³', 'bueno', 750000, 10.3910, -75.4794, 'Mamonal', 'Cartagena', 'Bolívar', true, true),
+('b3000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000003', 'Martillo hidráulico Montabert', 'Martillo para demolición acoplable a excavadora.', 'martillo', 'Montabert', 'V1200', 2021, '1.2 ton', 'excelente', 380000, 10.4000, -75.4800, 'Zona Franca', 'Cartagena', 'Bolívar', true, true),
+('b3000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000003', 'Planta eléctrica Cummins', 'Generador diésel de respaldo.', 'planta', 'Cummins', 'C200D5', 2022, '200 kVA', 'nuevo', 480000, 10.3700, -75.4600, 'Barrio El Bosque', 'Cartagena', 'Bolívar', true, true),
+('b3000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000003', 'Motocultor Yanmar YM359', 'Tractor pequeño para labranza y agricultura.', 'motocultor', 'Yanmar', 'YM359', 2021, '35 HP', 'excelente', 210000, 10.4200, -75.5000, 'Vía Turbaco', 'Turbaco', 'Bolívar', true, true),
+('b3000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000003', 'Andamio tubular', 'Juego de andamios metálicos para construcción.', 'andamio', 'Genérico', '2m', 2023, '500 kg', 'nuevo', 45000, 10.3800, -75.4900, 'Centro Histórico', 'Cartagena', 'Bolívar', true, true),
 
 -- Ana (5 máquinas)
-('b4000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000004', 'Motoniveladora CAT 140', 'Niveladora para acabado de terracerías.', 'motoniveladora', 'Caterpillar', '140', 2020, '30 ton', 'excelente', 820000, 120000, 7.1193, -73.1227, 'Girón', 'Bucaramanga', 'Santander', true, true),
-('b4000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000004', 'Pavimentadora Finlay 883', 'Planta pavimentadora móvil para asfalto.', 'pavimentadora', 'Finlay', '883', 2019, '150 TPH', 'bueno', 950000, 140000, 7.1300, -73.1100, 'Zona Ind. Pedregosa', 'Bucaramanga', 'Santander', true, true),
-('b4000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000004', 'Cortadora de concreto Husqvarna', 'Cortadora de pisos para juntas y demolición.', 'cortadora', 'Husqvarna', 'FS 513', 2022, '13 HP', 'nuevo', 110000, 18000, 7.1000, -73.1000, 'Cabecera', 'Bucaramanga', 'Santander', true, true),
-('b4000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000004', 'Mezcladora de concreto IMER', 'Mezcladora eléctrica para obra.', 'mezcladora', 'IMER', 'Sintesi 350', 2023, '350 L', 'nuevo', 72000, 12000, 7.1400, -73.1400, 'Florida', 'Bucaramanga', 'Santander', true, true),
-('b4000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000004', 'Torre de iluminación Allmand', 'Torre portátil con 4 lámparas LED.', 'torre', 'Allmand', 'Night-Lite', 2021, '6 m', 'bueno', 180000, 28000, 7.1100, -73.1300, 'Vía Piedecuesta', 'Piedecuesta', 'Santander', true, true),
+('b4000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000004', 'Motoniveladora CAT 140', 'Niveladora para acabado de terracerías.', 'motoniveladora', 'Caterpillar', '140', 2020, '30 ton', 'excelente', 820000, 7.1193, -73.1227, 'Girón', 'Bucaramanga', 'Santander', true, true),
+('b4000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000004', 'Pavimentadora Finlay 883', 'Planta pavimentadora móvil para asfalto.', 'pavimentadora', 'Finlay', '883', 2019, '150 TPH', 'bueno', 950000, 7.1300, -73.1100, 'Zona Ind. Pedregosa', 'Bucaramanga', 'Santander', true, true),
+('b4000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000004', 'Cortadora de concreto Husqvarna', 'Cortadora de pisos para juntas y demolición.', 'cortadora', 'Husqvarna', 'FS 513', 2022, '13 HP', 'nuevo', 110000, 7.1000, -73.1000, 'Cabecera', 'Bucaramanga', 'Santander', true, true),
+('b4000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000004', 'Mezcladora de concreto IMER', 'Mezcladora eléctrica para obra.', 'mezcladora', 'IMER', 'Sintesi 350', 2023, '350 L', 'nuevo', 72000, 7.1400, -73.1400, 'Florida', 'Bucaramanga', 'Santander', true, true),
+('b4000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000004', 'Torre de iluminación Allmand', 'Torre portátil con 4 lámparas LED.', 'torre', 'Allmand', 'Night-Lite', 2021, '6 m', 'bueno', 180000, 7.1100, -73.1300, 'Vía Piedecuesta', 'Piedecuesta', 'Santander', true, true),
 
 -- Jorge (5 máquinas)
-('b5000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000005', 'Camión volquete Kodiak', 'Volquete para acarreo de materiales.', 'camion', 'Chevrolet', 'Kodiak', 2020, '15 m³', 'excelente', 520000, 78000, 10.9600, -74.7800, 'Vía 40', 'Barranquilla', 'Atlántico', true, true),
-('b5000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000005', 'Tractor agrícola John Deere', 'Tractor para labranza y faenas agrícolas.', 'tractor', 'John Deere', '5075E', 2022, '75 HP', 'nuevo', 600000, 90000, 10.9300, -74.8000, 'Vía Juan Mina', 'Barranquilla', 'Atlántico', true, true),
-('b5000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000005', 'Bomba de concreto Putzmeister', 'Bomba estacionaria para concreto.', 'bomba', 'Putzmeister', 'BSA 1005', 2021, '50 m³/h', 'excelente', 720000, 105000, 10.9800, -74.7600, 'Soledad', 'Soledad', 'Atlántico', true, true),
-('b5000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000005', 'Soldadora Lincoln 305', 'Máquina de soldar multiproceso.', 'soldadora', 'Lincoln Electric', '305G', 2022, '305 A', 'nuevo', 140000, 22000, 10.9000, -74.7900, 'Malambo', 'Malambo', 'Atlántico', true, true),
-('b5000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000005', 'Montacargas Clark C25', 'Montacargas diésel para patio.', 'montacargas', 'Clark', 'C25L', 2020, '2.5 ton', 'bueno', 280000, 45000, 10.9700, -74.7700, 'Baranovista', 'Barranquilla', 'Atlántico', true, true)
-ON CONFLICT (id) DO UPDATE SET titulo = EXCLUDED.titulo, descripcion = EXCLUDED.descripcion, tipo = EXCLUDED.tipo, marca = EXCLUDED.marca, modelo = EXCLUDED.modelo, precio_por_dia = EXCLUDED.precio_por_dia, precio_por_hora = EXCLUDED.precio_por_hora, direccion = EXCLUDED.direccion, ciudad = EXCLUDED.ciudad, departamento = EXCLUDED.departamento, disponible = true, activo = true;
+('b5000000-0000-0000-0000-000000000001', 'a2000000-0000-0000-0000-000000000005', 'Camión volquete Kodiak', 'Volquete para acarreo de materiales.', 'camion', 'Chevrolet', 'Kodiak', 2020, '15 m³', 'excelente', 520000, 10.9600, -74.7800, 'Vía 40', 'Barranquilla', 'Atlántico', true, true),
+('b5000000-0000-0000-0000-000000000002', 'a2000000-0000-0000-0000-000000000005', 'Tractor agrícola John Deere', 'Tractor para labranza y faenas agrícolas.', 'tractor', 'John Deere', '5075E', 2022, '75 HP', 'nuevo', 600000, 10.9300, -74.8000, 'Vía Juan Mina', 'Barranquilla', 'Atlántico', true, true),
+('b5000000-0000-0000-0000-000000000003', 'a2000000-0000-0000-0000-000000000005', 'Bomba de concreto Putzmeister', 'Bomba estacionaria para concreto.', 'bomba', 'Putzmeister', 'BSA 1005', 2021, '50 m³/h', 'excelente', 720000, 10.9800, -74.7600, 'Soledad', 'Soledad', 'Atlántico', true, true),
+('b5000000-0000-0000-0000-000000000004', 'a2000000-0000-0000-0000-000000000005', 'Soldadora Lincoln 305', 'Máquina de soldar multiproceso.', 'soldadora', 'Lincoln Electric', '305G', 2022, '305 A', 'nuevo', 140000, 10.9000, -74.7900, 'Malambo', 'Malambo', 'Atlántico', true, true),
+('b5000000-0000-0000-0000-000000000005', 'a2000000-0000-0000-0000-000000000005', 'Montacargas Clark C25', 'Montacargas diésel para patio.', 'montacargas', 'Clark', 'C25L', 2020, '2.5 ton', 'bueno', 280000, 10.9700, -74.7700, 'Baranovista', 'Barranquilla', 'Atlántico', true, true)
+ON CONFLICT (id) DO UPDATE SET titulo = EXCLUDED.titulo, descripcion = EXCLUDED.descripcion, tipo = EXCLUDED.tipo, marca = EXCLUDED.marca, modelo = EXCLUDED.modelo, precio_por_dia = EXCLUDED.precio_por_dia, direccion = EXCLUDED.direccion, ciudad = EXCLUDED.ciudad, departamento = EXCLUDED.departamento, disponible = true, activo = true;
 "@
 Invoke-SeedSql 'maquinaria-machinery-db-1' 'rentamaq_machinery' $machinerySql
 
@@ -103,11 +103,13 @@ $imageUrls = @(
   'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1200&q=80'
 )
 
-# IDs máquina: b100 a b124
+# IDs máquina: b1000000-...-0001 a b5000000-...-0005 (grupo = 1..5, dentro = 1..5)
 $imageValues = for ($i = 0; $i -lt 25; $i++) {
-    $mid = [string](100 + $i)
-    $iid = [string](100 + $i)
-    "  ('c$('0'*35)$iid', 'b$mid$('0'*35)001', '$($imageUrls[$i])', 0, true)"
+    $group = [Math]::Floor($i / 5) + 1
+    $within = ($i % 5) + 1
+    $mid = "b${group}000000-0000-0000-0000-00000000000${within}"
+    $iid = "c${group}000000-0000-0000-0000-00000000000${within}"
+    "  ('$iid', '$mid', '$($imageUrls[$i])', 0, true)"
 }
 $imageSql = "INSERT INTO imagen_maquinaria (id, maquinaria_id, url, orden, es_portada) VALUES`n$($imageValues -join ",`n")`nON CONFLICT (id) DO NOTHING;"
 Invoke-SeedSql 'maquinaria-machinery-db-1' 'rentamaq_machinery' $imageSql
