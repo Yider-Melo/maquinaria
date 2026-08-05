@@ -69,10 +69,11 @@ export class Profile implements OnInit {
       next: (res) => {
         this.profile = res.data;
         this.loading = false;
+        this.cdr.detectChanges();
         if (this.canManageMachineryImages) { this.loadOwnerMachines(); this.loadOwnerRequests(); this.loadBankAccount(); }
         if (this.canUseRenterProfile) { this.loadRenterBookings(); this.loadRenterPayments(); }
       },
-      error: () => { this.error = 'No se pudo cargar tu perfil.'; this.loading = false; }
+      error: () => { this.error = 'No se pudo cargar tu perfil.'; this.loading = false; this.cdr.detectChanges(); }
     });
   }
 
@@ -134,21 +135,21 @@ export class Profile implements OnInit {
 
   loadRenterBookings(): void {
     this.api.get<Booking[]>('/bookings/my-bookings', { size: 50 }).subscribe({
-      next: (res) => this.renterBookings = res.data || [],
+      next: (res) => { this.renterBookings = res.data || []; this.cdr.detectChanges(); },
       error: () => this.error = 'No se pudieron cargar tus reservas.'
     });
   }
 
   loadRenterPayments(): void {
     this.api.get<Payment[]>('/payments/my-payments', { page: 1, size: 10 }).subscribe({
-      next: (res) => this.renterPayments = res.data || [],
+      next: (res) => { this.renterPayments = res.data || []; this.cdr.detectChanges(); },
       error: () => {}
     });
   }
 
   loadOwnerRequests(): void {
     this.api.get<Booking[]>('/bookings/my-listings', { page: 1, size: 100 }).subscribe({
-      next: (res) => this.ownerRequests = res.data || [],
+      next: (res) => { this.ownerRequests = res.data || []; this.cdr.detectChanges(); },
       error: () => this.error = 'No se pudieron cargar las solicitudes de tus equipos.'
     });
   }
@@ -159,6 +160,7 @@ export class Profile implements OnInit {
         const r = res as any;
         this.ownerMachTotal = r?.pagination?.total || 0;
         this.ownerMachines = r?.data || [];
+        this.cdr.detectChanges();
         if (this.ownerMachines.length && !this.selectedMachine) this.selectMachine(this.ownerMachines[0]);
         if (this.ownerMachines.length && this.selectedMachine && !this.ownerMachines.find(m => m.id === this.selectedMachine.id)) {
           this.selectMachine(this.ownerMachines[0]);
@@ -258,9 +260,9 @@ export class Profile implements OnInit {
   saveProfile(): void {
     this.saving = true; this.error = '';
     const payload = {
-      nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono,
-      departamento: this.profile.departamento, ciudad: this.profile.ciudad, numero_documento: this.profile.numero_documento,
-      foto_url: this.profile.foto_url
+      nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono || '',
+      departamento: this.profile.departamento || '', ciudad: this.profile.ciudad || '',
+      numero_documento: this.profile.numero_documento || '', foto_url: this.profile.foto_url || ''
     };
     this.api.patch<Usuario>('/auth/profile', payload).subscribe({
       next: (res) => {
@@ -269,8 +271,9 @@ export class Profile implements OnInit {
         localStorage.setItem('rentamaq_user', JSON.stringify({ ...current, ...res.data }));
         this.snackBar.open('Perfil actualizado.', 'Cerrar', { duration: 3000 });
         this.saving = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => { this.error = err.error?.error?.message || 'No se pudo actualizar el perfil.'; this.saving = false; }
+      error: (err) => { this.error = err.error?.error?.message || 'No se pudo actualizar el perfil.'; this.saving = false; this.cdr.detectChanges(); }
     });
   }
 
@@ -290,8 +293,8 @@ export class Profile implements OnInit {
   changePassword(): void {
     this.passwordSaving = true; this.error = '';
     this.api.put<Usuario>('/auth/profile/password', this.password).subscribe({
-      next: () => { this.password = { currentPassword: '', newPassword: '' }; this.snackBar.open('Contraseña actualizada.', 'Cerrar', { duration: 3000 }); this.passwordSaving = false; },
-      error: (err) => { this.error = err.error?.error?.message || 'No se pudo cambiar la contraseña.'; this.passwordSaving = false; }
+      next: () => { this.password = { currentPassword: '', newPassword: '' }; this.snackBar.open('Contraseña actualizada.', 'Cerrar', { duration: 3000 }); this.passwordSaving = false; this.cdr.detectChanges(); },
+      error: (err) => { this.error = err.error?.error?.message || 'No se pudo cambiar la contraseña.'; this.passwordSaving = false; this.cdr.detectChanges(); }
     });
   }
 
