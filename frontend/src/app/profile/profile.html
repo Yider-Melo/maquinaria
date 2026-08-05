@@ -1,10 +1,10 @@
 <div class="profile-page" *ngIf="!loading; else loadingTmpl">
-  <section class="profile-hero">
+  <section class="profile-hero" appReveal>
     <img [src]="profile.foto_url || 'https://ui-avatars.com/api/?name=' + profile.nombre + '+' + profile.apellido + '&background=0f766e&color=fff'" alt="Avatar">
     <div><span>{{ profile.tipo_usuario === 'propietario' ? 'Perfil de arrendador' : profile.tipo_usuario === 'admin' ? 'Perfil administrativo' : 'Perfil de arrendatario' }}</span><h1>{{ profile.nombre }} {{ profile.apellido }}</h1><p>{{ profile.email }} · {{ profile.tipo_usuario }}</p></div>
   </section>
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon>{{ error }}</div>
-  <div class="profile-grid">
+  <div class="profile-grid" appReveal [appReveal]="100">
     <mat-card>
       <mat-card-header><mat-card-title>Datos personales</mat-card-title></mat-card-header>
       <mat-card-content>
@@ -108,7 +108,7 @@
       <h3>Tus equipos ({{ ownerMachTotal }})</h3>
       <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
         <div class="machine-image">
-          <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo">
+          <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo" loading="lazy">
           <span [class.unavailable]="machine.disponible === false">{{ machine.disponible === false ? 'No disponible' : 'Disponible' }}</span>
         </div>
         <mat-card-content>
@@ -210,7 +210,7 @@
         <app-loading *ngIf="imageLoading"></app-loading>
         <div class="vehicle-gallery" *ngIf="!imageLoading && machineImages.length > 0">
           <div class="vehicle-photo" *ngFor="let image of machineImages">
-            <img [src]="image.url" [alt]="selectedMachine?.titulo">
+            <img [src]="image.url" [alt]="selectedMachine?.titulo" loading="lazy">
             <button mat-icon-button color="warn" type="button" (click)="deleteMachineImage(image)" aria-label="Eliminar foto"><mat-icon>delete</mat-icon></button>
           </div>
         </div>

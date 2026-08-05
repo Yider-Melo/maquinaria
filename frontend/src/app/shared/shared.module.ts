@@ -27,6 +27,7 @@ import { Footer } from './footer/footer.component';
 import { Loading } from './loading/loading.component';
 import { SkeletonCard } from './skeleton-card/skeleton-card.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+import { RevealDirective } from './reveal/reveal.directive';
 import { FormatDatePipe } from './pipes/format-date.pipe';
 import { FormatDateTimePipe } from './pipes/format-datetime.pipe';
 import { EstadoLabelPipe } from './pipes/estado-label.pipe';
@@ -36,6 +37,7 @@ import { FormatIdPipe } from './pipes/format-id.pipe';
   declarations: [Header, Footer, Loading, SkeletonCard, BreadcrumbComponent],
   imports: [
     CommonModule,
+    RevealDirective,
     FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe,
     RouterModule,
     FormsModule,
@@ -62,7 +64,7 @@ import { FormatIdPipe } from './pipes/format-id.pipe';
     MatToolbarModule, MatButtonModule, MatCardModule, MatInputModule,
     MatFormFieldModule, MatSelectModule, MatAutocompleteModule, MatMenuModule, MatTabsModule, MatIconModule,
     MatDialogModule, MatSnackBarModule, MatBadgeModule, MatCheckboxModule, MatDividerModule, MatRippleModule,
-    Header, Footer, Loading, SkeletonCard, BreadcrumbComponent, FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe
+    Header, Footer, Loading, SkeletonCard, BreadcrumbComponent, RevealDirective, FormatDatePipe, FormatDateTimePipe, EstadoLabelPipe, FormatIdPipe
   ]
 })
 export class SharedModule {}

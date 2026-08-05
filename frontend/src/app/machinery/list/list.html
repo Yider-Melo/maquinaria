@@ -1,5 +1,5 @@
 <div class="container">
-  <div class="list-hero">
+  <div class="list-hero" appReveal>
     <div>
       <span class="eyebrow">{{ auth.esTipo('propietario') ? 'Mis equipos' : 'Catálogo operativo' }}</span>
       <h1>{{ auth.esTipo('propietario') ? 'Tus máquinas publicadas' : 'Encuentra maquinaria lista para trabajar' }}</h1>
@@ -9,7 +9,7 @@
       <mat-icon>add</mat-icon> Publicar maquinaria
     </button>
   </div>
-  <div class="filters-card">
+  <div class="filters-card" appReveal [appReveal]="90">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Buscar máquina</mat-label>
       <input matInput [(ngModel)]="filters.q" [matAutocomplete]="machineSuggestions" (input)="onQueryChange()" (keyup.enter)="search()" placeholder="excavadora CAT 320">
@@ -77,7 +77,7 @@
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
-      <mat-card *ngFor="let item of items; trackBy: trackById" class="card" tabindex="0" role="link" matRipple [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
+      <mat-card *ngFor="let item of items; trackBy: trackById; let i = index" class="card" tabindex="0" role="link" matRipple appReveal [appReveal]="i * 70" [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
         <div class="card-img-wrap">
           <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
           <button class="fav-btn" [class.active]="item.favorito" (click)="toggleFavorite(item, $event)" matRipple aria-label="Marcar como favorito">

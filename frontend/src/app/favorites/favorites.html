@@ -1,8 +1,8 @@
 <div class="container">
-  <div class="page-header"><h1>Mis Favoritos</h1></div>
+  <div class="page-header" appReveal><h1>Mis Favoritos</h1></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="grid" *ngIf="items.length > 0">
-      <mat-card *ngFor="let item of items" class="card" matRipple [routerLink]="['/machinery', item.id]">
+      <mat-card *ngFor="let item of items; let i = index" class="card" matRipple appReveal [appReveal]="i * 70" [routerLink]="['/machinery', item.id]">
         <div class="card-img-wrap">
           <img class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
           <button class="fav-btn active" (click)="remove(item, $event)" matRipple aria-label="Quitar de favoritos">

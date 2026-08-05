@@ -89,6 +89,37 @@ a:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .error-box { color: var(--rm-danger) !important; background: #fff2e8 !important; border-color: #efc7a5 !important; }
 .hint, .muted, .subtitle { color: var(--rm-muted) !important; }
 
+/* ===== Microinteracciones, feedback táctil y transiciones ===== */
+html { scroll-behavior: smooth; }
+button, a, .clickable { -webkit-tap-highlight-color: transparent; }
+
+button { transition: transform .16s cubic-bezier(.4,0,.2,1), opacity .2s, background-color .25s, box-shadow .25s, color .25s; }
+button:active:not(:disabled) { transform: scale(.95); }
+
+.mat-mdc-button-base { transition: transform .18s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1), background-color .25s, border-color .25s, color .25s, filter .2s !important; }
+.mat-mdc-button-base:active:not([disabled]) { transform: scale(.95); }
+.mat-mdc-button-base:hover:not([disabled]) { filter: brightness(1.05); }
+.mat-mdc-button-base mat-icon { transition: transform .22s cubic-bezier(.34,1.56,.64,1); }
+.mat-mdc-button-base:hover:not(:active) mat-icon { transform: scale(1.18); }
+
+.card:active, .stat-card:active { transform: translateY(-1px) scale(.985); }
+
+/* ===== Revelado progresivo al hacer scroll ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1) !important;
+  will-change: opacity, transform;
+}
+.reveal.reveal-in { opacity: 1; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none !important; }
+  .mat-mdc-button-base:active:not([disabled]), button:active:not(:disabled) { transform: none; }
+  .mat-mdc-button-base mat-icon, .mat-mdc-button-base:hover:not(:active) mat-icon { transform: none; transition: none; }
+}
+
 table { width: 100%; }
 .admin-table { display: block; width: 100%; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
 .admin-table thead, .admin-table tbody, .admin-table tr { width: 100%; }

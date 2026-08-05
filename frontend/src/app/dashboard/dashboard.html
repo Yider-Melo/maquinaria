@@ -1,5 +1,5 @@
 <div class="dashboard">
-  <div class="welcome">
+  <div class="welcome" appReveal>
     <div class="welcome-text">
       <span class="eyebrow">RentaMaq operativo</span>
       <h1>{{ roleTitle }}</h1>
@@ -16,28 +16,28 @@
 
   <ng-container *ngIf="!loading; else loadingTmpl">
     <div class="stats-grid">
-      <mat-card class="stat-card" routerLink="/machinery" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <mat-card class="stat-card" appReveal routerLink="/machinery" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">construction</mat-icon>
         <div class="stat-info">
           <span class="stat-value">{{ ownerAvailableMachines }}</span>
           <span class="stat-label">Máquinas Disponibles</span>
         </div>
       </mat-card>
-      <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <mat-card class="stat-card" appReveal [appReveal]="80" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">assignment</mat-icon>
         <div class="stat-info">
           <span class="stat-value">{{ stats.misListados || 0 }}</span>
           <span class="stat-label">Solicitudes de Reserva</span>
         </div>
       </mat-card>
-      <mat-card class="stat-card" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+      <mat-card class="stat-card" appReveal [appReveal]="160" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
         <mat-icon class="stat-icon">calendar_today</mat-icon>
         <div class="stat-info">
           <span class="stat-value">{{ stats.misReservas || 0 }}</span>
           <span class="stat-label">Mis Reservas</span>
         </div>
       </mat-card>
-      <mat-card class="stat-card" routerLink="/notifications">
+      <mat-card class="stat-card" appReveal [appReveal]="240" routerLink="/notifications">
         <mat-icon class="stat-icon" [class.warn]="stats.noLeidas > 0">notifications</mat-icon>
         <div class="stat-info">
           <span class="stat-value" [class.has-unread]="stats.noLeidas > 0">{{ stats.noLeidas || 0 }}</span>
@@ -47,7 +47,7 @@
     </div>
 
     <div class="role-panel">
-      <div class="panel-card" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+      <div class="panel-card" appReveal *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
         <mat-icon>travel_explore</mat-icon>
         <h3>Para alquilar más rápido</h3>
         <p>Usa filtros por ciudad, categoría y precio. En el detalle puedes solicitar la reserva con fechas y total estimado.</p>
@@ -55,13 +55,13 @@
           <button mat-stroked-button routerLink="/machinery">Explorar catálogo</button>
         </div>
       </div>
-      <div class="panel-card" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+      <div class="panel-card" appReveal [appReveal]="120" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
         <mat-icon>inventory_2</mat-icon>
         <h3>Para vender mejor tus equipos</h3>
         <p>Publica fotos claras, capacidad, precio diario y ubicación. Las solicitudes aparecerán en reservas.</p>
         <button mat-stroked-button routerLink="/machinery/new">Publicar equipo</button>
       </div>
-      <div class="panel-card" *ngIf="auth.esTipo('admin')">
+      <div class="panel-card" appReveal [appReveal]="240" *ngIf="auth.esTipo('admin')">
         <mat-icon>admin_panel_settings</mat-icon>
         <h3>Control administrativo</h3>
         <p>Revisa métricas, usuarios, maquinaria activa y reportes desde el panel de administración.</p>
@@ -69,7 +69,7 @@
       </div>
     </div>
 
-    <div class="owner-workbench" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+    <div class="owner-workbench" appReveal *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
       <div class="workbench-header"><div><h2>Operación del propietario</h2><p>Vista rápida de tus equipos, solicitudes e ingresos estimados.</p></div><button mat-raised-button routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar máquina</button></div>
       <div class="owner-kpis">
         <mat-card><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Máquinas publicadas</span></mat-card>
@@ -88,25 +88,25 @@
       </div>
     </div>
 
-    <div class="quick-actions">
+    <div class="quick-actions" appReveal>
       <h2>Acciones Rápidas</h2>
       <div class="actions-grid">
-        <button mat-raised-button color="primary" routerLink="/machinery">
+        <button mat-raised-button color="primary" routerLink="/machinery" appReveal>
           <mat-icon>search</mat-icon> Buscar Maquinaria
         </button>
-        <button mat-raised-button color="accent" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+        <button mat-raised-button color="accent" routerLink="/machinery/new" appReveal [appReveal]="70" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
           <mat-icon>add_circle</mat-icon> Publicar Maquinaria
         </button>
-        <button mat-raised-button color="primary" routerLink="/bookings" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
+        <button mat-raised-button color="primary" routerLink="/bookings" appReveal [appReveal]="140" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
           <mat-icon>book_online</mat-icon> Mis Reservas
         </button>
-        <button mat-raised-button color="accent" routerLink="/bookings" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
+        <button mat-raised-button color="accent" routerLink="/bookings" appReveal [appReveal]="210" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
           <mat-icon>list_alt</mat-icon> Gestionar Solicitudes
         </button>
-        <button mat-raised-button color="primary" routerLink="/payments">
+        <button mat-raised-button color="primary" routerLink="/payments" appReveal [appReveal]="280">
           <mat-icon>payments</mat-icon> Ver Pagos
         </button>
-        <button mat-raised-button color="accent" routerLink="/ratings">
+        <button mat-raised-button color="accent" routerLink="/ratings" appReveal [appReveal]="350">
           <mat-icon>star</mat-icon> Calificaciones
         </button>
       </div>

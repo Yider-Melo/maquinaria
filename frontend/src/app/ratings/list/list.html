@@ -1,9 +1,9 @@
 <div class="container">
-  <div class="page-header"><h1>Mis Calificaciones</h1></div>
+  <div class="page-header" appReveal><h1>Mis Calificaciones</h1></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
     <mat-tab-group animationDuration="300ms">
       <mat-tab label="Recibidas">
-        <mat-card *ngFor="let r of receivedRatings" class="rating-card" matRipple [routerLink]="['/ratings', r.id]">
+        <mat-card *ngFor="let r of receivedRatings; let i = index" class="rating-card" matRipple appReveal [appReveal]="i * 60" [routerLink]="['/ratings', r.id]">
           <mat-card-content>
             <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
               <ng-container *ngFor="let star of [1,2,3,4,5]">
@@ -29,7 +29,7 @@
         </div>
       </mat-tab>
       <mat-tab label="Escritas por mí">
-        <mat-card *ngFor="let r of ratings" class="rating-card" matRipple [routerLink]="['/ratings', r.id]">
+        <mat-card *ngFor="let r of ratings; let i = index" class="rating-card" matRipple appReveal [appReveal]="i * 60" [routerLink]="['/ratings', r.id]">
           <mat-card-content>
             <div class="stars" [attr.aria-label]="'Puntuación: ' + r.puntuacion + ' de 5'">
               <ng-container *ngFor="let star of [1,2,3,4,5]">

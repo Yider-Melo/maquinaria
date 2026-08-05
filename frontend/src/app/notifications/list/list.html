@@ -1,5 +1,5 @@
 <div class="container">
-  <div class="page-header">
+  <div class="page-header" appReveal>
     <h1>Notificaciones</h1>
     <button mat-stroked-button color="primary" class="mark-btn" (click)="markAllAsRead()" *ngIf="notifications.length">
       <mat-icon>done_all</mat-icon> Marcar todas leídas
@@ -7,7 +7,7 @@
   </div>
 
   <ng-container *ngIf="!loading; else loadingTmpl">
-    <mat-card *ngFor="let n of notifications" class="notif-card" [class.unread]="!n.leida" matRipple (click)="goToNotification(n)">
+    <mat-card *ngFor="let n of notifications; let i = index" class="notif-card" [class.unread]="!n.leida" matRipple appReveal [appReveal]="i * 60" (click)="goToNotification(n)">
       <mat-card-content style="padding:16px;">
         <div class="notif-header">
           <mat-icon class="notif-icon" [class]="getIconClase(n.tipo)">{{ getIcon(n.tipo) }}</mat-icon>

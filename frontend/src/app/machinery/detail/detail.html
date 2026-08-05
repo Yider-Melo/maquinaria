@@ -3,7 +3,7 @@
     <mat-icon>arrow_back</mat-icon> Volver
   </button>
   <div class="detail-grid">
-    <div class="images-section">
+    <div class="images-section" appReveal>
       <div class="main-image" *ngIf="images.length > 0">
         <button class="nav-btn nav-prev" (click)="prevImage()" *ngIf="images.length > 1" aria-label="Imagen anterior"><mat-icon>chevron_left</mat-icon></button>
         <img [src]="selectedImage || fallbackImage" alt="{{ item.titulo }}" loading="lazy">
@@ -25,7 +25,7 @@
         <input #fileInput type="file" accept="image/*" style="display:none" (change)="onFileSelected($event)">
       </div>
     </div>
-    <div class="info">
+    <div class="info" appReveal [appReveal]="120">
       <div class="title-row">
         <h1>{{ item.titulo }}</h1>
         <button class="fav-btn" [class.active]="item.favorito" (click)="toggleFavorite($event)" matRipple aria-label="Marcar como favorito">

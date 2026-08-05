@@ -8,13 +8,14 @@ import { MatRippleModule } from '@angular/material/core';
 import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
 import { Machinery } from '../core/models';
+import { RevealDirective } from '../shared/reveal/reveal.directive';
 
 @Component({
   selector: 'app-favorites',
   templateUrl: './favorites.html',
   styleUrls: ['./favorites.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatRippleModule]
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatRippleModule, RevealDirective]
 })
 export class FavoritesComponent implements OnInit {
   items: Machinery[] = []; loading = true;

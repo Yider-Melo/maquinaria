@@ -1,5 +1,5 @@
 <div class="container">
-  <div class="page-header"><h1>{{ auth.esTipo('propietario') ? 'Pagos recibidos' : 'Mis Pagos' }}</h1></div>
+  <div class="page-header" appReveal><h1>{{ auth.esTipo('propietario') ? 'Pagos recibidos' : 'Mis Pagos' }}</h1></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
   <div class="search-bar">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -19,7 +19,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-    <mat-card *ngFor="let p of filteredPayments" class="payment-card" matRipple [routerLink]="['/payments', p.id]">
+    <mat-card *ngFor="let p of filteredPayments; let i = index" class="payment-card" matRipple appReveal [appReveal]="i * 60" [routerLink]="['/payments', p.id]">
       <mat-card-header>
         <mat-card-title>
           <mat-icon style="vertical-align:middle;margin-right:8px;color:#1976d2;">receipt</mat-icon>
