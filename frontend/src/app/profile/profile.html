@@ -1,222 +1,293 @@
 <div class="profile-page" *ngIf="!loading; else loadingTmpl">
   <section class="profile-hero" appReveal>
-    <img [src]="profile.foto_url || 'https://ui-avatars.com/api/?name=' + profile.nombre + '+' + profile.apellido + '&background=0f766e&color=fff'" alt="Avatar">
-    <div><span>{{ profile.tipo_usuario === 'propietario' ? 'Perfil de arrendador' : profile.tipo_usuario === 'admin' ? 'Perfil administrativo' : 'Perfil de arrendatario' }}</span><h1>{{ profile.nombre }} {{ profile.apellido }}</h1><p>{{ profile.email }} · {{ profile.tipo_usuario }}</p></div>
+    <div class="avatar-wrap">
+      <img [src]="profile.foto_url || 'https://ui-avatars.com/api/?name=' + profile.nombre + '+' + profile.apellido + '&background=0f766e&color=fff'" alt="Avatar">
+      <button type="button" class="avatar-upload" (click)="avatarInput.click()" aria-label="Subir foto de perfil"><mat-icon>photo_camera</mat-icon></button>
+      <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)">
+    </div>
+    <div>
+      <span>{{ profile.tipo_usuario === 'propietario' ? 'Perfil de arrendador' : profile.tipo_usuario === 'admin' ? 'Perfil administrativo' : 'Perfil de arrendatario' }}</span>
+      <h1>{{ profile.nombre }} {{ profile.apellido }}</h1>
+      <p class="hero-meta"><mat-icon>mail</mat-icon> {{ profile.email }} · {{ profile.tipo_usuario }}</p>
+      <p class="hero-meta" *ngIf="profile.telefono"><mat-icon>phone</mat-icon> {{ profile.telefono }}</p>
+      <p class="hero-meta" *ngIf="profile.ciudad || profile.departamento"><mat-icon>location_on</mat-icon> {{ profile.ciudad }}{{ profile.departamento ? ', ' + profile.departamento : '' }}</p>
+    </div>
   </section>
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon>{{ error }}</div>
-  <div class="profile-grid" appReveal [appReveal]="100">
-    <mat-card>
-      <mat-card-header><mat-card-title>Datos personales</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="profile.nombre"></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="profile.apellido"></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="profile.telefono"></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Departamento</mat-label>
-          <mat-select [(ngModel)]="profile.departamento">
-            <mat-option value="">Seleccionar</mat-option>
-            <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Foto URL</mat-label><input matInput [(ngModel)]="profile.foto_url" placeholder="https://..."></mat-form-field>
-        <div class="verify-row"><mat-icon>{{ profile.email_verificado ? 'verified' : 'mark_email_unread' }}</mat-icon><span>{{ profile.email_verificado ? 'Correo verificado' : 'Correo pendiente de verificación' }}</span></div>
-        <button mat-stroked-button type="button" *ngIf="!profile.email_verificado" (click)="verifyEmail()">Verificar correo demo</button>
-      </mat-card-content>
-      <mat-card-actions><button mat-raised-button class="primary" [disabled]="saving" (click)="saveProfile()">Guardar perfil</button></mat-card-actions>
-    </mat-card>
-    <mat-card>
-      <mat-card-header><mat-card-title>Seguridad</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <mat-form-field appearance="outline"><mat-label>Contraseña actual</mat-label><input matInput type="password" [(ngModel)]="password.currentPassword"></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Nueva contraseña</mat-label><input matInput type="password" [(ngModel)]="password.newPassword"></mat-form-field>
-        <p class="hint">Debe incluir mínimo 8 caracteres, mayúscula, minúscula y número.</p>
-      </mat-card-content>
-      <mat-card-actions><button mat-raised-button class="primary" [disabled]="passwordSaving" (click)="changePassword()">Cambiar contraseña</button></mat-card-actions>
-    </mat-card>
-    <mat-card class="delete-card">
-      <mat-card-header><mat-card-title>Eliminar cuenta</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <p class="delete-warning">Esta acción es irreversible. Se eliminarán tus datos personales y se cerrarán todas las sesiones.</p>
-      </mat-card-content>
-      <mat-card-actions><button mat-raised-button color="warn" (click)="deleteAccount()">Eliminar mi cuenta</button></mat-card-actions>
-      </mat-card>
-      <div class="pagination" *ngIf="ownerMachTotal > ownerMachSize">
-        <button mat-stroked-button (click)="ownerMachPrevPage()" [disabled]="ownerMachPage===1">Anterior</button>
-        <span>Página {{ ownerMachPage }} de {{ ownerMachTotalPages }}</span>
-        <button mat-stroked-button (click)="ownerMachNextPage()" [disabled]="ownerMachPage*ownerMachSize>=ownerMachTotal">Siguiente</button>
-      </div>
-    </div>
 
-  <section class="renter-profile" *ngIf="canUseRenterProfile">
-    <div class="renter-summary">
-      <div>
-        <span class="section-eyebrow">Reservas y confianza</span>
-        <h2>Perfil de arrendatario</h2>
-        <p>Vista enfocada en tus solicitudes, arriendos activos, pagos pendientes e historial como cliente.</p>
-      </div>
-      <button mat-raised-button class="primary" routerLink="/machinery"><mat-icon>search</mat-icon> Buscar maquinaria</button>
-    </div>
-
-    <div class="trust-grid">
-      <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
-      <div class="trust-card"><mat-icon>book_online</mat-icon><strong>{{ activeRenterBookings.length }}</strong><span>Solicitudes activas</span></div>
-      <div class="trust-card"><mat-icon>payments</mat-icon><strong>{{ pendingRenterPayments }}</strong><span>Pagos por gestionar</span></div>
-      <div class="trust-card"><mat-icon>done_all</mat-icon><strong>{{ completedRenterBookings }}</strong><span>Arriendos finalizados</span></div>
-    </div>
-
-    <div class="renter-actions">
-      <button mat-stroked-button routerLink="/bookings"><mat-icon>calendar_today</mat-icon> Mis reservas</button>
-      <button mat-stroked-button routerLink="/payments"><mat-icon>account_balance_wallet</mat-icon> Pagos</button>
-      <button mat-stroked-button routerLink="/ratings"><mat-icon>star</mat-icon> Calificaciones</button>
-    </div>
-
-    <h3>Solicitudes activas</h3>
-    <p class="empty-state" *ngIf="activeRenterBookings.length === 0">No tienes solicitudes activas. Busca maquinaria y solicita fechas para iniciar un arriendo.</p>
-    <div class="booking-list" *ngIf="activeRenterBookings.length > 0">
-      <mat-card class="booking-mini" *ngFor="let booking of activeRenterBookings.slice(0, 4)" [routerLink]="['/bookings', booking.id]">
-        <div>
-          <strong>{{ formatId(booking.id, 'ID') }}</strong>
-          <span>{{ formatDate(booking.fecha_inicio) }} → {{ formatDate(booking.fecha_fin) }}</span>
+  <mat-tab-group animationDuration="300ms" class="profile-tabs">
+    <mat-tab>
+      <ng-template mat-tab-label><mat-icon>person</mat-icon> Perfil</ng-template>
+      <div class="tab-body">
+        <div class="profile-grid">
+          <mat-card>
+            <mat-card-header><mat-card-title>Datos personales</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput [(ngModel)]="profile.nombre"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput [(ngModel)]="profile.apellido"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Teléfono</mat-label><input matInput [(ngModel)]="profile.telefono" placeholder="300 123 4567"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Departamento</mat-label>
+                <mat-select [(ngModel)]="profile.departamento">
+                  <mat-option value="">Seleccionar</mat-option>
+                  <mat-option *ngFor="let d of departamentos" [value]="d">{{ d }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Ciudad</mat-label><input matInput [(ngModel)]="profile.ciudad" placeholder="Bogotá"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Número de documento</mat-label><input matInput [(ngModel)]="profile.numero_documento" placeholder="Cédula de ciudadanía"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Foto URL</mat-label><input matInput [(ngModel)]="profile.foto_url" placeholder="https://..."></mat-form-field>
+              <div class="verify-row"><mat-icon>{{ profile.email_verificado ? 'verified' : 'mark_email_unread' }}</mat-icon><span>{{ profile.email_verificado ? 'Correo verificado' : 'Correo pendiente de verificación' }}</span></div>
+              <button mat-stroked-button type="button" *ngIf="!profile.email_verificado" (click)="verifyEmail()">Verificar correo demo</button>
+            </mat-card-content>
+            <mat-card-actions><button mat-raised-button class="primary" [disabled]="saving" (click)="saveProfile()">Guardar perfil</button></mat-card-actions>
+          </mat-card>
+          <mat-card>
+            <mat-card-header><mat-card-title>Seguridad</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <mat-form-field appearance="outline"><mat-label>Contraseña actual</mat-label><input matInput type="password" [(ngModel)]="password.currentPassword"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Nueva contraseña</mat-label><input matInput type="password" [(ngModel)]="password.newPassword"></mat-form-field>
+              <p class="hint">Debe incluir mínimo 8 caracteres, mayúscula, minúscula y número.</p>
+            </mat-card-content>
+            <mat-card-actions><button mat-raised-button class="primary" [disabled]="passwordSaving" (click)="changePassword()">Cambiar contraseña</button></mat-card-actions>
+          </mat-card>
+          <mat-card class="delete-card">
+            <mat-card-header><mat-card-title>Eliminar cuenta</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <p class="delete-warning">Esta acción es irreversible. Se eliminarán tus datos personales y se cerrarán todas las sesiones.</p>
+            </mat-card-content>
+            <mat-card-actions><button mat-raised-button color="warn" (click)="deleteAccount()">Eliminar mi cuenta</button></mat-card-actions>
+          </mat-card>
         </div>
-        <div>
-          <span class="booking-state" [class.confirmed]="booking.estado === 'confirmada'" [class.progress]="booking.estado === 'en_curso'">{{ estadoLabel(booking.estado) }}</span>
-          <strong>${{ booking.precio_total | number }}</strong>
-        </div>
-      </mat-card>
-    </div>
-  </section>
-
-  <section class="owner-profile" *ngIf="canManageMachineryImages">
-    <div class="owner-summary">
-      <div>
-        <span class="section-eyebrow">Catálogo propio</span>
-        <h2>Mis equipos publicados</h2>
-        <p>Estas son las máquinas que has registrado como arrendador. Puedes verlas, editarlas o agregar fotos.</p>
       </div>
-      <button mat-raised-button class="primary" routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar nuevo equipo</button>
-    </div>
+    </mat-tab>
 
-    <div class="trust-grid">
-      <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
-      <div class="trust-card"><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Tus equipos</span></div>
-      <div class="trust-card"><mat-icon>event_available</mat-icon><strong>{{ availableOwnerMachines.length }}</strong><span>Disponibles para arrendar</span></div>
-      <div class="trust-card"><mat-icon>support_agent</mat-icon><strong>{{ profile.telefono ? 'Activo' : 'Por completar' }}</strong><span>Contacto</span></div>
-    </div>
-
-    <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no has publicado maquinaria. Publica tu primer equipo para empezar a recibir solicitudes de arriendo.</p>
-
-    <div class="machine-catalog" *ngIf="ownerMachines.length > 0">
-      <h3>Tus equipos ({{ ownerMachTotal }})</h3>
-      <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
-        <div class="machine-image">
-          <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo" loading="lazy">
-          <span [class.unavailable]="machine.disponible === false">{{ machine.disponible === false ? 'No disponible' : 'Disponible' }}</span>
-        </div>
-        <mat-card-content>
-          <div class="machine-heading">
+    <mat-tab *ngIf="canUseRenterProfile">
+      <ng-template mat-tab-label><mat-icon>book_online</mat-icon> Arrendatario</ng-template>
+      <div class="tab-body">
+        <section class="renter-profile">
+          <div class="renter-summary">
             <div>
-              <h3>{{ machine.titulo }}</h3>
-              <p>{{ machine.tipo }} · {{ machine.marca || 'Marca no indicada' }} {{ machine.modelo || '' }}</p>
+              <span class="section-eyebrow">Reservas y confianza</span>
+              <h2>Perfil de arrendatario</h2>
+              <p>Vista enfocada en tus solicitudes, arriendos activos, pagos pendientes e historial como cliente.</p>
             </div>
-            <strong>${{ machine.precio_por_dia | number }}<small>/día</small></strong>
+            <button mat-raised-button class="primary" routerLink="/machinery"><mat-icon>search</mat-icon> Buscar maquinaria</button>
           </div>
-          <div class="machine-details">
-            <span><mat-icon>location_on</mat-icon>{{ machine.ciudad || 'Ubicación por confirmar' }}{{ machine.departamento ? ', ' + machine.departamento : '' }}</span>
-            <span><mat-icon>build_circle</mat-icon>Estado: {{ formatMachineState(machine.estado) }}</span>
-            <span *ngIf="machine.capacidad"><mat-icon>speed</mat-icon>Capacidad: {{ machine.capacidad }}</span>
-          </div>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-stroked-button [routerLink]="['/machinery', machine.id]">Ver detalle</button>
-          <button mat-stroked-button (click)="openMachineBookings(machine)"><mat-icon>event</mat-icon> Ver reservas</button>
-          <button mat-raised-button class="primary" [routerLink]="['/machinery', machine.id, 'edit']">Editar publicación</button>
-        </mat-card-actions>
-      </mat-card>
-    </div>
-  </section>
 
-  <mat-card class="bank-card" *ngIf="canManageMachineryImages">
-    <mat-card-header><mat-card-title>Datos bancarios para pagos</mat-card-title><mat-card-subtitle>Al completar una reserva, el pago (menos comisión) se enviará automáticamente a esta cuenta.</mat-card-subtitle></mat-card-header>
-    <mat-card-content>
-      <div class="bank-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Banco</mat-label>
-          <mat-select [(ngModel)]="bankAccount.banco">
-            <mat-option value="">Seleccionar</mat-option>
-            <mat-option *ngFor="let b of bancos" [value]="b">{{ b }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de cuenta</mat-label>
-          <mat-select [(ngModel)]="bankAccount.tipo_cuenta">
-            <mat-option value="ahorros">Ahorros</mat-option>
-            <mat-option value="corriente">Corriente</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Número de cuenta</mat-label>
-          <input matInput [(ngModel)]="bankAccount.numero_cuenta" placeholder="Número de cuenta o celular (Nequi)">
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Titular</mat-label>
-          <input matInput [(ngModel)]="bankAccount.titular" placeholder="Nombre del titular">
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo documento</mat-label>
-          <mat-select [(ngModel)]="bankAccount.tipo_documento">
-            <mat-option *ngFor="let td of tiposDocumento" [value]="td">{{ td }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Número documento</mat-label>
-          <input matInput [(ngModel)]="bankAccount.numero_documento" placeholder="Cédula del titular">
-        </mat-form-field>
+          <div class="trust-grid">
+            <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
+            <div class="trust-card"><mat-icon>book_online</mat-icon><strong>{{ activeRenterBookings.length }}</strong><span>Solicitudes activas</span></div>
+            <div class="trust-card"><mat-icon>payments</mat-icon><strong>{{ pendingRenterPayments }}</strong><span>Pagos por gestionar</span></div>
+            <div class="trust-card"><mat-icon>done_all</mat-icon><strong>{{ completedCount }}</strong><span>Arriendos finalizados</span></div>
+            <div class="trust-card"><mat-icon>account_balance_wallet</mat-icon><strong>${{ totalGastado | number }}</strong><span>Total gastado</span></div>
+          </div>
+
+          <div class="renter-actions">
+            <button mat-stroked-button routerLink="/bookings"><mat-icon>calendar_today</mat-icon> Mis reservas</button>
+            <button mat-stroked-button routerLink="/payments"><mat-icon>account_balance_wallet</mat-icon> Pagos</button>
+            <button mat-stroked-button routerLink="/ratings"><mat-icon>star</mat-icon> Calificaciones</button>
+          </div>
+
+          <div class="section-head">
+            <h3>Solicitudes activas</h3>
+            <a class="view-all" routerLink="/bookings">Ver todas</a>
+          </div>
+          <p class="empty-state" *ngIf="activeRenterBookings.length === 0">No tienes solicitudes activas. Busca maquinaria y solicita fechas para iniciar un arriendo.</p>
+          <div class="booking-list" *ngIf="activeRenterBookings.length > 0">
+            <mat-card class="booking-mini" *ngFor="let booking of activeRenterBookings.slice(0, 4)" [routerLink]="['/bookings', booking.id]">
+              <div>
+                <strong>{{ formatId(booking.id, 'ID') }}</strong>
+                <span>{{ formatDate(booking.fecha_inicio) }} → {{ formatDate(booking.fecha_fin) }}</span>
+              </div>
+              <div>
+                <span class="booking-state" [class.confirmed]="booking.estado === 'confirmada'" [class.progress]="booking.estado === 'en_curso'">{{ estadoLabel(booking.estado) }}</span>
+                <strong>${{ booking.precio_total | number }}</strong>
+              </div>
+            </mat-card>
+          </div>
+
+          <div class="section-head">
+            <h3>Historial de arriendos</h3>
+            <a class="view-all" routerLink="/bookings">Ver todos</a>
+          </div>
+          <p class="empty-state" *ngIf="completedCount === 0">Aún no has finalizado ningún arriendo.</p>
+          <div class="booking-list" *ngIf="completedCount > 0">
+            <mat-card class="booking-mini" *ngFor="let booking of completedBookings.slice(0, 4)" [routerLink]="['/bookings', booking.id]">
+              <div>
+                <strong>{{ formatId(booking.id, 'ID') }}</strong>
+                <span>{{ formatDate(booking.fecha_inicio) }} → {{ formatDate(booking.fecha_fin) }}</span>
+              </div>
+              <div>
+                <span class="booking-state completed">{{ estadoLabel(booking.estado) }}</span>
+                <strong>${{ booking.precio_total | number }}</strong>
+              </div>
+            </mat-card>
+          </div>
+
+          <div class="section-head">
+            <h3>Pagos recientes</h3>
+            <a class="view-all" routerLink="/payments">Ver todos</a>
+          </div>
+          <p class="empty-state" *ngIf="recentPayments.length === 0">No tienes pagos registrados.</p>
+          <div class="booking-list" *ngIf="recentPayments.length > 0">
+            <mat-card class="booking-mini" *ngFor="let p of recentPayments" [routerLink]="['/payments', p.id]">
+              <div>
+                <strong>{{ formatId(p.id, 'ID') }}</strong>
+                <span>{{ formatDateTime(p.creado_en || '') }}</span>
+              </div>
+              <div>
+                <span class="booking-state">{{ estadoLabel(p.estado) }}</span>
+                <strong>${{ p.monto | number }}</strong>
+              </div>
+            </mat-card>
+          </div>
+        </section>
       </div>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button class="primary" [disabled]="bankLoading || !bankAccount.banco || !bankAccount.numero_cuenta" (click)="saveBankAccount()">Guardar cuenta bancaria</button>
-      <button mat-stroked-button color="warn" *ngIf="bankAccount.id" (click)="deleteBankAccount()">Eliminar</button>
-    </mat-card-actions>
-  </mat-card>
+    </mat-tab>
 
-  <mat-card class="machinery-photo-card" *ngIf="canManageMachineryImages">
-    <mat-card-header>
-      <mat-card-title>Fotos de tus vehículos y maquinaria</mat-card-title>
-      <mat-card-subtitle>Selecciona una publicación y agrega fotos desde tu equipo o con una URL.</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada. Publica un equipo para agregar fotos.</p>
-
-      <ng-container *ngIf="ownerMachines.length > 0">
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Vehículo o maquinaria</mat-label>
-          <mat-select [ngModel]="selectedMachine" (selectionChange)="selectMachine($event.value)">
-            <mat-option *ngFor="let machine of ownerMachines" [value]="machine">{{ machine.titulo }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <div class="photo-actions">
-          <button mat-raised-button class="primary" type="button" [disabled]="imageLoading" (click)="fileInput.click()">
-            <mat-icon>upload</mat-icon> Subir foto
-          </button>
-          <input #fileInput type="file" accept="image/*" hidden (change)="onImageFileSelected($event)">
-          <mat-form-field appearance="outline" class="url-field">
-            <mat-label>O pegar URL de foto</mat-label>
-            <input matInput [(ngModel)]="imageUrl" placeholder="https://...">
-          </mat-form-field>
-          <button mat-stroked-button type="button" [disabled]="imageLoading || !imageUrl.trim()" (click)="addImageFromUrl()">Agregar URL</button>
-        </div>
-
-        <p class="hint">En modo demo se aceptan imágenes locales de hasta 900 KB.</p>
-        <app-loading *ngIf="imageLoading"></app-loading>
-        <div class="vehicle-gallery" *ngIf="!imageLoading && machineImages.length > 0">
-          <div class="vehicle-photo" *ngFor="let image of machineImages">
-            <img [src]="image.url" [alt]="selectedMachine?.titulo" loading="lazy">
-            <button mat-icon-button color="warn" type="button" (click)="deleteMachineImage(image)" aria-label="Eliminar foto"><mat-icon>delete</mat-icon></button>
+    <mat-tab *ngIf="canManageMachineryImages">
+      <ng-template mat-tab-label><mat-icon>construction</mat-icon> Propietario</ng-template>
+      <div class="tab-body">
+        <section class="owner-profile">
+          <div class="owner-summary">
+            <div>
+              <span class="section-eyebrow">Catálogo propio</span>
+              <h2>Mis equipos publicados</h2>
+              <p>Estas son las máquinas que has registrado como arrendador. Puedes verlas, editarlas o agregar fotos.</p>
+            </div>
+            <button mat-raised-button class="primary" routerLink="/machinery/new"><mat-icon>add</mat-icon> Publicar nuevo equipo</button>
           </div>
-        </div>
-        <p class="empty-state" *ngIf="!imageLoading && machineImages.length === 0">Esta publicación todavía no tiene fotos.</p>
-      </ng-container>
-    </mat-card-content>
-  </mat-card>
+
+          <div class="trust-grid">
+            <div class="trust-card"><mat-icon>verified_user</mat-icon><strong>{{ profile.email_verificado ? 'Verificado' : 'Pendiente' }}</strong><span>Identidad / correo</span></div>
+            <div class="trust-card"><mat-icon>construction</mat-icon><strong>{{ ownerMachines.length }}</strong><span>Tus equipos</span></div>
+            <div class="trust-card"><mat-icon>event_available</mat-icon><strong>{{ availableOwnerMachines.length }}</strong><span>Disponibles para arrendar</span></div>
+            <div class="trust-card"><mat-icon>pending_actions</mat-icon><strong>{{ pendingOwnerRequests }}</strong><span>Solicitudes pendientes</span></div>
+            <div class="trust-card"><mat-icon>payments</mat-icon><strong>${{ ownerIncome | number }}</strong><span>Ingresos estimados</span></div>
+          </div>
+
+          <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no has publicado maquinaria. Publica tu primer equipo para empezar a recibir solicitudes de arriendo.</p>
+
+          <div class="machine-catalog" *ngIf="ownerMachines.length > 0">
+            <h3>Tus equipos ({{ ownerMachTotal }})</h3>
+            <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
+              <div class="machine-image">
+                <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo" loading="lazy">
+                <span [class.unavailable]="machine.disponible === false">{{ machine.disponible === false ? 'No disponible' : 'Disponible' }}</span>
+              </div>
+              <mat-card-content>
+                <div class="machine-heading">
+                  <div>
+                    <h3>{{ machine.titulo }}</h3>
+                    <p>{{ machine.tipo }} · {{ machine.marca || 'Marca no indicada' }} {{ machine.modelo || '' }}</p>
+                  </div>
+                  <strong>${{ machine.precio_por_dia | number }}<small>/día</small></strong>
+                </div>
+                <div class="machine-details">
+                  <span><mat-icon>location_on</mat-icon>{{ machine.ciudad || 'Ubicación por confirmar' }}{{ machine.departamento ? ', ' + machine.departamento : '' }}</span>
+                  <span><mat-icon>build_circle</mat-icon>Estado: {{ formatMachineState(machine.estado) }}</span>
+                  <span *ngIf="machine.capacidad"><mat-icon>speed</mat-icon>Capacidad: {{ machine.capacidad }}</span>
+                </div>
+              </mat-card-content>
+              <mat-card-actions>
+                <button mat-stroked-button [routerLink]="['/machinery', machine.id]">Ver detalle</button>
+                <button mat-stroked-button (click)="openMachineBookings(machine)"><mat-icon>event</mat-icon> Ver reservas</button>
+                <button mat-raised-button class="primary" [routerLink]="['/machinery', machine.id, 'edit']">Editar publicación</button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+          <div class="pagination" *ngIf="ownerMachTotal > ownerMachSize">
+            <button mat-stroked-button (click)="ownerMachPrevPage()" [disabled]="ownerMachPage===1">Anterior</button>
+            <span>Página {{ ownerMachPage }} de {{ ownerMachTotalPages }}</span>
+            <button mat-stroked-button (click)="ownerMachNextPage()" [disabled]="ownerMachPage*ownerMachSize>=ownerMachTotal">Siguiente</button>
+          </div>
+        </section>
+
+        <mat-card class="bank-card">
+          <mat-card-header><mat-card-title>Datos bancarios para pagos</mat-card-title><mat-card-subtitle>Al completar una reserva, el pago (menos comisión) se enviará automáticamente a esta cuenta.</mat-card-subtitle></mat-card-header>
+          <mat-card-content>
+            <div class="bank-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Banco</mat-label>
+                <mat-select [(ngModel)]="bankAccount.banco">
+                  <mat-option value="">Seleccionar</mat-option>
+                  <mat-option *ngFor="let b of bancos" [value]="b">{{ b }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo de cuenta</mat-label>
+                <mat-select [(ngModel)]="bankAccount.tipo_cuenta">
+                  <mat-option value="ahorros">Ahorros</mat-option>
+                  <mat-option value="corriente">Corriente</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Número de cuenta</mat-label>
+                <input matInput [(ngModel)]="bankAccount.numero_cuenta" placeholder="Número de cuenta o celular (Nequi)">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Titular</mat-label>
+                <input matInput [(ngModel)]="bankAccount.titular" placeholder="Nombre del titular">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo documento</mat-label>
+                <mat-select [(ngModel)]="bankAccount.tipo_documento">
+                  <mat-option *ngFor="let td of tiposDocumento" [value]="td">{{ td }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Número documento</mat-label>
+                <input matInput [(ngModel)]="bankAccount.numero_documento" placeholder="Cédula del titular">
+              </mat-form-field>
+            </div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-raised-button class="primary" [disabled]="bankLoading || !bankAccount.banco || !bankAccount.numero_cuenta" (click)="saveBankAccount()">Guardar cuenta bancaria</button>
+            <button mat-stroked-button color="warn" *ngIf="bankAccount.id" (click)="deleteBankAccount()">Eliminar</button>
+          </mat-card-actions>
+        </mat-card>
+
+        <mat-card class="machinery-photo-card">
+          <mat-card-header>
+            <mat-card-title>Fotos de tus vehículos y maquinaria</mat-card-title>
+            <mat-card-subtitle>Selecciona una publicación y agrega fotos desde tu equipo o con una URL.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="empty-state" *ngIf="ownerMachines.length === 0">Aún no tienes maquinaria publicada. Publica un equipo para agregar fotos.</p>
+
+            <ng-container *ngIf="ownerMachines.length > 0">
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Vehículo o maquinaria</mat-label>
+                <mat-select [ngModel]="selectedMachine" (selectionChange)="selectMachine($event.value)">
+                  <mat-option *ngFor="let machine of ownerMachines" [value]="machine">{{ machine.titulo }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="photo-actions">
+                <button mat-raised-button class="primary" type="button" [disabled]="imageLoading" (click)="fileInput.click()">
+                  <mat-icon>upload</mat-icon> Subir foto
+                </button>
+                <input #fileInput type="file" accept="image/*" hidden (change)="onImageFileSelected($event)">
+                <mat-form-field appearance="outline" class="url-field">
+                  <mat-label>O pegar URL de foto</mat-label>
+                  <input matInput [(ngModel)]="imageUrl" placeholder="https://...">
+                </mat-form-field>
+                <button mat-stroked-button type="button" [disabled]="imageLoading || !imageUrl.trim()" (click)="addImageFromUrl()">Agregar URL</button>
+              </div>
+
+              <p class="hint">En modo demo se aceptan imágenes locales de hasta 900 KB.</p>
+              <app-loading *ngIf="imageLoading"></app-loading>
+              <div class="vehicle-gallery" *ngIf="!imageLoading && machineImages.length > 0">
+                <div class="vehicle-photo" *ngFor="let image of machineImages">
+                  <img [src]="image.url" [alt]="selectedMachine?.titulo" loading="lazy">
+                  <button mat-icon-button color="warn" type="button" (click)="deleteMachineImage(image)" aria-label="Eliminar foto"><mat-icon>delete</mat-icon></button>
+                </div>
+              </div>
+              <p class="empty-state" *ngIf="!imageLoading && machineImages.length === 0">Esta publicación todavía no tiene fotos.</p>
+            </ng-container>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 </div>
 <ng-template #loadingTmpl><app-loading></app-loading></ng-template>

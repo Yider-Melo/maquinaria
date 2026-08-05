@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     token_recuperacion VARCHAR(255),
     expiracion_token_recuperacion TIMESTAMP,
     departamento VARCHAR(100),
+    ciudad VARCHAR(100),
+    numero_documento VARCHAR(30),
     activo BOOLEAN DEFAULT TRUE,
     ultimo_acceso TIMESTAMP,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

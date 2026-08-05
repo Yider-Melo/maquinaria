@@ -92,8 +92,10 @@ async function updateProfile(userId, data) {
     if (data.nombre) { fields.push(`nombre = $${idx++}`); values.push(data.nombre); }
     if (data.apellido) { fields.push(`apellido = $${idx++}`); values.push(data.apellido); }
     if (data.telefono !== undefined) { fields.push(`telefono = $${idx++}`); values.push(data.telefono || null); }
-    if (data.departamento !== undefined) { fields.push(`departamento = $${idx++}`); values.push(data.departamento); }
-    if (data.foto_url) { fields.push(`foto_url = $${idx++}`); values.push(data.foto_url); }
+    if (data.departamento !== undefined) { fields.push(`departamento = $${idx++}`); values.push(data.departamento || null); }
+    if (data.ciudad !== undefined) { fields.push(`ciudad = $${idx++}`); values.push(data.ciudad || null); }
+    if (data.numero_documento !== undefined) { fields.push(`numero_documento = $${idx++}`); values.push(data.numero_documento || null); }
+    if (data.foto_url !== undefined) { fields.push(`foto_url = $${idx++}`); values.push(data.foto_url || null); }
 
     if (fields.length === 0) return getProfile(userId);
 

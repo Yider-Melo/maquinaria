@@ -215,7 +215,13 @@ const schemas = {
         apellido: Joi.string().min(2).max(100).optional().messages({
             'string.min': 'El apellido debe tener al menos 2 caracteres'
         }),
-        telefono: Joi.string().max(20).optional()
+        telefono: Joi.string().max(20).optional(),
+        departamento: Joi.string().max(100).allow('').optional(),
+        ciudad: Joi.string().max(100).allow('').optional(),
+        numero_documento: Joi.string().max(30).allow('').optional(),
+        foto_url: Joi.string().uri().max(2000).allow('').optional().messages({
+            'string.uri': 'La foto debe ser una URL válida'
+        })
     }),
 
     changePassword: Joi.object({

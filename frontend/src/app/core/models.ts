@@ -7,6 +7,8 @@ export interface Usuario {
   foto_url?: string;
   telefono?: string;
   departamento?: string;
+  ciudad?: string;
+  numero_documento?: string;
   email_verificado?: boolean;
   activo?: boolean;
 }

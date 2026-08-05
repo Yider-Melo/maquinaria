@@ -1,16 +1,23 @@
 .profile-page { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
 .profile-hero { display: flex; align-items: center; gap: 22px; padding: 28px; border-radius: 24px; color: #fff8ec; background: var(--rm-gradient); margin-bottom: 24px; }
-.profile-hero img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,.5); }
+.avatar-wrap { position: relative; flex-shrink: 0; }
+.profile-hero img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,.5); display: block; }
+.avatar-upload { position: absolute; right: 0; bottom: 0; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff8ec; background: var(--rm-primary); color: #fff8ec; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.avatar-upload mat-icon { font-size: 17px; width: 17px; height: 17px; }
 .profile-hero span { color: #ffe2a8; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
 .profile-hero h1 { margin: 6px 0; font-size: clamp(30px, 4vw, 46px); }
 .profile-hero p { margin: 0; color: rgba(255,255,255,.78); }
+.hero-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.hero-meta mat-icon { font-size: 17px; width: 17px; height: 17px; }
+.profile-tabs { margin-top: 8px; }
+.tab-body { padding: 20px 4px; }
 .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .primary { background: var(--rm-primary) !important; color: #fff8ec !important; border-radius: 12px !important; }
 .verify-row { display: flex; align-items: center; gap: 8px; color: var(--rm-success); font-weight: 800; }
 .hint { color: #64748b; }
 .error-box { display: flex; align-items: center; gap: 8px; color: #9a3412; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px; padding: 12px; margin-bottom: 16px; }
 .machinery-photo-card { margin-top: 24px; }
-.owner-profile, .renter-profile { margin-top: 24px; padding: 24px; background: #fffaf0; }
+.owner-profile, .renter-profile { margin-top: 8px; padding: 24px; background: #fffaf0; border-radius: 22px; border: 1px solid var(--rm-border); }
 .owner-summary, .renter-summary { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 18px; }
 .owner-summary h2, .renter-summary h2 { margin: 6px 0 8px; color: var(--rm-ink); }
 .owner-summary p, .renter-summary p { margin: 0; max-width: 680px; color: var(--rm-muted); }
@@ -20,10 +27,15 @@
 .trust-card mat-icon { color: var(--rm-primary); }
 .trust-card strong { color: var(--rm-ink); }
 .renter-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 20px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 10px; }
+.section-head h3 { margin: 0; color: var(--rm-ink); }
+.view-all { color: var(--rm-primary); font-weight: 700; text-decoration: none; cursor: pointer; }
+.view-all:hover { text-decoration: underline; }
 .booking-list { display: grid; gap: 10px; }
 .booking-mini { display: flex !important; justify-content: space-between; gap: 14px; padding: 16px; cursor: pointer; }
 .booking-mini span { color: var(--rm-muted); }
 .booking-state { padding: 6px 10px; border-radius: 999px; font-weight: 900; }
+.booking-state.completed { background: #e5f6ea; color: #14663b; }
 .machine-catalog { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .machine-card { overflow: hidden; border-radius: 20px !important; }
 .machine-image { position: relative; height: 180px; background: #f1f5f9; }
@@ -52,6 +64,7 @@
 .pagination span { color: #888; font-size: 14px; }
 .delete-warning { color: var(--rm-danger); font-size: 13px; line-height: 1.6; }
 .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mat-mdc-tab .mat-mdc-tab-label-content { display: inline-flex; align-items: center; gap: 6px; }
 @media (max-width: 600px) { .bank-grid { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .owner-summary, .renter-summary, .booking-mini { flex-direction: column; } .owner-summary button, .renter-summary button, .photo-actions button { width: 100%; } .photo-actions { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .profile-grid { grid-template-columns: 1fr; } .profile-hero { flex-direction: column; text-align: center; } }

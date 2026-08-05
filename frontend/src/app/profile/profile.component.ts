@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,7 @@ import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
 import { SharedModule } from '../shared/shared.module';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
-import { Usuario, BankAccount, Machinery, MachineryImage, Booking, ApiResponse, PaginatedResponse } from '../core/models';
+import { Usuario, BankAccount, Machinery, MachineryImage, Booking, Payment, ApiResponse, PaginatedResponse } from '../core/models';
 import { compressImage } from '../shared/image-utils';
 import { MachineBookingsDialog } from './machine-bookings-dialog';
 
@@ -40,12 +40,14 @@ import { MachineBookingsDialog } from './machine-bookings-dialog';
 })
 export class Profile implements OnInit {
   loading = true; saving = false; passwordSaving = false;
-  profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', foto_url: '' };
+  profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', ciudad: '', numero_documento: '', foto_url: '' };
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };
   ownerMachines: Machinery[] = [];
   ownerMachPage = 1; ownerMachSize = 6; ownerMachTotal = 0;
   renterBookings: Booking[] = [];
+  renterPayments: Payment[] = [];
+  ownerRequests: Booking[] = [];
 
   get ownerMachTotalPages(): number { return Math.ceil(this.ownerMachTotal / this.ownerMachSize) || 1; }
   bankAccount: BankAccount = { banco: '', tipo_cuenta: 'ahorros', numero_cuenta: '', titular: '', tipo_documento: 'CC', numero_documento: '' };
@@ -58,7 +60,7 @@ export class Profile implements OnInit {
   imageLoading = false;
   error = '';
 
-  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router) {}
+  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -67,8 +69,8 @@ export class Profile implements OnInit {
       next: (res) => {
         this.profile = res.data;
         this.loading = false;
-        if (this.canManageMachineryImages) { this.loadOwnerMachines(); this.loadBankAccount(); }
-        if (this.canUseRenterProfile) this.loadRenterBookings();
+        if (this.canManageMachineryImages) { this.loadOwnerMachines(); this.loadOwnerRequests(); this.loadBankAccount(); }
+        if (this.canUseRenterProfile) { this.loadRenterBookings(); this.loadRenterPayments(); }
       },
       error: () => { this.error = 'No se pudo cargar tu perfil.'; this.loading = false; }
     });
@@ -87,18 +89,41 @@ export class Profile implements OnInit {
   }
 
   get activeRenterBookings(): Booking[] {
-    return this.renterBookings.filter(booking => ['pendiente', 'confirmada', 'en_curso'].includes(booking.estado));
+    return this.renterBookings.filter(booking => ['pendiente', 'confirmada', 'pagada', 'en_curso'].includes(booking.estado));
   }
 
-  get completedRenterBookings(): number {
-    return this.renterBookings.filter(booking => booking.estado === 'completada').length;
+  get completedBookings(): Booking[] {
+    return this.renterBookings.filter(booking => booking.estado === 'completada');
+  }
+
+  get completedCount(): number {
+    return this.completedBookings.length;
   }
 
   get pendingRenterPayments(): number {
     return this.renterBookings.filter(booking => booking.estado === 'confirmada').length;
   }
 
+  get recentPayments(): Payment[] {
+    return this.renterPayments.slice(0, 4);
+  }
+
+  get totalGastado(): number {
+    return this.completedBookings.reduce((sum, b) => sum + Number(b.precio_total || 0), 0);
+  }
+
+  get pendingOwnerRequests(): number {
+    return this.ownerRequests.filter(b => b.estado === 'pendiente').length;
+  }
+
+  get ownerIncome(): number {
+    return this.ownerRequests
+      .filter(b => ['confirmada', 'en_curso', 'completada'].includes(b.estado))
+      .reduce((sum, b) => sum + Number(b.precio_total || 0), 0);
+  }
+
   formatDate = formatDate;
+  formatDateTime = formatDateTime;
   formatId = formatId;
   estadoLabel = estadoLabel;
 
@@ -108,9 +133,23 @@ export class Profile implements OnInit {
   }
 
   loadRenterBookings(): void {
-    this.api.get<PaginatedResponse<Booking>>('/bookings/my-bookings', { size: 50 }).subscribe({
-      next: (res) => this.renterBookings = res.data?.data || [],
+    this.api.get<Booking[]>('/bookings/my-bookings', { size: 50 }).subscribe({
+      next: (res) => this.renterBookings = res.data || [],
       error: () => this.error = 'No se pudieron cargar tus reservas.'
+    });
+  }
+
+  loadRenterPayments(): void {
+    this.api.get<Payment[]>('/payments/my-payments', { page: 1, size: 10 }).subscribe({
+      next: (res) => this.renterPayments = res.data || [],
+      error: () => {}
+    });
+  }
+
+  loadOwnerRequests(): void {
+    this.api.get<Booking[]>('/bookings/my-listings', { page: 1, size: 100 }).subscribe({
+      next: (res) => this.ownerRequests = res.data || [],
+      error: () => this.error = 'No se pudieron cargar las solicitudes de tus equipos.'
     });
   }
 
@@ -218,9 +257,14 @@ export class Profile implements OnInit {
 
   saveProfile(): void {
     this.saving = true; this.error = '';
-    const payload = { nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono, departamento: this.profile.departamento, foto_url: this.profile.foto_url };
-    this.api.put<Usuario>('/auth/profile', payload).subscribe({
+    const payload = {
+      nombre: this.profile.nombre, apellido: this.profile.apellido, telefono: this.profile.telefono,
+      departamento: this.profile.departamento, ciudad: this.profile.ciudad, numero_documento: this.profile.numero_documento,
+      foto_url: this.profile.foto_url
+    };
+    this.api.patch<Usuario>('/auth/profile', payload).subscribe({
       next: (res) => {
+        this.profile = { ...this.profile, ...res.data };
         const current = this.auth.getUser();
         localStorage.setItem('rentamaq_user', JSON.stringify({ ...current, ...res.data }));
         this.snackBar.open('Perfil actualizado.', 'Cerrar', { duration: 3000 });
@@ -228,6 +272,19 @@ export class Profile implements OnInit {
       },
       error: (err) => { this.error = err.error?.error?.message || 'No se pudo actualizar el perfil.'; this.saving = false; }
     });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { this.error = 'Selecciona una imagen válida.'; input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { this.error = 'La imagen no puede superar 10 MB.'; input.value = ''; return; }
+    compressImage(file, 400, 0.85).then(url => {
+      this.profile.foto_url = url;
+      this.cdr.markForCheck();
+      input.value = '';
+    }).catch(() => { this.error = 'No se pudo procesar la imagen.'; input.value = ''; });
   }
 
   changePassword(): void {

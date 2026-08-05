@@ -8,7 +8,8 @@ async function findByEmail(email) {
 async function findById(id) {
     const result = await pool.query(
         `SELECT id, email, nombre, apellido, telefono, tipo_usuario, foto_url,
-                email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en
+                email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en,
+                departamento, ciudad, numero_documento
          FROM usuarios WHERE id = $1`,
         [id]
     );
@@ -105,7 +106,8 @@ async function findAll(page, size) {
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
         `SELECT id, email, nombre, apellido, telefono, tipo_usuario, foto_url,
-                email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en
+                email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en,
+                departamento, ciudad, numero_documento
          FROM usuarios ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
         [size, offset]
     );

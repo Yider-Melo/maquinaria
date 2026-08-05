@@ -59,9 +59,9 @@ export class MachineryDetail implements OnInit {
 
   private loadRatings(): void {
     if (!this.item?.id) return;
-    this.api.get<PaginatedResponse<Rating>>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
+    this.api.get<Rating[]>(`/ratings/machinery/${this.item.id}`, { size: 10 }).subscribe({
       next: (res) => {
-        this.ratings = res.data?.data || [];
+        this.ratings = res.data || [];
         this.ratingAverage = this.item?.puntuacion_promedio || 0;
         this.ratingCount = this.item?.total_resenas || 0;
         this.cdr.detectChanges();
