@@ -5,7 +5,15 @@
 const Joi = require('joi');
 
 const schemas = {
-    // Registro de nuevo usuario
+    // Reenvío del enlace de verificación de correo
+    resendVerification: Joi.object({
+        email: Joi.string().email().required().messages({
+            'string.email': 'El email no tiene un formato válido',
+            'any.required': 'El email es requerido',
+            'string.empty': 'El email no puede estar vacío'
+        })
+    }),
+
     register: Joi.object({
         email: Joi.string().email().required().messages({
             'string.email': 'El email no tiene un formato válido',

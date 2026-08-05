@@ -31,6 +31,10 @@
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>
         </div>
+        <button mat-button type="button" class="resend-btn" *ngIf="canResend" (click)="resendVerification()" [disabled]="resending">
+          <mat-icon>{{ resending ? 'hourglass_top' : 'mark_email_read' }}</mat-icon>
+          {{ resending ? 'Enviando enlace...' : 'Reenviar enlace de verificación' }}
+        </button>
         <button mat-raised-button type="submit" [disabled]="loading" class="submit-btn">
           <mat-icon *ngIf="loading" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
           {{ loading ? 'Ingresando...' : 'Ingresar' }}

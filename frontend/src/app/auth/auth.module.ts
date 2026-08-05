@@ -5,6 +5,7 @@ import { AuthRoutingModule } from './auth-routing.module';
 import { SharedModule } from '../shared/shared.module';
 import { Login } from './login/login.component';
 import { Register } from './register/register.component';
+import { VerifyEmail } from './verify-email/verify-email.component';
 
-@NgModule({ declarations: [Login, Register], imports: [AuthRoutingModule, SharedModule] })
+@NgModule({ declarations: [Login, Register, VerifyEmail], imports: [AuthRoutingModule, SharedModule] })
 export class AuthModule {}

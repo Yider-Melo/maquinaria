@@ -100,6 +100,7 @@
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>
         </div>
+        <p class="auth-hint"><mat-icon>mark_email_read</mat-icon> Después de crear tu cuenta recibirás un enlace en tu correo para confirmar la cuenta.</p>
         <button mat-raised-button type="submit" [disabled]="loading" class="submit-btn">
           <mat-icon *ngIf="loading" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
           {{ loading ? 'Registrando...' : 'Crear Cuenta' }}

@@ -5,6 +5,7 @@ const { validate, validateParams, uuidParam, validateToken, requireRole, schemas
 
 router.post('/register', validate(schemas.register), authController.register);
 router.post('/login', validate(schemas.login), authController.login);
+router.post('/resend-verification', validate(schemas.resendVerification), authController.resendVerificationEmail);
 router.post('/refresh', validate(schemas.refreshToken), authController.refresh);
 router.post('/logout', validate(schemas.refreshToken), authController.logout);
 router.post('/logout-all', validateToken, authController.logoutAll);

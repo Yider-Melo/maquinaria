@@ -156,6 +156,13 @@ async function findByVerificationToken(token) {
     return result.rows[0] || null;
 }
 
+async function updateVerificationToken(userId, token) {
+    await pool.query(
+        `UPDATE usuarios SET token_verificacion = $1, actualizado_en = CURRENT_TIMESTAMP WHERE id = $2`,
+        [token, userId]
+    );
+}
+
 async function verifyEmail(userId) {
     const result = await pool.query(
         `UPDATE usuarios SET email_verificado = true, token_verificacion = NULL, actualizado_en = CURRENT_TIMESTAMP
@@ -186,5 +193,6 @@ module.exports = {
     setActive,
     verifyEmail,
     findByVerificationToken,
+    updateVerificationToken,
     softDelete
 };

@@ -122,7 +122,7 @@ Para cualquier consulta sobre privacidad, contáctanos a través de la plataform
     if (!payload.telefono) (payload as any).telefono = undefined;
     this.auth.register(payload).subscribe({
       next: () => {
-        this.snackBar.open('Cuenta creada con éxito. Ahora inicia sesión.', 'Cerrar', { duration: 5000 });
+        this.snackBar.open('Cuenta creada. Te enviamos un enlace de verificación a tu correo.', 'Cerrar', { duration: 6000 });
         this.router.navigate(['/auth/login']);
       },
       error: (err) => {

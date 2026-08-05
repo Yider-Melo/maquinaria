@@ -67,6 +67,13 @@ async function changePassword(req, res, next) {
     }
 }
 
+async function resendVerificationEmail(req, res, next) {
+    try {
+        const result = await authService.resendVerificationEmail(req.body.email);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function verifyEmail(req, res, next) {
     try {
         const profile = await authService.verifyEmail(req.user.id);
@@ -203,6 +210,7 @@ module.exports = {
     updateProfile,
     changePassword,
     verifyEmail,
+    resendVerificationEmail,
     setup2FA,
     verify2FA,
     forgotPassword,

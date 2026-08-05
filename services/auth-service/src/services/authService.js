@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
-const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, getJwtSecret } = require('shared');
+const { ConflictError, NotFoundError, UnauthorizedError, ValidationError, ForbiddenError, getJwtSecret } = require('shared');
 const usuarioRepository = require('../repositories/usuarioRepository');
 const refreshTokenRepository = require('../repositories/refreshTokenRepository');
 const cuentaBancariaRepository = require('../repositories/cuentaBancariaRepository');
@@ -51,6 +51,10 @@ async function login({ email, password }) {
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
         throw new UnauthorizedError('Credenciales inválidas');
+    }
+
+    if (!user.email_verificado) {
+        throw new ForbiddenError('Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada (o spam) y haz clic en el enlace de confirmación.');
     }
 
     await usuarioRepository.updateLastAccess(user.id);
@@ -127,6 +131,20 @@ async function verifyEmailByToken(token) {
     if (!user) throw new ValidationError('Token inválido o expirado');
     const result = await usuarioRepository.verifyEmail(user.id);
     return result;
+}
+
+async function resendVerificationEmail(email) {
+    if (!email) throw new ValidationError('El email es requerido');
+    const user = await usuarioRepository.findByEmailWithPassword(email);
+    if (!user) throw new NotFoundError('No existe una cuenta registrada con este correo');
+    if (user.email_verificado) throw new ValidationError('Tu correo ya está verificado');
+    const tokenVerificacion = uuidv4();
+    await usuarioRepository.updateVerificationToken(user.id, tokenVerificacion);
+    setImmediate(async () => {
+        try { await emailService.sendVerificationEmail(email, user.nombre || 'usuario', tokenVerificacion); }
+        catch (err) { logger.error('Error enviando email de verificación:', { error: err.message }); }
+    });
+    return { message: 'Te enviamos un nuevo enlace de verificación a tu correo' };
 }
 
 async function setup2FA(userId) {
@@ -299,7 +317,7 @@ async function getBankAccountInternal(userId) {
 }
 
 module.exports = {
-    register, login, getProfile, updateProfile, changePassword, verifyEmail,
+    register, login, getProfile, updateProfile, changePassword, verifyEmail, verifyEmailByToken, resendVerificationEmail,
     setup2FA, verify2FA, forgotPassword, resetPassword,
     refreshToken, logout, logoutAll,
     validateToken, adminListUsers, adminUserStats, adminSetUserStatus,
