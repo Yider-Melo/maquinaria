@@ -9,7 +9,7 @@
         <span class="stat-sub">P: {{ stats.users?.propietarios || 0 }} | A: {{ stats.users?.arrendatarios || 0 }}</span>
       </div>
     </mat-card>
-    <mat-card class="stat-card machinery" routerLink="/admin/performance">
+    <mat-card class="stat-card machinery">
       <mat-icon>construction</mat-icon>
       <div class="stat-info">
         <span class="stat-value">{{ stats.machinery?.resumen?.activas || 0 }}</span>
@@ -17,20 +17,12 @@
         <span class="stat-sub">{{ stats.machinery?.resumen?.total || 0 }} registradas</span>
       </div>
     </mat-card>
-    <mat-card class="stat-card bookings" routerLink="/admin/performance">
+    <mat-card class="stat-card bookings">
       <mat-icon>book_online</mat-icon>
       <div class="stat-info">
         <span class="stat-value">{{ stats.bookings?.total || 0 }}</span>
         <span class="stat-label">Reservas Totales</span>
         <span class="stat-sub">{{ stats.bookings?.pendientes || 0 }} pendientes</span>
-      </div>
-    </mat-card>
-    <mat-card class="stat-card payments" routerLink="/admin/accounting">
-      <mat-icon>payments</mat-icon>
-      <div class="stat-info">
-        <span class="stat-value">${{ (stats.payments?.resumen?.total_liberado || 0) | number }}</span>
-        <span class="stat-label">Facturación Total</span>
-        <span class="stat-sub">${{ (stats.payments?.resumen?.total_retenido || 0) | number }} retenido</span>
       </div>
     </mat-card>
     <mat-card class="stat-card reports" routerLink="/admin/reports">

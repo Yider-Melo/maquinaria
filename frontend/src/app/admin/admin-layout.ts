@@ -17,11 +17,8 @@ import { CommonModule } from '@angular/common';
           <a mat-button class="sidebar-link" routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" matRipple>
             <mat-icon>dashboard</mat-icon> Dashboard
           </a>
-          <a mat-button class="sidebar-link" routerLink="/admin/performance" routerLinkActive="active" matRipple>
-            <mat-icon>trending_up</mat-icon> Rendimiento
-          </a>
           <a mat-button class="sidebar-link" routerLink="/admin/accounting" routerLinkActive="active" matRipple>
-            <mat-icon>account_balance</mat-icon> Contabilidad
+            <mat-icon>account_balance</mat-icon> Finanzas
           </a>
           <a mat-button class="sidebar-link" routerLink="/admin/reports" routerLinkActive="active" matRipple>
             <mat-icon>assessment</mat-icon> Gestión

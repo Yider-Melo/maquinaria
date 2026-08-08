@@ -23,8 +23,7 @@ const LABELS: Record<string, string> = {
   'failure': 'Pago fallido',
   'pending': 'Pago pendiente',
   'dashboard': 'Dashboard',
-  'accounting': 'Contabilidad',
-  'performance': 'Rendimiento',
+  'accounting': 'Finanzas',
   'reports': 'Gestión',
   'usuarios-maquinas': 'Usuarios y Máquinas',
 };
