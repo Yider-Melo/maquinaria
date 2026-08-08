@@ -196,12 +196,14 @@ export class MachineryDetail implements OnInit {
     this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
     this.buildCalendar();
     this.markSelectedDays();
+    this.loadOccupiedDates();
   }
 
   nextMonth(): void {
     this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
     this.buildCalendar();
     this.markSelectedDays();
+    this.loadOccupiedDates();
   }
 
   reserve(): void {
@@ -418,7 +420,7 @@ export class MachineryDetail implements OnInit {
   private loadOccupiedDates(): void {
     const start = this.minDate;
     const endDate = new Date(this.currentMonth);
-    endDate.setMonth(endDate.getMonth() + 2);
+    endDate.setMonth(endDate.getMonth() + 13);
     endDate.setDate(0);
     this.api.get<OccupiedDates>(`/bookings/machinery/${this.item!.id}/occupied`, { start, end: endDate.toISOString().slice(0, 10) }).subscribe({
       next: (res) => {
