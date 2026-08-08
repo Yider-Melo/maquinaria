@@ -10,7 +10,8 @@ async function releaseByBooking(req, res, next) {
 
 async function getDashboard(req, res, next) {
     try {
-        const dashboard = await paymentService.getDashboard();
+        const q = (req.query.q || '').trim();
+        const dashboard = await paymentService.getDashboard(q);
         success(res, dashboard);
     } catch (err) { next(err); }
 }

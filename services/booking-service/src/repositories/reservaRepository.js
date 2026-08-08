@@ -125,10 +125,16 @@ async function findExpiredBookings() {
     return result.rows;
 }
 
-async function findRecent(limit) {
+async function findRecent(limit, q) {
+    const params = [limit];
+    let where = '';
+    if (q) {
+        params.push(`%${q}%`);
+        where = 'WHERE (CAST(id AS TEXT) ILIKE $2 OR CAST(maquinaria_id AS TEXT) ILIKE $2 OR estado ILIKE $2 OR CAST(precio_total AS TEXT) ILIKE $2)';
+    }
     const result = await pool.query(
-        `SELECT ${RESERVA_COLUMNS} FROM reserva ORDER BY creado_en DESC LIMIT $1`,
-        [limit]
+        `SELECT ${RESERVA_COLUMNS} FROM reserva ${where} ORDER BY creado_en DESC LIMIT $1`,
+        params
     );
     return result.rows;
 }

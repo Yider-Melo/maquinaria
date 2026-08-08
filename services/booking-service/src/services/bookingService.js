@@ -386,8 +386,8 @@ async function adminBookingStats() {
     return await reservaRepository.getAdminStats();
 }
 
-async function adminRecentBookings(limit = 10) {
-    return await reservaRepository.findRecent(limit);
+async function adminRecentBookings(limit = 10, q) {
+    return await reservaRepository.findRecent(limit, q);
 }
 
 module.exports = {

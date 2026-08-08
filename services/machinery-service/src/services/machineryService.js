@@ -125,9 +125,9 @@ async function adminMachineryStats() {
     return await maquinariaRepository.getAdminStats();
 }
 
-async function adminAllMachinery(page = 1, size = 20) {
+async function adminAllMachinery(page = 1, size = 20, q) {
     size = Math.min(size, 100);
-    const { data, total } = await maquinariaRepository.findAllAdmin(page, size);
+    const { data, total } = await maquinariaRepository.findAllAdmin(page, size, q);
     return { data, total, page, size };
 }
 

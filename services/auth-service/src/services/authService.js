@@ -254,9 +254,9 @@ async function validateToken(token) {
     }
 }
 
-async function adminListUsers(page = 1, size = 20) {
+async function adminListUsers(page = 1, size = 20, q) {
     size = Math.min(size, 100);
-    const { data, total } = await usuarioRepository.findAll(page, size);
+    const { data, total } = await usuarioRepository.findAll(page, size, q);
     return { data, total, page, size };
 }
 

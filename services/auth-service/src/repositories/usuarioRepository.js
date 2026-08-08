@@ -100,16 +100,24 @@ async function updatePassword(userId, passwordHash) {
     );
 }
 
-async function findAll(page, size) {
+async function findAll(page, size, q) {
     const offset = (page - 1) * size;
-    const countResult = await pool.query('SELECT COUNT(*) FROM usuarios');
+    let where = '';
+    const params = [];
+    if (q) {
+        params.push(`%${q}%`);
+        where = 'WHERE (nombre ILIKE $1 OR apellido ILIKE $1 OR email ILIKE $1 OR tipo_usuario ILIKE $1 OR CAST(id AS TEXT) ILIKE $1)';
+    }
+    const countResult = await pool.query(`SELECT COUNT(*) FROM usuarios ${where}`, params);
     const total = parseInt(countResult.rows[0].count);
+    const limitParams = [...params, size, offset];
+    const limitIndex = params.length ? 2 : 1;
     const result = await pool.query(
         `SELECT id, email, nombre, apellido, telefono, tipo_usuario, foto_url,
                 email_verificado, verificado_2fa, activo, ultimo_acceso, creado_en,
                 departamento, ciudad, numero_documento
-         FROM usuarios ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
-        [size, offset]
+         FROM usuarios ${where} ORDER BY creado_en DESC LIMIT $${limitIndex} OFFSET $${limitIndex + 1}`,
+        limitParams
     );
     return { data: result.rows, total };
 }

@@ -213,7 +213,7 @@ async function findPendingPayouts() {
     return result.rows;
 }
 
-async function getDashboard() {
+async function getDashboard(q) {
     const totals = await pool.query(
         `SELECT
            COUNT(*) as total_transacciones,
@@ -237,7 +237,10 @@ async function getDashboard() {
     );
     const ultimosPagos = await pool.query(
         `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
-         FROM pago ORDER BY creado_en DESC LIMIT 10`
+         FROM pago
+         ${q ? 'WHERE CAST(id AS TEXT) ILIKE $1 OR CAST(reserva_id AS TEXT) ILIKE $1 OR CAST(usuario_id AS TEXT) ILIKE $1 OR CAST(propietario_id AS TEXT) ILIKE $1 OR referencia_pasarela ILIKE $1 OR estado ILIKE $1' : ''}
+         ORDER BY creado_en DESC LIMIT ${q ? 200 : 10}`,
+        q ? [`%${q}%`] : []
     );
     const porMes = await pool.query(
         `SELECT

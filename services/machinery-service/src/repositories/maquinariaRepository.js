@@ -164,13 +164,21 @@ async function getAdminStats() {
     return { resumen: result.rows[0], por_tipo: tipoResult.rows };
 }
 
-async function findAllAdmin(page, size) {
+async function findAllAdmin(page, size, q) {
     const offset = (page - 1) * size;
-    const countResult = await pool.query('SELECT COUNT(*) FROM maquinaria');
+    let where = '';
+    const params = [];
+    if (q) {
+        params.push(`%${q}%`);
+        where = 'WHERE (titulo ILIKE $1 OR marca ILIKE $1 OR modelo ILIKE $1 OR tipo ILIKE $1 OR CAST(id AS TEXT) ILIKE $1)';
+    }
+    const countResult = await pool.query(`SELECT COUNT(*) FROM maquinaria ${where}`, params);
     const total = parseInt(countResult.rows[0].count);
+    const limitParams = [...params, size, offset];
+    const limitIndex = params.length ? 2 : 1;
     const result = await pool.query(
-        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria ORDER BY creado_en DESC LIMIT $1 OFFSET $2`,
-        [size, offset]
+        `SELECT ${MAQUINARIA_COLUMNS} FROM maquinaria ${where} ORDER BY creado_en DESC LIMIT $${limitIndex} OFFSET $${limitIndex + 1}`,
+        limitParams
     );
     return { data: result.rows, total };
 }

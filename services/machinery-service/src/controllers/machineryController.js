@@ -37,7 +37,8 @@ async function adminAllMachinery(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const { data, total } = await machineryService.adminAllMachinery(page, size);
+        const q = (req.query.q || '').trim();
+        const { data, total } = await machineryService.adminAllMachinery(page, size, q);
         paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }

@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Api } from '../../core/services/api.service';
 import { MatDialog } from '@angular/material/dialog';
-import { of, Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { of, Observable, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { Usuario, Machinery } from '../../core/models';
 
@@ -44,10 +44,19 @@ import { Usuario, Machinery } from '../../core/models';
     .admin-table button:hover:not(.user-row button) { background: #c96f2d; color: white; }
     .id-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #999; }
     .empty-sub { color: #999; font-size: 13px; padding: 8px 0; }
+    .filter-bar { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 4px; }
+    .filter-search { width: 260px; font-size: 13px; }
+    .filter-search ::ng-deep .mat-mdc-text-field-wrapper { border-radius: 24px; background: #fff; }
+    .filter-search ::ng-deep .mat-mdc-form-field-flex { height: 40px; align-items: center; }
+    .filter-search ::ng-deep .mat-mdc-input-element { font-size: 13px; }
+    .filter-search ::ng-deep .mat-mdc-form-field-outline { color: #ddd; }
+    .filter-search ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+    .search-summary { margin: 12px 0 4px; font-size: 13px; color: #666; }
+    .search-summary strong { color: #c96f2d; }
   `],
   standalone: false
 })
-export class AdminUsuariosMaquinas implements OnInit {
+export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
   usuarios: Usuario[] = [];
   maquinas: Machinery[] = [];
   maquinasPorUsuario: { [key: string]: Machinery[] } = {};
@@ -56,7 +65,18 @@ export class AdminUsuariosMaquinas implements OnInit {
   userPage = 1; userSize = 20; userTotal = 0;
   machPage = 1; machSize = 50; machTotal = 0;
 
+  userSearch = '';
+  machSearch = '';
+
+  private userSearch$ = new Subject<string>();
+  private machSearch$ = new Subject<string>();
+
   get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
+
+  get usuariosVisibles(): Usuario[] {
+    if (!this.machSearch.trim()) return this.usuarios;
+    return this.usuarios.filter(u => (this.maquinasPorUsuario[u.id]?.length || 0) > 0);
+  }
 
   constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
 
@@ -70,26 +90,57 @@ export class AdminUsuariosMaquinas implements OnInit {
     }
   }
 
-  ngOnInit(): void { this.loadUsers(); this.loadAllMachinery(); }
+  ngOnInit(): void {
+    this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
+    this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.userPage = 1; this.loadAllMachinery(); this.loadUsers(); });
+    this.loadUsers(); this.loadAllMachinery();
+  }
+
+  ngOnDestroy(): void {
+    this.userSearch$.complete();
+    this.machSearch$.complete();
+  }
+
+  onUserSearch(q: string): void { this.userSearch = q; this.userSearch$.next(q); }
+  onMachSearch(q: string): void { this.machSearch = q; this.machSearch$.next(q); }
+
+  clearUserSearch(): void { this.userSearch = ''; this.userSearch$.next(''); }
+  clearMachSearch(): void { this.machSearch = ''; this.machSearch$.next(''); }
 
   prevUserPage(): void { if (this.userPage > 1) { this.userPage--; this.loadUsers(); } }
   nextUserPage(): void { if (this.userPage * this.userSize < this.userTotal) { this.userPage++; this.loadUsers(); } }
 
   private loadUsers(): void {
-    this.api.get<Usuario[]>(`/admin/users?page=${this.userPage}&size=${this.userSize}`).pipe(
+    const searchingMach = !!this.machSearch.trim();
+    const size = searchingMach ? 500 : this.userSize;
+    const q = this.userSearch.trim() ? `&q=${encodeURIComponent(this.userSearch.trim())}` : '';
+    this.api.get<Usuario[]>(`/admin/users?page=1&size=${size}${q}`).pipe(
       catchError(() => of({ success: true, data: [] } as any))
     ).subscribe(res => {
       const r = res as any;
       this.usuarios = r?.data || [];
       this.userTotal = r?.pagination?.total || 0;
+      if (searchingMach) this.actualizarExpandidos();
       this.cdr.detectChanges();
     });
   }
 
   private loadAllMachinery(): void {
-    this.api.get<Machinery[]>(`/admin/machinery/all?page=1&size=500`).pipe(
+    const q = this.machSearch.trim() ? `&q=${encodeURIComponent(this.machSearch.trim())}` : '';
+    this.api.get<Machinery[]>(`/admin/machinery/all?page=1&size=500${q}`).pipe(
       catchError(() => of({ success: true, data: [] } as any))
-    ).subscribe(res => { this.procesarMaquinas(res?.data || []); this.cdr.detectChanges(); });
+    ).subscribe(res => {
+      this.procesarMaquinas(res?.data || []);
+      if (this.machSearch.trim()) this.actualizarExpandidos();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private actualizarExpandidos(): void {
+    for (const u of this.usuarios) {
+      if ((this.maquinasPorUsuario[u.id]?.length || 0) > 0) this.expandidos.add(u.id);
+      else this.expandidos.delete(u.id);
+    }
   }
 
   toggleExpand(u: Usuario): void {

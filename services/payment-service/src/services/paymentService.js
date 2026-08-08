@@ -561,8 +561,8 @@ async function markPayoutManuallyCompleted(pagoId, adminUserId) {
     };
 }
 
-async function getDashboard() {
-    return await pagoRepository.getDashboard();
+async function getDashboard(q) {
+    return await pagoRepository.getDashboard(q);
 }
 
 async function getPaymentsByMonth(mes, page = 1, size = 10) {

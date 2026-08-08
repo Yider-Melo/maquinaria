@@ -34,7 +34,8 @@ async function adminBookingStats(req, res, next) {
 async function adminRecentBookings(req, res, next) {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const bookings = await bookingService.adminRecentBookings(limit);
+        const q = (req.query.q || '').trim();
+        const bookings = await bookingService.adminRecentBookings(limit, q);
         success(res, bookings);
     } catch (err) { next(err); }
 }

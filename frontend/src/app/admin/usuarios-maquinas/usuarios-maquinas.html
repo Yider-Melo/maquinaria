@@ -1,5 +1,18 @@
 <div class="page">
   <h1>Usuarios y Máquinas</h1>
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" class="filter-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput type="text" placeholder="Buscar usuario, email o rol..." [value]="userSearch" (input)="onUserSearch($event.target.value)">
+      <button mat-icon-button matSuffix *ngIf="userSearch" (click)="clearUserSearch()"><mat-icon>close</mat-icon></button>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="filter-search">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput type="text" placeholder="Buscar máquina, marca, modelo o tipo..." [value]="machSearch" (input)="onMachSearch($event.target.value)">
+      <button mat-icon-button matSuffix *ngIf="machSearch" (click)="clearMachSearch()"><mat-icon>close</mat-icon></button>
+    </mat-form-field>
+  </div>
+  <p *ngIf="machSearch.trim()" class="search-summary">Se encontraron <strong>{{ maquinas.length }}</strong> máquina(s) para "{{ machSearch }}"</p>
   <table class="admin-table">
     <thead>
       <tr>
@@ -13,7 +26,7 @@
       </tr>
     </thead>
     <tbody>
-      <ng-container *ngFor="let u of usuarios">
+      <ng-container *ngFor="let u of usuariosVisibles">
         <tr class="user-row" [class.expanded]="expandidos.has(u.id)" (click)="toggleExpand(u)">
           <td><mat-icon>{{ expandidos.has(u.id) ? 'expand_less' : 'expand_more' }}</mat-icon></td>
           <td><strong>{{ u.nombre }} {{ u.apellido }}</strong></td>
