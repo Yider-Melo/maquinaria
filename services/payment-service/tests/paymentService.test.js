@@ -233,7 +233,7 @@ describe('refund', () => {
 });
 
 describe('getDashboard', () => {
-    it('debe devolver resumen y ultimos pagos', async () => {
+    it('debe devolver resumen, ultimos pagos y datos por mes', async () => {
         const originalQuery = pool.query;
         let callCount = 0;
         pool.query = mock.fn(() => {
@@ -243,12 +243,51 @@ describe('getDashboard', () => {
                     rows: [{ total_transacciones: '5', total_liberado: '100000', total_retenido: '50000', total_reembolsado: '20000', total_fallidos: '1' }]
                 });
             }
+            if (callCount === 5) {
+                return Promise.resolve({
+                    rows: [{ mes: '2026-07', total_transacciones: '5', total_liberado: '100000', total_retenido: '50000', total_reembolsado: '20000', total_fallidos: '1' }]
+                });
+            }
             return Promise.resolve({ rows: [{ id: 'p-1' }] });
         });
 
         const result = await paymentService.getDashboard();
         assert.equal(result.resumen.total_transacciones, '5');
         assert.equal(result.ultimos_pagos.length, 1);
+        assert.equal(result.por_mes.length, 1);
+        assert.equal(result.por_mes[0].mes, '2026-07');
+
+        pool.query = originalQuery;
+    });
+});
+
+describe('getPaymentsByMonth', () => {
+    it('debe rechazar un mes con formato inválido', async () => {
+        const originalQuery = pool.query;
+        pool.query = mock.fn(() => Promise.resolve({ rows: [], rowCount: 0 }));
+
+        await assert.rejects(
+            () => paymentService.getPaymentsByMonth('julio'),
+            (err) => { assert.equal(err.statusCode, 400); return true; }
+        );
+
+        pool.query = originalQuery;
+    });
+
+    it('debe devolver pagos paginados por mes', async () => {
+        const originalQuery = pool.query;
+        let callCount = 0;
+        pool.query = mock.fn(() => {
+            callCount++;
+            if (callCount === 1) {
+                return Promise.resolve({ rows: [{ count: '3' }] });
+            }
+            return Promise.resolve({ rows: [{ id: 'p-1', monto: '200000', estado: 'liberado' }] });
+        });
+
+        const result = await paymentService.getPaymentsByMonth('2026-07', 1, 8);
+        assert.equal(result.total, 3);
+        assert.equal(result.data.length, 1);
 
         pool.query = originalQuery;
     });

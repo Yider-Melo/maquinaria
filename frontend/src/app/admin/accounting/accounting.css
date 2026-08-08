@@ -2,6 +2,12 @@
 .page h1 { margin-bottom:8px; }
 .page h2 { margin:32px 0 8px; }
 .intro { color:var(--rm-muted); font-size:14px; margin:0 0 20px; }
+.admin-table tbody tr { cursor:pointer; }
+.admin-table tbody tr.selected-row { background: rgba(201, 111, 45, .16); }
+.row-chevron { font-size:16px; width:16px; height:16px; vertical-align:middle; color:var(--rm-muted); }
+.pagination { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:16px; color:var(--rm-muted); font-size:13px; }
+.detail-card { margin-top:24px; border-top:3px solid var(--rm-primary); }
+.detail-card mat-card-title { color:var(--rm-ink); font-size:16px; }
 .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:16px; }
 .summary-card { display:flex; flex-direction:column; align-items:center; text-align:center; padding:24px 16px; }
 .summary-card mat-icon { font-size:36px; width:36px; height:36px; color:var(--rm-primary); margin-bottom:8px; }

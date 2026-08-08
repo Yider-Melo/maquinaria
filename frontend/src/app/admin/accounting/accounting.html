@@ -38,11 +38,75 @@
     </mat-card>
     <mat-card class="summary-card">
       <mat-icon>trending_up</mat-icon>
-      <span class="summary-value">${{ ((dashboard.resumen.total_liberado || 0) - (dashboard.resumen.total_reembolsado || 0)) | number }}</span>
+      <span class="summary-value">${{ gananciaNeta | number }}</span>
       <span class="summary-label">Ganancia Neta</span>
       <span class="summary-desc">Lo que realmente queda de ganancia (facturado menos reembolsos).</span>
     </mat-card>
   </div>
+
+  <h2>Finanzas por Mes</h2>
+  <p class="intro">Así se comportaron las finanzas en cada mes. Haz clic en un mes para ver los pagos que se hicieron en él.</p>
+  <mat-card>
+    <mat-card-content>
+      <table class="admin-table" *ngIf="dashboard.por_mes?.length">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Facturado</th>
+            <th>En Garantía</th>
+            <th>Reembolsado</th>
+            <th>Ganancia Neta</th>
+            <th>Pagos</th>
+            <th>Fallidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of mesesPaginados" (click)="verDetalle(m.mes)" [class.selected-row]="m.mes === mesDetalle">
+            <td>{{ mesLabel(m.mes) }} <mat-icon class="row-chevron" *ngIf="m.mes === mesDetalle">expand_more</mat-icon><mat-icon class="row-chevron" *ngIf="m.mes !== mesDetalle">chevron_right</mat-icon></td>
+            <td>${{ (m.total_liberado || 0) | number }}</td>
+            <td>${{ (m.total_retenido || 0) | number }}</td>
+            <td>${{ (m.total_reembolsado || 0) | number }}</td>
+            <td>${{ ((m.total_liberado || 0) - (m.total_reembolsado || 0)) | number }}</td>
+            <td>{{ m.total_transacciones || 0 }}</td>
+            <td>{{ m.total_fallidos || 0 }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!dashboard.por_mes?.length" class="empty">Aún no hay datos por mes</p>
+      <div class="pagination" *ngIf="(dashboard.por_mes?.length || 0) > mesSize">
+        <button mat-stroked-button (click)="prevMesPage()" [disabled]="mesPage===1">Anterior</button>
+        <span>Página {{ mesPage }} de {{ mesTotalPages }}</span>
+        <button mat-stroked-button (click)="nextMesPage()" [disabled]="mesPage*mesSize >= (dashboard.por_mes?.length || 0)">Siguiente</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="detail-card" *ngIf="mesDetalle">
+    <mat-card-header>
+      <mat-card-title>Pagos de {{ mesLabel(mesDetalle) }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <table class="admin-table" *ngIf="pagosMes?.length">
+        <thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Método</th><th>Fecha</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of pagosMes">
+            <td>{{ p.id?.substring(0, 8) }}...</td>
+            <td>{{ p.reserva_id?.substring(0, 8) }}...</td>
+            <td>${{ p.monto | number }}</td>
+            <td><span class="status-badge" [class]="p.estado">{{ p.estado }}</span></td>
+            <td>{{ p.metodo_pago || 'N/A' }}</td>
+            <td>{{ p.creado_en | date:'short':'':'es-CO' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!pagosMes?.length" class="empty">Este mes no tiene pagos registrados</p>
+      <div class="pagination" *ngIf="pagoTotal > pagoSize">
+        <button mat-stroked-button (click)="prevPagoPage()" [disabled]="pagoPage===1">Anterior</button>
+        <span>Página {{ pagoPage }} de {{ pagoTotalPages }}</span>
+        <button mat-stroked-button (click)="nextPagoPage()" [disabled]="pagoPage*pagoSize >= pagoTotal">Siguiente</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
   <h2>Últimos Pagos</h2>
   <p class="intro">Estos son los pagos más recientes registrados en la plataforma.</p>

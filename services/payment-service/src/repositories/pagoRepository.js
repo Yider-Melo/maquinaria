@@ -86,6 +86,24 @@ async function findByUser(userId, page = 1, size = 20) {
     return { data: result.rows, total };
 }
 
+async function findByMonth(mes, page = 1, size = 10) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        `SELECT COUNT(*) FROM pago WHERE to_char(creado_en, 'YYYY-MM') = $1`,
+        [mes]
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+    const result = await pool.query(
+        `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
+         FROM pago
+         WHERE to_char(creado_en, 'YYYY-MM') = $1
+         ORDER BY creado_en DESC
+         LIMIT $2 OFFSET $3`,
+        [mes, size, offset]
+    );
+    return { data: result.rows, total };
+}
+
 async function findByIdSimple(pagoId) {
     const result = await pool.query(
         `SELECT id, usuario_id, propietario_id, reserva_id, monto,
@@ -221,11 +239,24 @@ async function getDashboard() {
         `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
          FROM pago ORDER BY creado_en DESC LIMIT 10`
     );
+    const porMes = await pool.query(
+        `SELECT
+           to_char(creado_en, 'YYYY-MM') as mes,
+           COUNT(*) as total_transacciones,
+           COALESCE(SUM(CASE WHEN estado = 'liberado' THEN monto ELSE 0 END), 0) as total_liberado,
+           COALESCE(SUM(CASE WHEN estado = 'retenido' THEN monto ELSE 0 END), 0) as total_retenido,
+           COALESCE(SUM(CASE WHEN estado = 'reembolsado' THEN monto ELSE 0 END), 0) as total_reembolsado,
+           COUNT(CASE WHEN estado = 'fallido' THEN 1 END) as total_fallidos
+         FROM pago
+         GROUP BY mes
+         ORDER BY mes DESC`
+    );
     return {
         resumen: totals.rows[0],
         comisiones: comisiones.rows[0],
         ganancia_total: earnings.rows[0].ganancia_total,
-        ultimos_pagos: ultimosPagos.rows
+        ultimos_pagos: ultimosPagos.rows,
+        por_mes: porMes.rows
     };
 }
 
@@ -235,5 +266,6 @@ module.exports = {
     findByIdWithReserva, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,
-    markLiberado, findFailedPayouts, findPendingPayouts, getDashboard
+    markLiberado, findFailedPayouts, findPendingPayouts, getDashboard,
+    findByMonth
 };

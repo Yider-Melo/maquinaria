@@ -15,6 +15,17 @@ async function getDashboard(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getPaymentsByMonth(req, res, next) {
+    try {
+        const mes = req.query.mes;
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 10;
+        const result = await paymentService.getPaymentsByMonth(mes, page, size);
+        const { paginated } = require('shared');
+        paginated(res, result.data, result.total, page, size);
+    } catch (err) { next(err); }
+}
+
 async function createCheckout(req, res, next) {
     try {
         const checkout = await paymentService.createCheckout(req.body.reserva_id, req.user.id, req.body.metodo_pago);
@@ -104,6 +115,7 @@ async function markPayoutCompleted(req, res, next) {
 
 module.exports = {
     getDashboard,
+    getPaymentsByMonth,
     createCheckout,
     handleWebhook,
     getPaymentsByBooking,

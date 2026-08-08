@@ -565,10 +565,17 @@ async function getDashboard() {
     return await pagoRepository.getDashboard();
 }
 
+async function getPaymentsByMonth(mes, page = 1, size = 10) {
+    if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
+        throw new ValidationError('Mes inválido. Usa el formato YYYY-MM');
+    }
+    return await pagoRepository.findByMonth(mes, page, size);
+}
+
 module.exports = {
     createCheckout, handleWebhook, determinarEstado,
     getPaymentById, getPaymentsByBooking, getMyPayments,
     simulateApproval, releaseFunds, refund, releaseByBooking,
     retryPayout, getPendingPayouts, getFailedPayouts,
-    markPayoutManuallyCompleted, getDashboard
+    markPayoutManuallyCompleted, getDashboard, getPaymentsByMonth
 };
