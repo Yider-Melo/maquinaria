@@ -64,7 +64,18 @@ async function findByOwner(ownerId, page, size) {
     const countResult = await pool.query('SELECT COUNT(*) FROM reserva WHERE propietario_id = $1', [ownerId]);
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE propietario_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE propietario_id = $1
+         ORDER BY
+           CASE estado
+             WHEN 'pendiente' THEN 0
+             WHEN 'en_curso' THEN 1
+             WHEN 'confirmada' THEN 2
+             WHEN 'pagada' THEN 2
+             ELSE 3
+           END ASC,
+           CASE WHEN estado IN ('pendiente', 'en_curso', 'confirmada', 'pagada') THEN fecha_inicio END ASC NULLS LAST,
+           creado_en DESC
+         LIMIT $2 OFFSET $3`,
         [ownerId, size, offset]
     );
     return { data: result.rows, total };
@@ -75,7 +86,18 @@ async function findByMachinery(machineryId, page, size) {
     const countResult = await pool.query('SELECT COUNT(*) FROM reserva WHERE maquinaria_id = $1', [machineryId]);
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE maquinaria_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
+        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE maquinaria_id = $1
+         ORDER BY
+           CASE estado
+             WHEN 'pendiente' THEN 0
+             WHEN 'en_curso' THEN 1
+             WHEN 'confirmada' THEN 2
+             WHEN 'pagada' THEN 2
+             ELSE 3
+           END ASC,
+           CASE WHEN estado IN ('pendiente', 'en_curso', 'confirmada', 'pagada') THEN fecha_inicio END ASC NULLS LAST,
+           creado_en DESC
+         LIMIT $2 OFFSET $3`,
         [machineryId, size, offset]
     );
     return { data: result.rows, total };
