@@ -1,4 +1,8 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
+
+# Asegurar UTF-8 al leer el script y al enviar datos a psql (evita tildes corruptas)
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Invoke-SeedSql {
     param([string]$Container, [string]$Database, [string]$Sql)

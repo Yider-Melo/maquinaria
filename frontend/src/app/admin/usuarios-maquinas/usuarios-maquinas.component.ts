@@ -119,9 +119,11 @@ export class AdminUsuariosMaquinas implements OnInit {
     });
   }
 
-  getStars(p: number): string {
-    const full = Math.round(p);
-    return '★'.repeat(full) + '☆'.repeat(5 - full) + ` ${p.toFixed(1)}`;
+  getStars(p: any): string {
+    const num = Number(p) || 0;
+    const full = Math.min(5, Math.round(num));
+    const stars = '★'.repeat(full) + '☆'.repeat(Math.max(0, 5 - full));
+    return stars + ` ${num.toFixed(1)}`;
   }
 
   private confirmAction(msg: string): Observable<boolean> {
