@@ -1,5 +1,5 @@
 <div class="container">
-  <div class="page-header" appReveal><h1>{{ auth.esTipo('propietario') ? 'Pagos recibidos' : 'Mis Pagos' }}</h1></div>
+  <div class="page-header" appReveal><h1>{{ auth.esTipo('propietario') ? 'Pagos recibidos' : 'Pagos' }}</h1></div>
   <ng-container *ngIf="!loading; else loadingTmpl">
   <div class="search-bar">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">

@@ -9,7 +9,7 @@
       <mat-icon aria-hidden="true">precision_manufacturing</mat-icon> <span>Maquinaria</span>
     </a>
     <a mat-button class="nav-link" routerLink="/bookings" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
-      <mat-icon aria-hidden="true">book_online</mat-icon> <span>Mis Reservas</span>
+      <mat-icon aria-hidden="true">book_online</mat-icon> <span>Reservas</span>
     </a>
     <a mat-button class="nav-link publish-nav" routerLink="/machinery/new" *ngIf="auth.esTipo('propietario')">
       <mat-icon aria-hidden="true">add_circle</mat-icon> <span>Publicar</span>
@@ -28,7 +28,7 @@
   </nav>
   <mat-menu #moreMenu="matMenu">
     <button mat-menu-item routerLink="/payments">
-      <mat-icon aria-hidden="true">payments</mat-icon> Mis Pagos
+      <mat-icon aria-hidden="true">payments</mat-icon> Pagos
     </button>
     <button mat-menu-item routerLink="/favorites">
       <mat-icon aria-hidden="true">favorite</mat-icon> Favoritos

@@ -34,7 +34,7 @@
         <mat-icon class="stat-icon">calendar_today</mat-icon>
         <div class="stat-info">
           <span class="stat-value">{{ stats.misReservas || 0 }}</span>
-          <span class="stat-label">Mis Reservas</span>
+          <span class="stat-label">Reservas</span>
         </div>
       </mat-card>
       <mat-card class="stat-card" appReveal [appReveal]="240" routerLink="/notifications">
@@ -98,7 +98,7 @@
           <mat-icon>add_circle</mat-icon> Publicar Maquinaria
         </button>
         <button mat-raised-button color="primary" routerLink="/bookings" appReveal [appReveal]="140" *ngIf="auth.esTipo('arrendatario') || auth.esTipo('admin')">
-          <mat-icon>book_online</mat-icon> Mis Reservas
+          <mat-icon>book_online</mat-icon> Reservas
         </button>
         <button mat-raised-button color="accent" routerLink="/bookings" appReveal [appReveal]="210" *ngIf="auth.esTipo('propietario') || auth.esTipo('admin')">
           <mat-icon>list_alt</mat-icon> Gestionar Solicitudes

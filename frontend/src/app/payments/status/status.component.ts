@@ -10,7 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
       </mat-icon>
       <h2>{{ isSuccess ? 'Pago exitoso' : 'Pago fallido' }}</h2>
       <p>{{ isSuccess ? 'Tu pago ha sido procesado correctamente.' : 'Hubo un problema al procesar tu pago.' }}</p>
-      <a mat-raised-button color="primary" routerLink="/bookings">Volver a mis reservas</a>
+      <a mat-raised-button color="primary" routerLink="/bookings">Volver a reservas</a>
     </div>
   `,
   styles: [`
