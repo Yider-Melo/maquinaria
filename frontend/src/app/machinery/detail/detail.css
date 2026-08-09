@@ -117,12 +117,19 @@
 .stars-display mat-icon.filled { color: #f59e0b; }
 .stars-display.small mat-icon { font-size: 16px; width: 16px; height: 16px; }
 .score-bars { flex: 1 1 240px; display: grid; gap: 6px; }
-.bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--rm-muted); }
+.bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--rm-muted); padding: 3px 8px; border-radius: 8px; cursor: pointer; transition: background .15s ease, box-shadow .15s ease; }
+.bar-row:hover { background: rgba(201, 111, 45, .10); box-shadow: inset 0 0 0 1px rgba(201, 111, 45, .25); }
+.bar-row.active { background: rgba(201, 111, 45, .16); box-shadow: inset 0 0 0 1px var(--rm-primary); }
+.bar-row.disabled { opacity: .45; cursor: not-allowed; }
+.bar-row.disabled:hover { background: transparent; box-shadow: none; }
 .bar-label { width: 10px; text-align: right; font-weight: 700; }
 .bar-star { font-size: 13px; width: 13px; height: 13px; color: #f59e0b; }
 .bar-track { flex: 1; height: 8px; background: #f1dfc9; border-radius: 999px; overflow: hidden; }
 .bar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 999px; transition: width .6s ease; }
 .bar-count { width: 18px; text-align: left; font-weight: 700; }
+.filter-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 8px 14px; background: #fff7e8; border: 1px solid #f0ddc0; border-radius: 10px; font-size: 13px; color: var(--rm-ink); }
+.filter-notice strong { color: var(--rm-primary-dark); }
+.filter-notice button { font-size: 13px; }
 .ratings-list { display: grid; gap: 10px; }
 .rating-card { display: flex; gap: 12px; padding: 14px; border-radius: 14px; background: #fff; border: 1px solid var(--rm-border); transition: transform .2s ease, box-shadow .2s ease; }
 .rating-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px var(--rm-shadow); }

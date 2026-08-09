@@ -163,13 +163,21 @@
             <span>Promedio general</span>
           </div>
           <div class="score-bars">
-            <div class="bar-row" *ngFor="let level of ratingLevels">
+            <div class="bar-row" *ngFor="let level of ratingLevels" (click)="toggleRatingFilter(level)"
+                 [class.active]="ratingFilter === level"
+                 [class.disabled]="ratingCountFor(level) === 0"
+                 [title]="ratingCountFor(level) > 0 ? 'Ver opiniones de ' + level + ' estrella' + (level === 1 ? '' : 's') : 'Sin opiniones de ' + level + ' estrellas'">
               <span class="bar-label">{{ level }}</span>
               <mat-icon class="bar-star">star</mat-icon>
               <div class="bar-track"><div class="bar-fill" [style.width.%]="ratingPct(level)"></div></div>
               <span class="bar-count">{{ ratingCountFor(level) }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="filter-notice" *ngIf="ratingFilter !== null">
+          <span>Mostrando opiniones de <strong>{{ ratingFilter }} estrella{{ ratingFilter === 1 ? '' : 's' }}</strong> ({{ filteredRatings.length }})</span>
+          <button mat-button color="primary" (click)="toggleRatingFilter(null)"><mat-icon>clear</mat-icon> Ver todas</button>
         </div>
 
         <div class="ratings-list">

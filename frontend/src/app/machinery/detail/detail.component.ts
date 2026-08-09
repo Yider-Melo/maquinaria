@@ -71,16 +71,33 @@ export class MachineryDetail implements OnInit {
 
   ratingsPage = 1;
   ratingsPerPage = 4;
+  ratingFilter: number | null = null;
 
-  get visibleRatings(): Rating[] {
-    const start = (this.ratingsPage - 1) * this.ratingsPerPage;
-    return this.ratings.slice(start, start + this.ratingsPerPage);
+  get filteredRatings(): Rating[] {
+    return this.ratingFilter === null
+      ? this.ratings
+      : this.ratings.filter(r => Math.round(r.puntuacion) === this.ratingFilter);
   }
 
-  get ratingsTotalPages(): number { return Math.max(1, Math.ceil(this.ratings.length / this.ratingsPerPage)); }
+  get visibleRatings(): Rating[] {
+    const list = this.filteredRatings;
+    const start = (this.ratingsPage - 1) * this.ratingsPerPage;
+    return list.slice(start, start + this.ratingsPerPage);
+  }
+
+  get ratingsTotalPages(): number { return Math.max(1, Math.ceil(this.filteredRatings.length / this.ratingsPerPage)); }
 
   prevRatingsPage(): void { if (this.ratingsPage > 1) { this.ratingsPage--; } }
   nextRatingsPage(): void { if (this.ratingsPage < this.ratingsTotalPages) { this.ratingsPage++; } }
+
+  toggleRatingFilter(level: number | null): void {
+    if (level === null) {
+      this.ratingFilter = null;
+    } else {
+      this.ratingFilter = this.ratingFilter === level ? null : level;
+    }
+    this.ratingsPage = 1;
+  }
 
   get roundedAverage(): number { return Math.round(this.ratingAverage); }
 
