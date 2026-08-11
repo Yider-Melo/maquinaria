@@ -69,6 +69,7 @@ function webhookAuth(req, res, next) {
 }
 router.post('/webhook', webhookAuth, paymentController.handleWebhook);
 router.post('/internal/booking/:bookingId/release', internalAuth, validateParams(uuidParam('bookingId')), paymentController.releaseByBooking);
+router.post('/internal/booking/:bookingId/refund', internalAuth, validateParams(uuidParam('bookingId')), paymentController.refundByBookingInternal);
 router.get('/my-payments', validateToken, paymentController.getMyPayments);
 router.get('/booking/:bookingId', validateToken, validateParams(uuidParam('bookingId')), paymentController.getPaymentsByBooking);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), paymentController.getPaymentById);

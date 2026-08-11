@@ -35,7 +35,7 @@ async function findOccupiedRanges(machineryId, startDate, endDate) {
     const result = await pool.query(
         `SELECT fecha_inicio, fecha_fin, estado FROM reserva
          WHERE maquinaria_id = $1
-           AND estado IN ('pendiente', 'confirmada', 'en_curso')
+           AND estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso')
            AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)
          ORDER BY fecha_inicio ASC`,
         [machineryId, startDate, endDate]

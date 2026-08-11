@@ -149,7 +149,7 @@ async function updateRating(id, puntuacionPromedio, totalResenas) {
 async function setDisponible(id, disponible) {
     const maquinaria = await maquinariaRepository.findActiveById(id);
     if (!maquinaria) throw new NotFoundError('Maquinaria no encontrada');
-    await maquinariaRepository.update(id, ['disponible = $2'], [disponible]);
+    await maquinariaRepository.update(id, ['disponible = $1'], [disponible]);
     const updated = await maquinariaRepository.findActiveById(id);
     eventBus.publishEvent(EVENT_TYPES.MACHINERY.UPDATED, updated);
     return updated;

@@ -58,6 +58,13 @@ a:focus-visible { outline: 2px solid var(--rm-primary); outline-offset: 2px; }
   font-size: 12px; font-weight: 600; text-transform: capitalize;
   letter-spacing: 0.3px;
 }
+.status-badge.pendiente { background: #fff3e0; color: #e65100; }
+.status-badge.procesando { background: #e3f2fd; color: #1565c0; }
+.status-badge.retenido { background: #f3e5f5; color: #7b1fa2; }
+.status-badge.liberado { background: #e8f5e9; color: #2e7d32; }
+.status-badge.completado { background: #e8f5e9; color: #2e7d32; }
+.status-badge.reembolsado { background: #fce4ec; color: #c62828; }
+.status-badge.fallido { background: #ffebee; color: #b71c1c; }
 
 mat-card { border-radius: 14px !important; background: var(--rm-surface) !important; color: var(--rm-ink) !important; box-shadow: 0 10px 28px var(--rm-shadow) !important; }
 mat-card-header { margin-bottom: 8px; }

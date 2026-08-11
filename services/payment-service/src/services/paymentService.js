@@ -19,20 +19,32 @@ const { PROVIDER } = paymentProvider;
 
 async function markBookingAsPaid(bookingId) {
     const url = `${BOOKING_SERVICE_URL}/internal/${bookingId}/mark-paid`;
-    logger.info('markBookingAsPaid llamando a:', { url });
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' }
-        });
-        const body = await response.text();
-        logger.info('markBookingAsPaid respuesta:', { status: response.status, body });
-        if (!response.ok) {
-            logger.warn('No se pudo marcar reserva como pagada:', { status: response.status, body });
+    const MAX_INTENTOS = 3;
+    for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            const body = await response.text();
+            logger.info('markBookingAsPaid respuesta:', { status: response.status, body });
+            if (response.ok) {
+                return true;
+            }
+            logger.warn('markBookingAsPaid falló, reintentando:', { status: response.status, body, intento });
+        } catch (err) {
+            logger.warn('markBookingAsPaid error de conexión, reintentando:', { message: err.message, intento });
         }
-    } catch (err) {
-        logger.warn('Error al notificar al booking-service:', { message: err.message });
+        if (intento < MAX_INTENTOS) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * intento));
+        }
     }
+    logger.error('markBookingAsPaid agotó reintentos:', { bookingId });
+    return false;
 }
 
 async function findReservaById(bookingId) {
@@ -72,6 +84,9 @@ async function createCheckout(bookingId, userId, metodoPago) {
     let id, externalReference;
 
     if (existingPayment) {
+        if (existingPayment.estado === 'retenido' || existingPayment.estado === 'liberado') {
+            throw new ValidationError('Esta reserva ya tiene un pago aprobado. Verifica el estado de tu reserva antes de intentar pagar de nuevo.');
+        }
         id = existingPayment.id;
         externalReference = existingPayment.referencia_pasarela;
         if (existingPayment.checkout_url && !existingPayment.checkout_url.includes('mercadopago')
@@ -165,6 +180,17 @@ async function handleWebhook(payload) {
     return handleMpWebhook(payload);
 }
 
+const TRANSICIONES_PAGO = {
+    'retenido': ['pendiente', 'procesando'],
+    'fallido': ['pendiente', 'procesando', 'retenido'],
+    'reembolsado': ['pendiente', 'procesando', 'retenido'],
+    'procesando': ['pendiente']
+};
+
+function transicionesValidas(nuevoEstado) {
+    return TRANSICIONES_PAGO[nuevoEstado] || [];
+}
+
 async function handleWompiWebhook(payload) {
     const event = payload.event;
     const transaction = payload.data?.transaction;
@@ -186,7 +212,12 @@ async function handleWompiWebhook(payload) {
         : status === 'REFUNDED' ? 'reembolsado'
         : 'procesando';
 
-    await pagoRepository.updateEstado(pago.id, nuevoEstado);
+    const fromEstados = transicionesValidas(nuevoEstado);
+    if (!fromEstados.length) return { message: 'Evento ignorado' };
+
+    const updated = await pagoRepository.updateEstadoTransicion(pago.id, fromEstados, nuevoEstado);
+    if (!updated) return { message: 'Transición de estado no aplicable (webhook duplicado o estado final)' };
+
     await pagoRepository.updateReferenciaPasarela(pago.id, String(transactionId));
     pago.referencia_pasarela_mp = String(transactionId);
 
@@ -225,7 +256,12 @@ async function handleMpWebhook(payload) {
         if (!pago) return { message: 'Pago no encontrado' };
 
         const nuevoEstado = determinarEstado(status);
-        await pagoRepository.updateEstado(pago.id, nuevoEstado);
+        const fromEstados = transicionesValidas(nuevoEstado);
+        if (!fromEstados.length) return { message: 'Evento ignorado' };
+
+        const updated = await pagoRepository.updateEstadoTransicion(pago.id, fromEstados, nuevoEstado);
+        if (!updated) return { message: 'Transición de estado no aplicable (webhook duplicado o estado final)' };
+
         await pagoRepository.updateReferenciaPasarela(pago.id, String(mpPaymentId));
         pago.referencia_pasarela_mp = String(mpPaymentId);
 
@@ -262,6 +298,10 @@ async function releaseFunds(pagoId, userId) {
     if (!pago) throw new NotFoundError('Pago no encontrado');
     if (pago.propietario_id !== userId) throw new ForbiddenError('Solo el propietario puede liberar fondos');
 
+    if (pago.estado !== 'retenido') {
+        throw new ValidationError('Solo se pueden liberar fondos de un pago en estado retenido');
+    }
+
     if (pago.referencia_pasarela_mp) {
         const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
         if (!isNaN(mpPaymentId)) {
@@ -269,7 +309,30 @@ async function releaseFunds(pagoId, userId) {
         }
     }
 
+    const montoPropietario = Math.round(parseFloat(pago.monto || 0) * (1 - COMISION_PLATAFORMA));
+    const comision = parseFloat(pago.monto || 0) - montoPropietario;
+
+    await pagoRepository.updatePayoutInfo(pagoId, { comision, montoPropietario });
+
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'liberado');
+    if (result) {
+        await pagoRepository.insertMovimiento({
+            pagoId, reservaId: pago.reserva_id,
+            tipo: 'comision_plataforma',
+            monto: comision,
+            descripcion: `Comisión RentaMaq ${COMISION_PLATAFORMA * 100}% - Reserva ${(pago.reserva_id || '').substring(0, 8).toUpperCase()}`,
+            referenciaTipo: 'reserva',
+            referenciaId: pago.reserva_id
+        });
+        await pagoRepository.insertMovimiento({
+            pagoId, reservaId: pago.reserva_id,
+            tipo: 'pago_propietario',
+            monto: montoPropietario,
+            descripcion: `Pago a propietario - Reserva ${(pago.reserva_id || '').substring(0, 8).toUpperCase()} (liberado por el propietario)`,
+            referenciaTipo: 'reserva',
+            referenciaId: pago.reserva_id
+        });
+    }
     return result || { message: 'Pago no encontrado o no está en estado retenido' };
 }
 
@@ -286,6 +349,46 @@ async function refund(pagoId, userId) {
     }
 
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'reembolsado');
+    if (result) {
+        await pagoRepository.insertMovimiento({
+            pagoId, reservaId: pago.reserva_id,
+            tipo: 'reembolso',
+            monto: pago.monto,
+            descripcion: `Reembolso - Reserva ${(pago.reserva_id || '').substring(0, 8).toUpperCase()}`,
+            referenciaTipo: 'reserva',
+            referenciaId: pago.reserva_id
+        });
+    }
+    return result || { message: 'Pago no encontrado o no reembolsable' };
+}
+
+async function refundByBooking(bookingId) {
+    const pago = await pagoRepository.findPaymentByBooking(bookingId);
+    if (!pago) {
+        logger.warn('No hay pago reembolsable para la reserva:', { bookingId });
+        return { message: 'No hay pago reembolsable para esta reserva' };
+    }
+
+    if (pago.referencia_pasarela_mp) {
+        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
+        if (!isNaN(mpPaymentId)) {
+            await paymentProvider.refundPayment(mpPaymentId);
+        }
+    }
+
+    const result = await pagoRepository.updateEstadoWhere(pago.id, 'retenido', 'reembolsado');
+    if (result) {
+        await pagoRepository.insertMovimiento({
+            pagoId: pago.id,
+            reservaId: bookingId,
+            tipo: 'reembolso',
+            monto: pago.monto,
+            descripcion: `Reembolso por cancelación - Reserva ${(bookingId || '').substring(0, 8).toUpperCase()}`,
+            referenciaTipo: 'reserva',
+            referenciaId: bookingId
+        });
+        logger.info('Pago reembolsado por cancelación:', { pagoId: pago.id, bookingId });
+    }
     return result || { message: 'Pago no encontrado o no reembolsable' };
 }
 
@@ -379,11 +482,32 @@ async function releaseByBooking(bookingId) {
         });
     }
 
+    const payoutExitoso = !!payoutResult;
+
+    if (!payoutExitoso) {
+        logger.warn('Payout fallido, los fondos permanecen retenidos:', {
+            pagoId: pago.id,
+            bookingId,
+            propietarioId: pago.propietario_id,
+            payoutError
+        });
+        try {
+            eventBus.publishEvent(EVENT_TYPES.PAYMENT.RELEASED, {
+                pago_id: pago.id,
+                reserva_id: bookingId,
+                monto_propietario: montoPropietario,
+                comision,
+                payout_realizado: false,
+                payout_error: payoutError,
+                propietario_id: pago.propietario_id
+            });
+        } catch { }
+        return { success: false, message: 'Payout fallido. Los fondos permanecen retenidos para reintento.', payoutError };
+    }
+
     const result = await pagoRepository.updateEstadoWhere(pago.id, 'retenido', 'liberado');
     if (result) {
-        const payoutState = payoutResult
-            ? (payoutResult.simulated ? 'simulado' : payoutResult.manual ? 'manual' : 'real')
-            : 'fallido';
+        const payoutState = payoutResult.simulated ? 'simulado' : payoutResult.manual ? 'manual' : 'real';
         logger.info('Fondos liberados:', {
             pagoId: pago.id,
             bookingId,
@@ -408,10 +532,18 @@ async function releaseByBooking(bookingId) {
             reservaId: bookingId,
             tipo: 'pago_propietario',
             monto: montoPropietario,
-            descripcion: `Pago a propietario - Reserva ${bookingId.substring(0, 8).toUpperCase()}${payoutResult ? '' : ' (pendiente de transferencia)'}`,
+            descripcion: `Pago a propietario - Reserva ${bookingId.substring(0, 8).toUpperCase()}`,
             referenciaTipo: 'reserva',
             referenciaId: bookingId
         });
+
+        await enviarNotificacion(
+            pago.propietario_id,
+            EVENT_TYPES.PAYMENT.RELEASED,
+            pago.id,
+            'Pago recibido',
+            `Recibiste el pago por tu alquiler por $${Number(montoPropietario).toLocaleString('es-CO')} COP (Reserva ${(bookingId || '').substring(0, 8).toUpperCase()}).`
+        );
     }
 
     try {
@@ -420,7 +552,7 @@ async function releaseByBooking(bookingId) {
             reserva_id: bookingId,
             monto_propietario: montoPropietario,
             comision,
-            payout_realizado: !!payoutResult,
+            payout_realizado: true,
             propietario_id: pago.propietario_id
         });
     } catch { }
@@ -494,16 +626,17 @@ async function getFailedPayouts() {
 
 async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
     const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'pago' };
+    const publicado = await eventBus.publishEvent(tipo, payload);
+    if (publicado) return;
     try {
-        await eventBus.publishEvent(tipo, payload);
-    } catch {
-        try {
-            await fetch(`${NOTIFICATION_SERVICE_URL}/internal`, {
-                method: 'POST',
-                headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        } catch { }
+        await fetch(`${NOTIFICATION_SERVICE_URL}/internal`, {
+            method: 'POST',
+            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(3000)
+        });
+    } catch (err) {
+        logger.warn('No se pudo enviar notificacion por HTTP', { tipo, error: err.message });
     }
 }
 
@@ -575,7 +708,7 @@ async function getPaymentsByMonth(mes, page = 1, size = 10) {
 module.exports = {
     createCheckout, handleWebhook, determinarEstado,
     getPaymentById, getPaymentsByBooking, getMyPayments,
-    simulateApproval, releaseFunds, refund, releaseByBooking,
+    simulateApproval, releaseFunds, refund, refundByBooking, releaseByBooking,
     retryPayout, getPendingPayouts, getFailedPayouts,
     markPayoutManuallyCompleted, getDashboard, getPaymentsByMonth
 };

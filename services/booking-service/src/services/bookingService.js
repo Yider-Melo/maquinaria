@@ -24,7 +24,12 @@ function todayInTZ() {
 }
 
 function toDateOnly(value) {
-    return new Date(value).toISOString().slice(0, 10);
+    if (!value) return value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return String(value);
+    const { year, month, day } = datePartsInTZ(date);
+    return `${year}-${month}-${day}`;
 }
 
 function minStartDate() {
@@ -44,17 +49,15 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-
 
 async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
     const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'reserva' };
+    const publicado = await eventBus.publishEvent(tipo, payload);
+    if (publicado) return;
     try {
-        await eventBus.publishEvent(tipo, payload);
-    } catch {
-        try {
-            await axios.post(`${NOTIFICATION_SERVICE_URL}/internal`, payload, {
-                headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
-                timeout: 3000
-            });
-        } catch (err) {
-            logger.warn('No se pudo enviar notificacion por HTTP', { tipo, error: err.message });
-        }
+        await axios.post(`${NOTIFICATION_SERVICE_URL}/internal`, payload, {
+            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+            timeout: 3000
+        });
+    } catch (err) {
+        logger.warn('No se pudo enviar notificacion por HTTP', { tipo, error: err.message });
     }
 }
 
@@ -110,6 +113,11 @@ async function create(data, userId) {
         );
 
         return b;
+    }).catch((err) => {
+        if (err && err.code === '23P01') {
+            throw new ConflictError('La maquinaria no está disponible en las fechas seleccionadas');
+        }
+        throw err;
     });
 
     return booking;
@@ -189,6 +197,17 @@ async function getInternalById(id) {
     if (!reserva) {
         throw new NotFoundError('Reserva no encontrada');
     }
+    try {
+        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
+            timeout: 2000
+        });
+        const user = res.data?.data;
+        if (user) {
+            reserva.arrendatario_nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            reserva.arrendatario_email = user.email;
+        }
+    } catch { }
     return reserva;
 }
 
@@ -289,35 +308,67 @@ async function cancel(id, userId, motivo) {
         throw new ValidationError('No se puede cancelar una reserva completada o ya cancelada');
     }
 
-    return await reservaRepository.withTransaction(async (client) => {
-        const booking = await reservaRepository.cancel(id, motivo, client);
+    const booking = await reservaRepository.withTransaction(async (client) => {
+        const b = await reservaRepository.cancel(id, motivo, client);
 
         await enviarNotificacion(
-            booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
-            EVENT_TYPES.BOOKING.CANCELLED, booking.id,
+            b.arrendatario_id === userId ? b.propietario_id : b.arrendatario_id,
+            EVENT_TYPES.BOOKING.CANCELLED, b.id,
             'Reserva cancelada',
-            `La reserva ha sido cancelada. Motivo: ${booking.motivo_cancelacion}`
+            `La reserva ha sido cancelada. Motivo: ${b.motivo_cancelacion}`
         );
 
-        return booking;
+        return b;
     });
+
+    if (reserva.estado === 'pagada' || reserva.estado === 'en_curso') {
+        setImmediate(() => refundPayment(id));
+    }
+
+    return booking;
 }
 
 async function releasePayment(bookingId) {
     const url = `${PAYMENT_SERVICE_URL}/internal/booking/${bookingId}/release`;
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' }
+            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const body = await response.text();
         if (!response.ok) {
-            logger.warn('No se pudo liberar el pago automáticamente:', { status: response.status, bookingId });
+            logger.warn('No se pudo liberar el pago automáticamente:', { status: response.status, bookingId, body });
         } else {
             logger.info('Pago liberado automáticamente al completar reserva:', { bookingId });
         }
     } catch (err) {
         logger.warn('Error al liberar pago automático:', { message: err.message, bookingId });
+    }
+}
+
+async function refundPayment(bookingId) {
+    const url = `${PAYMENT_SERVICE_URL}/internal/booking/${bookingId}/refund`;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const body = await response.text();
+        if (!response.ok) {
+            logger.warn('No se pudo reembolsar el pago al cancelar:', { status: response.status, bookingId, body });
+        } else {
+            logger.info('Pago reembolsado al cancelar reserva:', { bookingId });
+        }
+    } catch (err) {
+        logger.warn('Error al reembolsar pago:', { message: err.message, bookingId });
     }
 }
 

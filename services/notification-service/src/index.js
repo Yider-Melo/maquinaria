@@ -114,6 +114,7 @@ app.listen(PORT, async () => {
     }
 
     eventBus.subscribeToEvent('booking.*', handleBookingEvent, 'notification-booking-queue');
+    eventBus.subscribeToEvent('payment.*', handleBookingEvent, 'notification-payment-queue');
 
     logger.info('Notification Service iniciado', { port: PORT });
 });

@@ -50,6 +50,16 @@ async function updateEstado(id, estado) {
     );
 }
 
+async function updateEstadoTransicion(pagoId, fromEstados, nuevoEstado) {
+    const result = await pool.query(
+        `UPDATE pago SET estado = $1, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $2 AND estado = ANY($3::varchar[])
+         RETURNING ${PAGO_COLUMNS}`,
+        [nuevoEstado, pagoId, fromEstados]
+    );
+    return result.rows[0] || null;
+}
+
 async function findByIdWithReserva(pagoId, userId) {
     const result = await pool.query(
         `SELECT ${PAGO_COLUMNS} FROM pago
@@ -265,7 +275,7 @@ async function getDashboard(q) {
 
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
-    findByReferenciaPasarela, updateEstado, updateCheckoutUrl,
+    findByReferenciaPasarela, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
     findByIdWithReserva, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,

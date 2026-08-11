@@ -47,6 +47,18 @@ app.listen(PORT, async () => {
     } catch (err) {
         logger.warn('No se pudo migrar el CHECK de estado:', { message: err.message });
     }
+    try {
+        await pool.query('CREATE EXTENSION IF NOT EXISTS btree_gist');
+        await pool.query(`ALTER TABLE reserva DROP CONSTRAINT IF EXISTS reserva_no_overlap`);
+        await pool.query(`ALTER TABLE reserva ADD CONSTRAINT reserva_no_overlap
+            EXCLUDE USING gist (
+                maquinaria_id WITH =,
+                daterange(fecha_inicio, fecha_fin) WITH &&
+            ) WHERE (estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso'))`);
+        logger.info('Migración: constraint reserva_no_overlap (EXCLUDE daterange) agregado');
+    } catch (err) {
+        logger.warn('No se pudo agregar el constraint reserva_no_overlap:', { message: err.message });
+    }
     scheduler.start();
     logger.info('Booking Service iniciado', { port: PORT });
 });

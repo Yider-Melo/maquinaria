@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE TABLE IF NOT EXISTS reserva (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     maquinaria_id UUID NOT NULL,
@@ -19,3 +20,14 @@ CREATE INDEX IF NOT EXISTS idx_reserva_maquinaria ON reserva(maquinaria_id);
 CREATE INDEX IF NOT EXISTS idx_reserva_estado ON reserva(estado);
 CREATE INDEX IF NOT EXISTS idx_reserva_fechas ON reserva(fecha_inicio, fecha_fin);
 ALTER TABLE reserva ADD COLUMN IF NOT EXISTS precio_unitario DECIMAL(12, 2);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reserva_no_overlap') THEN
+        ALTER TABLE reserva ADD CONSTRAINT reserva_no_overlap
+            EXCLUDE USING gist (
+                maquinaria_id WITH =,
+                daterange(fecha_inicio, fecha_fin) WITH &&
+            ) WHERE (estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso'));
+    END IF;
+END $$;

@@ -86,6 +86,13 @@ async function refund(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function refundByBookingInternal(req, res, next) {
+    try {
+        const result = await paymentService.refundByBooking(req.params.bookingId);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function retryPayout(req, res, next) {
     try {
         const result = await paymentService.retryPayout(req.params.id, req.user.id);
@@ -125,6 +132,7 @@ module.exports = {
     simulateApproval,
     releaseFunds,
     refund,
+    refundByBookingInternal,
     releaseByBooking,
     retryPayout,
     getPendingPayouts,
