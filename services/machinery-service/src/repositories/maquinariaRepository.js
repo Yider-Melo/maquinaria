@@ -87,7 +87,7 @@ async function insertImage({ id, machineryId, url, orden, esPortada }) {
 
 async function findImageByIdAndMachinery(imageId, machineryId) {
     const result = await pool.query(
-        'SELECT id FROM imagen_maquinaria WHERE id = $1 AND maquinaria_id = $2',
+        'SELECT id, url FROM imagen_maquinaria WHERE id = $1 AND maquinaria_id = $2',
         [imageId, machineryId]
     );
     return result.rows[0] || null;

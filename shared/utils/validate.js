@@ -59,7 +59,7 @@ function validate(schema, source = 'body') {
 
 function validateParams(schema) {
     return (req, res, next) => {
-        const { error, value } = schema.validate(req.params, { stripUnknown: true });
+        const { error, value } = schema.validate(req.params, { stripUnknown: false, allowUnknown: true });
         if (error) {
             return next(new ValidationError(formatJoiError(error)));
         }

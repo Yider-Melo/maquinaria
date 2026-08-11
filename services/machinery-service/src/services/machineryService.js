@@ -78,12 +78,27 @@ async function addImage(machineryId, url, userId) {
         throw new ForbiddenError('No tienes permiso');
     }
 
+    let urlFinal = url;
+    const r2 = require('../config/r2');
+    if (r2.habilitado && typeof url === 'string' && url.startsWith('data:')) {
+        const match = url.match(/^data:(image\/[a-z0-9.+-]+);base64,(.+)$/s);
+        if (match) {
+            const contentType = match[1];
+            const buffer = Buffer.from(match[2], 'base64');
+            const ext = contentType === 'image/svg+xml' ? 'svg'
+                : (contentType.split('/')[1] || 'bin').replace(/[^a-z0-9]/gi, '');
+            const clave = `maquinaria/${machineryId}/${uuidv4()}.${ext}`;
+            const publicUrl = await r2.subirImagen(clave, buffer, contentType);
+            if (publicUrl) urlFinal = publicUrl;
+        }
+    }
+
     const imgCount = await maquinariaRepository.countImages(machineryId);
     const esPortada = imgCount === 0;
     const id = uuidv4();
 
-    await maquinariaRepository.insertImage({ id, machineryId, url, orden: imgCount + 1, esPortada });
-    return { id, url, es_portada: esPortada };
+    await maquinariaRepository.insertImage({ id, machineryId, url: urlFinal, orden: imgCount + 1, esPortada });
+    return { id, url: urlFinal, es_portada: esPortada };
 }
 
 async function deleteImage(machineryId, imageId, userId) {
@@ -95,6 +110,13 @@ async function deleteImage(machineryId, imageId, userId) {
     const image = await maquinariaRepository.findImageByIdAndMachinery(imageId, machineryId);
     if (!image) {
         throw new NotFoundError('Imagen no encontrada');
+    }
+
+    const r2 = require('../config/r2');
+    const publicUrl = (process.env.R2_PUBLIC_URL || '').replace(/\/+$/, '');
+    if (publicUrl && typeof image.url === 'string' && image.url.startsWith(publicUrl + '/')) {
+        const clave = image.url.slice(publicUrl.length + 1);
+        await r2.eliminarImagen(clave);
     }
 
     await maquinariaRepository.deleteImage(imageId, machineryId);
