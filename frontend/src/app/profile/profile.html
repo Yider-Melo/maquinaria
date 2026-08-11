@@ -171,7 +171,7 @@
             <h3>Tus equipos ({{ ownerMachTotal }})</h3>
             <mat-card class="machine-card" *ngFor="let machine of ownerMachines">
               <div class="machine-image">
-                <img [src]="machine.imagen_portada || 'favicon.ico'" [alt]="machine.titulo" loading="lazy">
+                <img [src]="machine.imagen_portada || placeholderImage" [alt]="machine.titulo" loading="lazy">
                 <span [class.unavailable]="machine.disponible === false">{{ machine.disponible === false ? 'No disponible' : 'Disponible' }}</span>
               </div>
               <mat-card-content>

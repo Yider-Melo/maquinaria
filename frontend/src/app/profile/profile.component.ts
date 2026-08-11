@@ -13,7 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
 import { SharedModule } from '../shared/shared.module';
-import { formatDate, formatDateTime, formatId, estadoLabel } from '../shared/utils';
+import { formatDate, formatDateTime, formatId, estadoLabel, PLACEHOLDER_IMAGE } from '../shared/utils';
 import { Usuario, BankAccount, Machinery, MachineryImage, Booking, Payment, ApiResponse, PaginatedResponse } from '../core/models';
 import { compressImage } from '../shared/image-utils';
 import { MachineBookingsDialog } from './machine-bookings-dialog';
@@ -40,6 +40,7 @@ import { MachineBookingsDialog } from './machine-bookings-dialog';
 })
 export class Profile implements OnInit {
   loading = true; saving = false; passwordSaving = false;
+  get placeholderImage(): string { return PLACEHOLDER_IMAGE; }
   profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', ciudad: '', numero_documento: '', foto_url: '' };
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };

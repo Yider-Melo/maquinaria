@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { departamentos as deptos } from '../../shared/colombia-data';
+import { PLACEHOLDER_IMAGE } from '../../shared/utils';
 import { Machinery, SearchResult, ApiResponse } from '../../core/models';
 
 @Component({
@@ -18,6 +19,7 @@ export class MachineryList implements OnInit, OnDestroy {
   suggestions: string[] = [];
   sugerenciasCorreccion: string[] = [];
   buscandoUbicacion = false;
+  get placeholderImage(): string { return PLACEHOLDER_IMAGE; }
   ubicacionActiva = false;
   filters: any = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
   private suggestionSubject = new Subject<string>();
@@ -119,6 +121,7 @@ export class MachineryList implements OnInit, OnDestroy {
         if (this.items.length === 0 && this.filters.q?.trim()) {
           this.buscarSugerencias(this.filters.q.trim());
         }
+        this.attachCovers(this.items);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -126,6 +129,21 @@ export class MachineryList implements OnInit, OnDestroy {
         this.loading = false;
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  private attachCovers(items: any[]): void {
+    const ids = items.map(i => i?.id).filter(Boolean);
+    if (!ids.length) return;
+    this.api.get<any>('/machinery/covers', { ids: ids.join(',') }).subscribe({
+      next: (res) => {
+        const map = res.data || {};
+        for (const item of items) {
+          if (item && map[item.id]) item.imagen_portada = map[item.id];
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {}
     });
   }
 

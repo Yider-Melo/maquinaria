@@ -127,6 +127,13 @@ async function getImages(machineryId) {
     return await maquinariaRepository.findImagesByMachinery(machineryId);
 }
 
+async function getCovers(ids) {
+    const map = {};
+    const rows = await maquinariaRepository.findCovers(ids);
+    for (const r of rows) map[r.maquinaria_id] = r.url;
+    return map;
+}
+
 async function updateAvailability(machineryId, fechas, userId) {
     const existing = await getById(machineryId);
     if (existing.propietario_id !== userId) {
@@ -198,7 +205,7 @@ async function checkFavorite(userId, machineryId) {
 
 module.exports = {
     create, getById, getByOwner, listActive, update, remove,
-    addImage, deleteImage, getImages,
+    addImage, deleteImage, getImages, getCovers,
     updateAvailability, getAvailability,
     adminMachineryStats, adminAllMachinery, adminSetMachineryStatus, updateRating, setDisponible,
     toggleFavorite, getFavorites, checkFavorite

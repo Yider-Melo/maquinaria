@@ -86,6 +86,14 @@ async function getImages(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getCovers(req, res, next) {
+    try {
+        const ids = (req.query.ids || '').split(',').map(s => s.trim()).filter(Boolean);
+        const covers = await machineryService.getCovers(ids);
+        success(res, covers);
+    } catch (err) { next(err); }
+}
+
 async function deleteImage(req, res, next) {
     try {
         await machineryService.deleteImage(req.params.id, req.params.imageId, req.user.id);
@@ -156,6 +164,7 @@ module.exports = {
     remove,
     addImage,
     getImages,
+    getCovers,
     deleteImage,
     updateAvailability,
     getAvailability,

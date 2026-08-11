@@ -79,7 +79,7 @@
     <div class="grid" *ngIf="items.length > 0">
       <mat-card *ngFor="let item of items; trackBy: trackById; let i = index" class="card" tabindex="0" role="link" matRipple appReveal [appReveal]="i * 70" [routerLink]="['/machinery', item.id]" (keydown.enter)="onCardEnter($event)" (keydown.space)="onCardEnter($event)">
         <div class="card-img-wrap">
-          <img mat-card-image class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
+          <img mat-card-image class="card-img" [src]="item.imagen_portada || placeholderImage" alt="{{ item.titulo }}" loading="lazy">
           <button class="fav-btn" [class.active]="item.favorito" (click)="toggleFavorite(item, $event)" matRipple aria-label="Marcar como favorito">
             <mat-icon>{{ item.favorito ? 'favorite' : 'favorite_border' }}</mat-icon>
           </button>

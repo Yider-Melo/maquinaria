@@ -108,6 +108,18 @@ async function findImagesByMachinery(machineryId) {
     return result.rows;
 }
 
+async function findCovers(ids) {
+    if (!ids || !ids.length) return [];
+    const result = await pool.query(
+        `SELECT DISTINCT ON (maquinaria_id) maquinaria_id, url
+         FROM imagen_maquinaria
+         WHERE maquinaria_id = ANY($1::uuid[])
+         ORDER BY maquinaria_id, es_portada DESC, orden ASC`,
+        [ids]
+    );
+    return result.rows;
+}
+
 async function upsertAvailability(id, machineryId, fecha, disponible) {
     await pool.query(
         `INSERT INTO disponibilidad_maquinaria (id, maquinaria_id, fecha, disponible)
@@ -234,7 +246,7 @@ async function isFavorite(userId, machineryId) {
 
 module.exports = {
     insert, findActiveById, findByOwner, findActive, update, softDelete,
-    countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery,
+    countImages, insertImage, findImageByIdAndMachinery, deleteImage, findImagesByMachinery, findCovers,
     upsertAvailability, batchUpsertAvailability, findAvailability,
     getAdminStats, findAllAdmin, setActiveAdmin,
     addFavorite, removeFavorite, findFavorites, isFavorite

@@ -11,6 +11,7 @@ router.get('/owner', validateToken, machineryController.getByOwner);
 router.get('/stats', validateToken, requireRole('admin'), machineryController.adminMachineryStats);
 router.get('/all', validateToken, requireRole('admin'), machineryController.adminAllMachinery);
 router.put('/all/:id/status', validateToken, requireRole('admin'), validateParams(uuidParam('id')), machineryController.adminSetMachineryStatus);
+router.get('/covers', machineryController.getCovers);
 router.get('/:id', validateParams(uuidParam('id')), machineryController.getById);
 router.put('/:id', validateToken, requireRole('propietario'), validateParams(uuidParam('id')), validate(schemas.maquinaria), machineryController.update);
 router.patch('/:id', validateToken, requireRole('propietario'), validateParams(uuidParam('id')), validate(schemas.maquinariaPatch), machineryController.update);

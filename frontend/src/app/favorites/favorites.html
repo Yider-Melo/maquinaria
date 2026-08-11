@@ -4,7 +4,7 @@
     <div class="grid" *ngIf="items.length > 0">
       <mat-card *ngFor="let item of items; let i = index" class="card" matRipple appReveal [appReveal]="i * 70" [routerLink]="['/machinery', item.id]">
         <div class="card-img-wrap">
-          <img class="card-img" [src]="item.imagen_portada || 'favicon.ico'" alt="{{ item.titulo }}" loading="lazy">
+          <img class="card-img" [src]="item.imagen_portada || placeholderImage" alt="{{ item.titulo }}" loading="lazy">
           <button class="fav-btn active" (click)="remove(item, $event)" matRipple aria-label="Quitar de favoritos">
             <mat-icon>favorite</mat-icon>
           </button>

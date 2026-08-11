@@ -8,6 +8,7 @@ import { MatRippleModule } from '@angular/material/core';
 import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
 import { Machinery } from '../core/models';
+import { PLACEHOLDER_IMAGE } from '../shared/utils';
 import { RevealDirective } from '../shared/reveal/reveal.directive';
 
 @Component({
@@ -21,6 +22,7 @@ export class FavoritesComponent implements OnInit {
   items: Machinery[] = []; loading = true;
   page = 1; size = 12; total = 0;
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
+  get placeholderImage(): string { return PLACEHOLDER_IMAGE; }
 
   constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private router: Router) {}
 

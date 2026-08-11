@@ -36,6 +36,7 @@ router.get(api('/machinery/all'), validateToken, requireRole('admin'), proxyWith
 router.get(api('/machinery/owner'), validateToken, requireRole('propietario'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.get(api('/machinery/:id/images'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.get(api('/machinery/:id/availability'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
+router.get(api('/machinery/covers'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.get(api('/machinery/:id'), proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 router.use(api('/machinery'), validateToken, proxyWithTarget(MACHINERY_SERVICE, { [`^${API_PREFIX}/machinery`]: '' }));
 

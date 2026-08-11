@@ -89,3 +89,5 @@ export function estadoLabel(state: string): string {
   };
   return labels[state] || state;
 }
+
+export const PLACEHOLDER_IMAGE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#eef2f7"/><g transform="translate(300,200)"><rect x="-90" y="-40" width="180" height="80" rx="10" fill="#cbd5e1"/><circle cx="-40" cy="0" r="22" fill="#94a3b8"/><circle cx="20" cy="0" r="22" fill="#94a3b8"/><circle cx="80" cy="0" r="22" fill="#94a3b8"/><rect x="-14" y="-26" width="28" height="52" rx="4" fill="#94a3b8"/></g></svg>';
