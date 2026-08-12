@@ -78,6 +78,8 @@ export interface Booking {
   arrendatario_id: string;
   arrendatario_nombre?: string;
   arrendatario_email?: string;
+  arrendatario_promedio_calificacion?: number;
+  arrendatario_total_calificaciones?: number;
   modalidad?: string;
   motivo_cancelacion?: string;
 }

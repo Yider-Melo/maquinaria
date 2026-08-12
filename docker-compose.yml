@@ -198,6 +198,7 @@ services:
       - MACHINERY_SERVICE_URL=http://machinery-service:3002
       - AUTH_SERVICE_URL=http://auth-service:3001
       - PAYMENT_SERVICE_URL=http://payment-service:3005
+      - RATING_SERVICE_URL=http://rating-service:3006
       - NOTIFICATION_SERVICE_URL=http://notification-service:3007
       - INTERNAL_API_KEY=${INTERNAL_API_KEY:-rentamaq-internal-key-dev}
       - JWT_SECRET=${JWT_SECRET}

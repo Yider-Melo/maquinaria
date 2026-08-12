@@ -8,6 +8,7 @@ const logger = createServiceLogger('booking-service');
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
+const RATING_SERVICE_URL = process.env.RATING_SERVICE_URL || 'http://localhost:3006';
 
 const TZ = 'America/Bogota';
 
@@ -170,6 +171,7 @@ async function getById(id, userId) {
             reserva.propietario_nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim() || reserva.propietario_nombre;
         }
     } catch { }
+    await enrichArrendatarioRating(reserva);
     return reserva;
 }
 
@@ -242,6 +244,25 @@ async function getByMachinery(machineryId, userId, page = 1, size = 20) {
     return { data: enriched, total, page, size };
 }
 
+async function enrichArrendatarioRating(reserva) {
+    if (!reserva || !reserva.arrendatario_id) return reserva;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${RATING_SERVICE_URL}/user/${reserva.arrendatario_id}/average`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) return reserva;
+        const body = await res.json();
+        const avg = body.data;
+        reserva.arrendatario_promedio_calificacion = parseFloat(avg?.promedio) || 0;
+        reserva.arrendatario_total_calificaciones = parseInt(avg?.total, 10) || 0;
+    } catch { }
+    return reserva;
+}
+
 async function enrichBookingWithUsers(reserva) {
     try {
         const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
@@ -255,6 +276,7 @@ async function enrichBookingWithUsers(reserva) {
             reserva.arrendatario_email = user.email;
         }
     } catch { }
+    await enrichArrendatarioRating(reserva);
     return reserva;
 }
 
