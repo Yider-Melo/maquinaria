@@ -2,7 +2,7 @@
   <a class="brand" [routerLink]="auth.isLoggedIn() ? '/' : '/machinery'" aria-label="Ir al inicio">
     <mat-icon class="brand-icon" aria-hidden="true">precision_manufacturing</mat-icon>
     RentaMaq
-    <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Arrendador' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
+    <span class="rol-tag" *ngIf="auth.isLoggedIn()">{{ auth.getUser()?.tipo_usuario === 'propietario' ? 'Propietario' : auth.getUser()?.tipo_usuario === 'admin' ? 'Admin' : 'Arrendatario' }}</span>
   </a>
   <nav aria-label="Navegación principal" *ngIf="auth.isLoggedIn()" class="main-nav">
     <a mat-button class="nav-link" routerLink="/machinery" routerLinkActive="active-link" *ngIf="!auth.esTipo('admin')">
