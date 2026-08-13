@@ -14,6 +14,8 @@ import { Usuario, Machinery } from '../../core/models';
   styles: [`
     .page { padding: 24px; max-width: 1200px; margin: 0 auto; }
     .page h1 { margin-bottom: 24px; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+    .table-scroll > .admin-table, .table-scroll > .sub-table { min-width: max-content; }
     .admin-table { width: 100%; border-collapse: collapse; }
     .admin-table th { text-align: left; padding: 12px 8px; border-bottom: 2px solid #ddd; font-weight: 800; font-size: 13px; color: #666; }
     .admin-table tbody tr:nth-child(even) { background: rgba(201, 111, 45, .04); }
@@ -40,11 +42,14 @@ import { Usuario, Machinery } from '../../core/models';
     .role-badge.admin { background: #f3e5f5; color: #7b1fa2; }
     .role-badge.propietario { background: #e3f2fd; color: #1565c0; }
     .role-badge.arrendatario { background: #e8f5e9; color: #2e7d32; }
-    .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; white-space: nowrap; }
     .status.ok { background: #e8f5e9; color: #2e7d32; }
     .status:not(.ok) { background: #ffebee; color: #c62828; }
+    .admin-table button, .sub-table button { white-space: nowrap; }
     .admin-table button:hover:not(.user-row button) { background: #c96f2d; color: white; }
-    .id-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #999; }
+    .id-cell { font-family: 'Courier New', monospace; font-size: 11px; color: #999; word-break: break-all; }
+    .id-toggle { cursor: pointer; color: #c96f2d; font-weight: 600; white-space: nowrap; }
+    .id-toggle:hover { text-decoration: underline; }
     .empty-sub { color: #999; font-size: 13px; padding: 8px 0; }
     .filter-bar { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 4px; }
     .filter-search { width: 260px; font-size: 13px; }
@@ -69,6 +74,7 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
 
   userSearch = '';
   machSearch = '';
+  idsExpandidos = new Set<string>();
 
   private userSearch$ = new Subject<string>();
   private machSearch$ = new Subject<string>();
@@ -82,6 +88,13 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
   }
 
   constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef, private socket: SocketService) {}
+
+  toggleId(event: Event, id: string): void {
+    event.stopPropagation();
+    if (this.idsExpandidos.has(id)) this.idsExpandidos.delete(id);
+    else this.idsExpandidos.add(id);
+    this.cdr.detectChanges();
+  }
 
   private procesarMaquinas(lista: Machinery[]): void {
     this.maquinas = lista;
@@ -122,8 +135,9 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
   private loadUsers(): void {
     const searchingMach = !!this.machSearch.trim();
     const size = searchingMach ? 500 : this.userSize;
+    const page = searchingMach ? 1 : this.userPage;
     const q = this.userSearch.trim() ? `&q=${encodeURIComponent(this.userSearch.trim())}` : '';
-    this.api.get<Usuario[]>(`/admin/users?page=1&size=${size}${q}`).pipe(
+    this.api.get<Usuario[]>(`/admin/users?page=${page}&size=${size}${q}`).pipe(
       catchError(() => of({ success: true, data: [] } as any))
     ).subscribe(res => {
       const r = res as any;

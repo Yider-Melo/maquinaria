@@ -17,18 +17,20 @@
           <button mat-icon-button matSuffix *ngIf="userSearch" (click)="clearUserSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
       </div>
-      <table class="admin-table">
-        <thead><tr><th>Usuario</th><th>Rol</th><th>Teléfono</th><th>Estado</th><th>Acción</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let u of users">
-            <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><small>{{ u.email }}</small></td>
-            <td>{{ u.tipo_usuario }}</td>
-            <td>{{ u.telefono || 'N/A' }}</td>
-            <td><span class="status" [class.ok]="u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
-            <td><button mat-stroked-button (click)="toggleUser(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead><tr><th>Usuario</th><th>Rol</th><th>Teléfono</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><small>{{ u.email }}</small></td>
+              <td>{{ u.tipo_usuario }}</td>
+              <td>{{ u.telefono || 'N/A' }}</td>
+              <td><span class="status" [class.ok]="u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+              <td><button mat-stroked-button (click)="toggleUser(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="pagination" *ngIf="userTotal > userSize">
         <button mat-stroked-button (click)="prevUserPage()" [disabled]="userPage===1">Anterior</button>
         <span>Página {{ userPage }} de {{ userTotalPages }}</span>
@@ -43,21 +45,23 @@
           <button mat-icon-button matSuffix *ngIf="machSearch" (click)="clearMachSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
       </div>
-      <table class="admin-table">
-        <thead><tr><th>ID</th><th>Máquina</th><th>Tipo</th><th>Propietario</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let m of machinery">
-            <td class="id-cell">{{ m.id.substring(0, 8) }}</td>
-            <td><strong>{{ m.titulo }}</strong><small>{{ m.marca }} {{ m.modelo }}</small></td>
-            <td>{{ m.tipo }}</td>
-            <td>{{ userMap[m.propietario_id] || m.propietario_id.substring(0, 8) }}</td>
-            <td>{{ m.ciudad }}</td>
-            <td>${{ m.precio_por_dia | number }}</td>
-            <td><span class="status" [class.ok]="m.activo">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
-            <td><button mat-stroked-button (click)="toggleMachinery(m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Máquina</th><th>Tipo</th><th>Propietario</th><th>Ciudad</th><th>Precio</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of machinery">
+              <td class="id-cell id-toggle" (click)="toggleId(m.id)" [title]="m.id">{{ idsExpandidos.has(m.id) ? m.id : m.id.substring(0, 8) + '…' }}</td>
+              <td><strong>{{ m.titulo }}</strong><small>{{ m.marca }} {{ m.modelo }}</small></td>
+              <td>{{ m.tipo }}</td>
+              <td>{{ userMap[m.propietario_id] || m.propietario_id }}</td>
+              <td>{{ m.ciudad }}</td>
+              <td>${{ m.precio_por_dia | number }}</td>
+              <td><span class="status" [class.ok]="m.activo">{{ m.activo ? 'Activa' : 'Inactiva' }}</span></td>
+              <td><button mat-stroked-button (click)="toggleMachinery(m)">{{ m.activo ? 'Desactivar' : 'Activar' }}</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="pagination" *ngIf="machTotal > machSize">
         <button mat-stroked-button (click)="prevMachPage()" [disabled]="machPage===1">Anterior</button>
         <span>Página {{ machPage }} de {{ machTotalPages }}</span>
@@ -72,9 +76,11 @@
           <button mat-icon-button matSuffix *ngIf="bookingSearch" (click)="clearBookingSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
       </div>
-      <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
-        <tr *ngFor="let b of recentBookings"><td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
-      </tbody></table>
+      <div class="table-scroll">
+        <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
+          <tr *ngFor="let b of recentBookings"><td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
+        </tbody></table>
+      </div>
     </mat-tab>
     <mat-tab label="Pagos">
       <div class="filter-bar">
@@ -84,9 +90,11 @@
           <button mat-icon-button matSuffix *ngIf="paymentSearch" (click)="clearPaymentSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
       </div>
-      <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
-        <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
-      </tbody></table>
+      <div class="table-scroll">
+        <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
+          <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
+        </tbody></table>
+      </div>
     </mat-tab>
   </mat-tab-group>
 </div>

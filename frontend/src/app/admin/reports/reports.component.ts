@@ -30,6 +30,7 @@ export class AdminReports implements OnInit, OnDestroy {
   machSearch = '';
   bookingSearch = '';
   paymentSearch = '';
+  idsExpandidos = new Set<string>();
 
   private userSearch$ = new Subject<string>();
   private machSearch$ = new Subject<string>();
@@ -100,6 +101,36 @@ export class AdminReports implements OnInit, OnDestroy {
     });
     this.loadUsers();
     this.loadMachinery();
+    this.cargarMapaUsuarios();
+  }
+
+  // Carga todos los usuarios para resolver los nombres de los propietarios
+  // de maquinaria (el listado paginado solo trae una página y dejaba IDs sin nombre).
+  private cargarMapaUsuarios(): void {
+    this.api.get<Usuario[]>('/admin/users?page=1&size=100').pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe({
+      next: (res: any) => {
+        const totalPages = res?.pagination?.totalPages || 1;
+        this.userMap = {};
+        const add = (arr: any[]) => {
+          for (const u of arr || []) this.userMap[u.id] = `${u.nombre} ${u.apellido}`.trim();
+        };
+        add(res?.data);
+        if (totalPages > 1) {
+          const calls = [];
+          for (let p = 2; p <= totalPages; p++) {
+            calls.push(this.api.get<Usuario[]>(`/admin/users?page=${p}&size=100`).pipe(catchError(() => of({ success: true, data: [] } as any))));
+          }
+          forkJoin(calls).subscribe((results: any[]) => {
+            for (const r of results) add(r?.data);
+            this.cdr.markForCheck();
+          });
+        } else {
+          this.cdr.markForCheck();
+        }
+      }
+    });
   }
 
   private loadUsers(): void {
@@ -111,8 +142,6 @@ export class AdminReports implements OnInit, OnDestroy {
         const r = res as any;
         this.users = r?.data || [];
         this.userTotal = r?.pagination?.total || 0;
-        this.userMap = {};
-        for (const u of this.users) { this.userMap[u.id] = `${u.nombre} ${u.apellido}`.trim(); }
         this.cdr.markForCheck();
       }
     });
@@ -164,6 +193,11 @@ export class AdminReports implements OnInit, OnDestroy {
 
   verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
     this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
+  }
+
+  toggleId(id: string): void {
+    if (this.idsExpandidos.has(id)) this.idsExpandidos.delete(id);
+    else this.idsExpandidos.add(id);
   }
 
   toggleUser(user: Usuario): void {
