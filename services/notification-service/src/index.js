@@ -1,10 +1,9 @@
 const express = require('express');
-const http = require('http');
 const helmet = require('helmet');
 const cors = require('cors');
 const routes = require('./routes');
 const { eventBus, errorHandler, correlationId, requestLogger, emailService } = require('shared');
-const { createNotificationDirect, getUserEmail } = require('./services/notificationService');
+const { createNotificationDirect, getUserEmail, notifyGatewayViaHttp, broadcastRefreshViaHttp } = require('./services/notificationService');
 const createServiceLogger = require('../../../shared/logger');
 
 const logger = createServiceLogger('notification-service');
@@ -14,9 +13,6 @@ eventBus.setLogger(logger);
 process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled Rejection:', { reason: reason?.message || reason, stack: reason?.stack });
 });
-
-const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
 
 const app = express();
 const PORT = process.env.PORT || 3007;
@@ -35,20 +31,6 @@ app.get('/health', (_req, res) => {
 app.use('/', routes);
 
 app.use(errorHandler);
-
-function notifyGatewayViaHttp(userId, titulo, mensaje) {
-    const body = JSON.stringify({ userId, titulo, mensaje });
-    const req = http.request(`${GATEWAY_URL}/_ws/notify`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(body),
-            'x-api-key': INTERNAL_API_KEY
-        }
-    });
-    req.write(body);
-    req.end();
-}
 
 function getEmailTemplate(tipo, data) {
     const map = {
@@ -83,19 +65,40 @@ async function sendEmailNotification(tipo, data) {
 async function handleBookingEvent(event) {
     const { data, event: tipo } = event;
     try {
+        // El refresco en vivo se emite siempre, incluso si el evento no trae
+        // datos suficientes para crear una notificación (p. ej. payment.updated).
+        broadcastRefreshViaHttp(tipo, data?.referencia_id, data?.referencia_tipo);
+
+        const tipoFinal = data.tipo || tipo;
+        if (!data.usuario_id || !tipoFinal || !data.titulo || !data.mensaje) {
+            return;
+        }
+
         await createNotificationDirect(
             data.usuario_id,
-            data.tipo || tipo,
+            tipoFinal,
             data.titulo,
             data.mensaje,
             data.referencia_id,
             data.referencia_tipo
         );
-        notifyGatewayViaHttp(data.usuario_id, data.titulo, data.mensaje);
-        await sendEmailNotification(tipo || data.tipo, data);
-        logger.info('Notificación creada vía evento:', { usuarioId: data.usuario_id, tipo: data.tipo || tipo });
+        notifyGatewayViaHttp(data.usuario_id, tipoFinal, data.titulo, data.mensaje, data.referencia_id, data.referencia_tipo);
+        await sendEmailNotification(tipoFinal, data);
+        logger.info('Notificación creada vía evento:', { usuarioId: data.usuario_id, tipo: tipoFinal });
     } catch (err) {
         logger.error('Error procesando evento de notificación:', { message: err.message, stack: err.stack });
+    }
+}
+
+async function handleMachineryEvent(event) {
+    const { data, event: tipo } = event;
+    try {
+        // Sin notificación en base de datos para no saturar al propietario:
+        // solo se emite un refresco global para que las vistas se actualicen en vivo.
+        broadcastRefreshViaHttp(tipo, data?.id, 'maquinaria');
+        logger.info('Refresco de maquinaria emitido:', { tipo, id: data?.id });
+    } catch (err) {
+        logger.error('Error procesando evento de maquinaria:', { message: err.message, stack: err.stack });
     }
 }
 
@@ -115,6 +118,7 @@ app.listen(PORT, async () => {
 
     eventBus.subscribeToEvent('booking.*', handleBookingEvent, 'notification-booking-queue');
     eventBus.subscribeToEvent('payment.*', handleBookingEvent, 'notification-payment-queue');
+    eventBus.subscribeToEvent('machinery.*', handleMachineryEvent, 'notification-machinery-queue');
 
     logger.info('Notification Service iniciado', { port: PORT });
 });

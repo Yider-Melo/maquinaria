@@ -48,6 +48,20 @@ export class SocketService {
     });
   }
 
+  // Observable que emite valores cuando se recibe un evento de refresco en vivo.
+  // El backend lo usa para avisar que cambió una reserva, pago o maquinaria,
+  // de modo que las vistas se recarguen solas sin esperar a navegar.
+  onRefresh(): Observable<any> {
+    return new Observable(observer => {
+      if (!this.socket) this.connect();
+      const handler = (data: any) => observer.next(data);
+      this.socket!.on('refresh', handler);
+      return () => {
+        this.socket?.off('refresh', handler);
+      };
+    });
+  }
+
   // Observable que emite valores cuando se recibe notificaciones de booking
   onNewBooking(): Observable<any> {
     return this.onNotification();

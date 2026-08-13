@@ -1,10 +1,13 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { Machinery, MachineryImage, Rating, Booking, OccupiedDates, CheckAvailability, ApiResponse, PaginatedResponse, Usuario } from '../../core/models';
 
@@ -25,8 +28,9 @@ interface CalendarDay {
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MachineryDetail implements OnInit {
+export class MachineryDetail implements OnInit, OnDestroy {
   item: any = null; images: MachineryImage[] = []; loading = true; error = '';
+  private realtimeSub: Subscription | undefined;
   selectedImage = this.fallbackImage;
   ratings: Rating[] = []; ratingAverage = 0; ratingCount = 0;
   propietarioNombre = '';
@@ -123,10 +127,43 @@ export class MachineryDetail implements OnInit {
     private route: ActivatedRoute, public router: Router,
     private api: Api, public auth: Auth,
     private dialog: MatDialog, private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef, private socket: SocketService
   ) {}
 
   ngOnInit(): void {
+    this.loadDetail();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        if (t.startsWith('booking.')) return true;
+        return t.startsWith('machinery.');
+      },
+      () => this.refreshDetail()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
+
+  private refreshDetail(): void {
+    if (!this.item?.id) return;
+    this.api.get<Machinery>(`/machinery/${this.item.id}`).subscribe({
+      next: (res) => {
+        if (!res.data) return;
+        this.item = res.data;
+        this.images = res.data.imagenes || [];
+        if (this.images[0]?.url) this.selectedImage = this.images[0].url;
+        this.loadOccupiedDates();
+        this.loadRatings();
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  private loadDetail(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.error = 'Maquinaria no encontrada.';

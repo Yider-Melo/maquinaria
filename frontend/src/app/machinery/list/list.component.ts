@@ -5,6 +5,8 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { departamentos as deptos } from '../../shared/colombia-data';
 import { PLACEHOLDER_IMAGE } from '../../shared/utils';
 import { Machinery, SearchResult, ApiResponse } from '../../core/models';
@@ -24,6 +26,7 @@ export class MachineryList implements OnInit, OnDestroy {
   filters: any = { q: '', tipo: '', ciudad: '', departamento: '', minPrice: null, maxPrice: null, sort: 'price_asc' };
   private suggestionSubject = new Subject<string>();
   private suggestionSub: Subscription | undefined;
+  private realtimeSub: Subscription | undefined;
   machineryTypes = ['Excavadora', 'Retroexcavadora', 'Bulldozer', 'Grúa', 'Montacargas', 'Volqueta', 'Compactadora', 'Motoniveladora'];
   departamentos = deptos;
   sortOptions = [
@@ -69,7 +72,7 @@ export class MachineryList implements OnInit, OnDestroy {
     {"departamento":"Vichada","ciudades":["Puerto Carreño","Cumaribo","La Primavera","Santa Rosalía"]}
   ];
 
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private router: Router) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private router: Router, private socket: SocketService) {}
 
   onCardEnter(event: Event): void {
     event.preventDefault();
@@ -88,10 +91,19 @@ export class MachineryList implements OnInit, OnDestroy {
       if (q.length >= 2) this.loadSuggestions(q);
       else this.suggestions = [];
     });
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('machinery.');
+      },
+      () => this.load()
+    );
   }
 
   ngOnDestroy(): void {
     this.suggestionSub?.unsubscribe();
+    this.realtimeSub?.unsubscribe();
   }
 
   private normalize(text: string): string {

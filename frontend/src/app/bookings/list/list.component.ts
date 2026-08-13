@@ -1,17 +1,20 @@
 // Componente que lista las reservas del usuario, tanto las que hizo
 // como arrendatario como las que recibió como propietario. Permite
 // cancelar, confirmar, rechazar o completar reservas según el estado.
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, Inject } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { Api } from '../../core/services/api.service';
-import { Auth } from '../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 import { forkJoin, of, timeout, Observable } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { Api } from '../../core/services/api.service';
+import { Auth } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 import { Booking, Machinery, Payment, PaymentCheckout, PaginatedResponse, ApiResponse } from '../../core/models';
@@ -48,10 +51,11 @@ export class CancelDialog {
   selector: 'app-bookings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BookingsList implements OnInit {
+export class BookingsList implements OnInit, OnDestroy {
   asArrendatario: Booking[] = []; asPropietario: Booking[] = []; loading = true;
   error = '';
   tabIndex = 0;
+  private realtimeSub: Subscription | undefined;
   payingBookingId: string | null = null;
   searchQuery = ''; estadoFilter = '';
 
@@ -84,9 +88,23 @@ export class BookingsList implements OnInit {
 
   trackById(_index: number, item: Booking): string { return item?.id || String(_index); }
 
-  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router) {}
+  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router, private socket: SocketService) {}
 
-  ngOnInit(): void { this.loadBookings(true); }
+  ngOnInit(): void {
+    this.loadBookings(true);
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.');
+      },
+      () => this.loadBookings()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
 
   prevPage(): void { if (this.page > 1) { this.page--; this.loadBookings(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadBookings(); } }

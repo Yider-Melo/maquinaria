@@ -1,8 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
 import { MatDialog } from '@angular/material/dialog';
-import { of, Observable, Subject } from 'rxjs';
+import { of, Observable, Subject, Subscription } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { Usuario, Machinery } from '../../core/models';
 
@@ -70,6 +72,7 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
 
   private userSearch$ = new Subject<string>();
   private machSearch$ = new Subject<string>();
+  private realtimeSub: Subscription | undefined;
 
   get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
 
@@ -78,7 +81,7 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
     return this.usuarios.filter(u => (this.maquinasPorUsuario[u.id]?.length || 0) > 0);
   }
 
-  constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
   private procesarMaquinas(lista: Machinery[]): void {
     this.maquinas = lista;
@@ -94,11 +97,17 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
     this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.userPage = 1; this.loadAllMachinery(); this.loadUsers(); });
     this.loadUsers(); this.loadAllMachinery();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => String(ev?.tipo || '').startsWith('machinery.'),
+      () => this.loadAllMachinery()
+    );
   }
 
   ngOnDestroy(): void {
     this.userSearch$.complete();
     this.machSearch$.complete();
+    this.realtimeSub?.unsubscribe();
   }
 
   onUserSearch(q: string): void { this.userSearch = q; this.userSearch$.next(q); }
@@ -154,7 +163,10 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
     this.confirmAction(`¿${accion} al usuario ${user.nombre} ${user.apellido}?`).subscribe(confirmed => {
       if (!confirmed) return;
       this.api.put<Usuario>(`/admin/users/${user.id}/status`, { activo: !user.activo }).subscribe({
-        next: res => user.activo = res.data.activo
+        next: res => {
+          if (res?.data) user.activo = res.data.activo;
+          this.cdr.detectChanges();
+        }
       });
     });
   }
@@ -165,7 +177,10 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
     this.confirmAction(`¿${accion} la maquinaria "${item.titulo}"?`).subscribe(confirmed => {
       if (!confirmed) return;
       this.api.put<Machinery>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe({
-        next: res => item.activo = res.data.activo
+        next: res => {
+          if (res?.data) item.activo = res.data.activo;
+          this.cdr.detectChanges();
+        }
       });
     });
   }

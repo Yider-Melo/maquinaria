@@ -1,8 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { formatDate, formatId, formatDateTime, estadoLabel } from '../../shared/utils';
 import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 
@@ -10,10 +13,11 @@ import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
   standalone: false,
   selector: 'app-payments-list', templateUrl: './list.html', styleUrls: ['./list.css']
 })
-export class PaymentsList implements OnInit {
+export class PaymentsList implements OnInit, OnDestroy {
   payments: any[] = []; loading = true; error = '';
   searchQuery = ''; estadoFilter = '';
   page = 1; size = 10; total = 0;
+  private realtimeSub: Subscription | undefined;
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
@@ -32,9 +36,20 @@ export class PaymentsList implements OnInit {
     });
   }
 
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
-  ngOnInit(): void { this.loadPayments(); }
+  ngOnInit(): void {
+    this.loadPayments();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => String(ev?.tipo || '').startsWith('payment.'),
+      () => this.loadPayments()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
 
   prevPage(): void { if (this.page > 1) { this.page--; this.loadPayments(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadPayments(); } }

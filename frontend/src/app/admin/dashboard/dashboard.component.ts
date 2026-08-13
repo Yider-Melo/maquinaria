@@ -1,5 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
+import { Subscription } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { UserStats, MachineryStats, BookingStats, PaymentDashboard, Booking, ApiResponse } from '../../core/models';
@@ -8,14 +11,32 @@ import { UserStats, MachineryStats, BookingStats, PaymentDashboard, Booking, Api
   selector: 'app-admin-dashboard', templateUrl: './dashboard.html', styleUrls: ['./dashboard.css'],
   standalone: false
 })
-export class AdminDashboard implements OnInit {
+export class AdminDashboard implements OnInit, OnDestroy {
   stats: any = {};
   topTypes: { tipo: string; cantidad: number }[] = [];
   loading = true;
+  private realtimeSub: Subscription | undefined;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
   ngOnInit(): void {
+    this.loadStats();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+      },
+      () => this.loadStats()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
+
+  private loadStats(): void {
+    this.loading = true;
     forkJoin([
       this.api.get<UserStats>('/admin/users/stats').pipe(catchError(() => of({ success: true, data: { total: 0, propietarios: 0, arrendatarios: 0 } }))),
       this.api.get<MachineryStats>('/admin/machinery/stats').pipe(catchError(() => of({ success: true, data: { resumen: { activas: 0, inactivas: 0, total: 0, propietarios_con_maquinaria: 0, tipos_distintos: 0, precio_promedio_dia: 0, precio_minimo: 0, precio_maximo: 0 }, por_tipo: [] } }))),

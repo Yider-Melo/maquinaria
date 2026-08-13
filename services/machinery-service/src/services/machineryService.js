@@ -163,6 +163,7 @@ async function adminAllMachinery(page = 1, size = 20, q) {
 async function adminSetMachineryStatus(id, active) {
     const maquinaria = await maquinariaRepository.setActiveAdmin(id, active);
     if (!maquinaria) throw new NotFoundError('Maquinaria no encontrada');
+    eventBus.publishEvent(EVENT_TYPES.MACHINERY.UPDATED, maquinaria);
     return maquinaria;
 }
 

@@ -1,7 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Auth } from '../core/services/auth.service';
 import { Api } from '../core/services/api.service';
+import { SocketService } from '../core/services/socket.service';
+import { watchRealtime } from '../shared/realtime';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { Booking, Machinery, UnreadCount, PaginatedResponse } from '../core/models';
@@ -10,14 +13,15 @@ import { Booking, Machinery, UnreadCount, PaginatedResponse } from '../core/mode
   selector: 'app-dashboard', templateUrl: './dashboard.html', styleUrls: ['./dashboard.css'],
   standalone: false
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   stats: any = {};
   loading = true;
   ownerMachines: Machinery[] = [];
   ownerRequests: Booking[] = [];
   ownerIncome = 0;
+  private realtimeSub: Subscription | undefined;
 
-  constructor(public auth: Auth, private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
+  constructor(public auth: Auth, private api: Api, private router: Router, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
@@ -29,6 +33,18 @@ export class Dashboard implements OnInit {
       return;
     }
     this.loadStats();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+      },
+      () => this.loadStats()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
   }
 
   private loadStats(): void {

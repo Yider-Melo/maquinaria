@@ -6,6 +6,9 @@ const router = express.Router();
 const notificationService = require('../services/notificationService');
 const { validateToken, success, errorHandler, ForbiddenError } = require('shared');
 
+// Importar helpers de tiempo real para emitir socket también en modo fallback HTTP
+const { notifyGatewayViaHttp, broadcastRefreshViaHttp } = notificationService;
+
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
 
 // Middleware de autenticacion interna entre microservicios via API key
@@ -61,6 +64,15 @@ router.post('/internal', internalAuth, async (req, res, next) => {
             req.body.referencia_id,
             req.body.referencia_tipo
         );
+        notifyGatewayViaHttp(
+            req.body.usuario_id,
+            req.body.tipo,
+            req.body.titulo,
+            req.body.mensaje,
+            req.body.referencia_id,
+            req.body.referencia_tipo
+        );
+        broadcastRefreshViaHttp(req.body.tipo, req.body.referencia_id, req.body.referencia_tipo);
         success(res, result, 201);
     } catch (err) { next(err); }
 });

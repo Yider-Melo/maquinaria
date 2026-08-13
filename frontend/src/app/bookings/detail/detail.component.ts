@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -6,8 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { Api } from '../../core/services/api.service';
 import { Auth, Usuario } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { RatingForm } from '../../ratings/form/form';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
 import { Booking, Machinery, Payment, PaymentCheckout, Rating, ApiResponse } from '../../core/models';
@@ -44,12 +47,13 @@ export class CancelDetailDialog {
   standalone: false,
   selector: 'app-bookings-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
-export class BookingsDetail implements OnInit {
+export class BookingsDetail implements OnInit, OnDestroy {
   formatDate = formatDate;
   formatDateTime = formatDateTime;
   formatId = formatId;
   estadoLabel = estadoLabel;
   booking: any = null; loading = true; error = ''; paying = false;
+  private realtimeSub: Subscription | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -58,7 +62,8 @@ export class BookingsDetail implements OnInit {
     private auth: Auth,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private socket: SocketService
   ) {}
 
   ngOnInit(): void {
@@ -70,6 +75,23 @@ export class BookingsDetail implements OnInit {
       return; 
     }
     this.loadBooking(id);
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        if (t.startsWith('payment.')) return true;
+        if (t.startsWith('booking.')) {
+          const ref = String(ev?.referencia_id || '');
+          return !ref || ref === this.booking?.id;
+        }
+        return false;
+      },
+      () => { if (this.booking?.id) this.loadBooking(this.booking.id); }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
   }
 
   private loadBooking(id: string): void {

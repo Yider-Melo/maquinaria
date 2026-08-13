@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,8 +10,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs';
 import { Api } from '../core/services/api.service';
 import { Auth } from '../core/services/auth.service';
+import { SocketService } from '../core/services/socket.service';
+import { watchRealtime } from '../shared/realtime';
 import { SharedModule } from '../shared/shared.module';
 import { formatDate, formatDateTime, formatId, estadoLabel, PLACEHOLDER_IMAGE } from '../shared/utils';
 import { Usuario, BankAccount, Machinery, MachineryImage, Booking, Payment, ApiResponse, PaginatedResponse } from '../core/models';
@@ -38,8 +41,9 @@ import { MachineBookingsDialog } from './machine-bookings-dialog';
     MachineBookingsDialog
   ]
 })
-export class Profile implements OnInit {
+export class Profile implements OnInit, OnDestroy {
   loading = true; saving = false; passwordSaving = false;
+  private realtimeSub: Subscription | undefined;
   get placeholderImage(): string { return PLACEHOLDER_IMAGE; }
   profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', ciudad: '', numero_documento: '', foto_url: '' };
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
@@ -61,9 +65,34 @@ export class Profile implements OnInit {
   imageLoading = false;
   error = '';
 
-  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private auth: Auth, private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+      },
+      () => this.refreshSections()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
+
+  private refreshSections(): void {
+    if (this.canManageMachineryImages) {
+      this.loadOwnerMachines();
+      this.loadOwnerRequests();
+    }
+    if (this.canUseRenterProfile) {
+      this.loadRenterBookings();
+      this.loadRenterPayments();
+    }
+  }
 
   load(): void {
     this.api.get<Usuario>('/auth/profile').subscribe({

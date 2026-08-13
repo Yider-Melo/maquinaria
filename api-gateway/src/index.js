@@ -71,8 +71,31 @@ app.post('/_ws/notify', internalAuth, express.json({ limit: '1mb' }), (req, res)
     if (!userId || !titulo) {
         return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'userId y titulo son requeridos' } });
     }
-    io.to(`user:${userId}`).emit('notification', { titulo, mensaje });
+    io.to(`user:${userId}`).emit('notification', {
+        titulo,
+        mensaje,
+        tipo: req.body.tipo,
+        referencia_id: req.body.referencia_id,
+        referencia_tipo: req.body.referencia_tipo
+    });
     logger.info('Notification sent', { userId, titulo });
+    res.json({ success: true });
+});
+
+// Emite un evento de refresco en tiempo real a todos los clientes conectados.
+// Lo usan los microservicios para avisar que un recurso público cambió
+// (p. ej. reservas, pagos o maquinaria) y que las vistas se recarguen solas.
+app.post('/_ws/broadcast', internalAuth, express.json({ limit: '1mb' }), (req, res) => {
+    const { tipo } = req.body;
+    if (!tipo) {
+        return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'tipo es requerido' } });
+    }
+    io.to('global').emit('refresh', {
+        tipo,
+        referencia_id: req.body.referencia_id,
+        referencia_tipo: req.body.referencia_tipo
+    });
+    logger.info('Refresh broadcast sent', { tipo, referencia_id: req.body.referencia_id });
     res.json({ success: true });
 });
 
@@ -102,6 +125,8 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
     logger.info('WebSocket connected', { userId: socket.user?.id });
     socket.join(`user:${socket.user.id}`);
+    // Sala global para recibir eventos de refresco en tiempo real
+    socket.join('global');
 
     socket.on('disconnect', () => {
         logger.info('WebSocket disconnected', { userId: socket.user?.id });

@@ -1,9 +1,36 @@
 const { v4: uuidv4 } = require('uuid');
+const http = require('http');
 const { ValidationError } = require('shared');
 const notificacionRepository = require('../repositories/notificacionRepository');
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+
+function postToGateway(path, body) {
+    const payload = JSON.stringify(body);
+    const req = http.request(`${GATEWAY_URL}${path}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+            'x-api-key': INTERNAL_API_KEY
+        }
+    });
+    req.on('error', () => {});
+    req.write(payload);
+    req.end();
+}
+
+// Avisa al usuario (vía WebSocket) que tiene una notificación nueva.
+function notifyGatewayViaHttp(userId, tipo, titulo, mensaje, referenciaId, referenciaTipo) {
+    postToGateway('/_ws/notify', { userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: referenciaTipo });
+}
+
+// Emite un evento de refresco global para que las vistas se recarguen en vivo.
+function broadcastRefreshViaHttp(tipo, referenciaId, referenciaTipo) {
+    postToGateway('/_ws/broadcast', { tipo, referencia_id: referenciaId, referencia_tipo: referenciaTipo });
+}
 
 async function getUserEmail(userId) {
     try {
@@ -117,5 +144,6 @@ async function markAllAsRead(userId) {
 module.exports = {
     createNotification, createNotificationDirect,
     getNotificationsByUser, getUnreadCount, markAsRead, markAllAsRead,
-    TIPOS_NOTIFICACION, getUserEmail
+    TIPOS_NOTIFICACION, getUserEmail,
+    notifyGatewayViaHttp, broadcastRefreshViaHttp
 };

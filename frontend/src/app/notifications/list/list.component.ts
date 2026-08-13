@@ -1,6 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchNotifications } from '../../shared/realtime';
 import { formatDateTime, formatDateRelative } from '../../shared/utils';
 import { Notification, PaginatedResponse } from '../../core/models';
 
@@ -8,17 +11,25 @@ import { Notification, PaginatedResponse } from '../../core/models';
   standalone: false,
   selector: 'app-notifications-list', templateUrl: './list.html', styleUrls: ['./list.css']
 })
-export class NotificationsList implements OnInit {
+export class NotificationsList implements OnInit, OnDestroy {
   formatDateTime = formatDateTime;
   formatDateRelative = formatDateRelative;
   notifications: Notification[] = []; loading = true; error = '';
   page = 1; size = 20; total = 0;
+  private realtimeSub: Subscription | undefined;
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
-  constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
-  ngOnInit(): void { this.loadNotifications(); }
+  ngOnInit(): void {
+    this.loadNotifications();
+    this.realtimeSub = watchNotifications(this.socket, () => this.loadNotifications());
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
 
   prevPage(): void { if (this.page > 1) { this.page--; this.loadNotifications(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadNotifications(); } }
