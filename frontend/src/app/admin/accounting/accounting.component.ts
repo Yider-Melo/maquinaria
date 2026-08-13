@@ -1,12 +1,15 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { catchError, of } from 'rxjs';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 
 @Component({
   selector: 'app-admin-accounting', templateUrl: './accounting.html', styleUrls: ['./accounting.css'],
   standalone: false
 })
-export class AdminAccounting implements OnInit {
+export class AdminAccounting implements OnInit, OnDestroy {
   dashboard: any = {
     resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 },
     por_mes: [],
@@ -22,9 +25,27 @@ export class AdminAccounting implements OnInit {
   pagoSize = 8;
   pagoTotal = 0;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef) {}
+  private realtimeSub: Subscription | undefined;
+
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
   ngOnInit(): void {
+    this.loadDashboard();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('payment.') || t.startsWith('booking.');
+      },
+      () => this.loadDashboard()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
+
+  private loadDashboard(): void {
     this.api.get<any>('/admin/payments/dashboard').pipe(
       catchError(() => of({
         success: true,

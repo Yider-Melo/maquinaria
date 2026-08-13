@@ -1,8 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api.service';
-import { Observable, forkJoin, of, Subject } from 'rxjs';
+import { SocketService } from '../../core/services/socket.service';
+import { Observable, forkJoin, of, Subject, Subscription } from 'rxjs';
 import { catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { UserStats, RatingStats, Booking, Machinery, PaymentDashboard, Usuario } from '../../core/models';
 
@@ -32,11 +34,12 @@ export class AdminReports implements OnInit, OnDestroy {
   private machSearch$ = new Subject<string>();
   private bookingSearch$ = new Subject<string>();
   private paymentSearch$ = new Subject<string>();
+  private realtimeSub: Subscription | undefined;
 
   get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
   get machTotalPages(): number { return Math.ceil(this.machTotal / this.machSize) || 1; }
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog, private socket: SocketService) {}
 
   ngOnInit(): void {
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
@@ -44,6 +47,14 @@ export class AdminReports implements OnInit, OnDestroy {
     this.bookingSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadBookings());
     this.paymentSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadPayments());
     this.loadAll();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+      },
+      () => this.loadAll()
+    );
   }
 
   ngOnDestroy(): void {
@@ -51,6 +62,7 @@ export class AdminReports implements OnInit, OnDestroy {
     this.machSearch$.complete();
     this.bookingSearch$.complete();
     this.paymentSearch$.complete();
+    this.realtimeSub?.unsubscribe();
   }
 
   onUserSearch(q: string): void { this.userSearch = q; this.userSearch$.next(q); }
@@ -154,7 +166,7 @@ export class AdminReports implements OnInit, OnDestroy {
     this.confirmAction(`¿${accion} al usuario ${user.nombre} ${user.apellido}?`).subscribe(confirmed => {
       if (!confirmed) return;
       this.api.put<Usuario>(`/admin/users/${user.id}/status`, { activo: !user.activo }).subscribe({
-        next: res => user.activo = res.data.activo,
+        next: res => { if (res?.data) user.activo = res.data.activo; this.cdr.detectChanges(); },
         error: () => console.error('Error al cambiar estado del usuario')
       });
     });
@@ -165,7 +177,7 @@ export class AdminReports implements OnInit, OnDestroy {
     this.confirmAction(`¿${accion} la maquinaria "${item.titulo}"?`).subscribe(confirmed => {
       if (!confirmed) return;
       this.api.put<Machinery>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe({
-        next: res => item.activo = res.data.activo,
+        next: res => { if (res?.data) item.activo = res.data.activo; this.cdr.detectChanges(); },
         error: () => console.error('Error al cambiar estado de la maquinaria')
       });
     });

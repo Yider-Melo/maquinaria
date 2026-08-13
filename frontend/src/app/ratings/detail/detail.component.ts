@@ -1,6 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { formatDate, formatDateTime, formatId } from '../../shared/utils';
 import { Rating } from '../../core/models';
 
@@ -8,17 +11,19 @@ import { Rating } from '../../core/models';
   standalone: false,
   selector: 'app-ratings-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
-export class RatingsDetail implements OnInit {
+export class RatingsDetail implements OnInit, OnDestroy {
   formatDate = formatDate;
   formatDateTime = formatDateTime;
   formatId = formatId;
   rating: any = null; loading = true; error = '';
+  private realtimeSub: Subscription | undefined;
 
   constructor(
     private route: ActivatedRoute,
     public router: Router,
     private api: Api,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private socket: SocketService
   ) {}
 
   ngOnInit(): void {
@@ -30,6 +35,18 @@ export class RatingsDetail implements OnInit {
       return;
     }
     this.loadRating(id);
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('machinery.') || t.startsWith('booking.');
+      },
+      () => { if (this.rating?.id) this.loadRating(this.rating.id); }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
   }
 
   private loadRating(id: string): void {

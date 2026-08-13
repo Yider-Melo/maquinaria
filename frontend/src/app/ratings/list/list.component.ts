@@ -1,10 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
+import { SocketService } from '../../core/services/socket.service';
 import { RatingForm } from '../form/form';
-import { forkJoin, of, Observable } from 'rxjs';
+import { forkJoin, of, Observable, Subscription } from 'rxjs';
 import { catchError, finalize, tap } from 'rxjs/operators';
+import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { formatDate, formatId, estadoLabel } from '../../shared/utils';
 import { Rating, Booking, Machinery, PaginatedResponse, ApiResponse } from '../../core/models';
@@ -13,19 +15,34 @@ import { Rating, Booking, Machinery, PaginatedResponse, ApiResponse } from '../.
   selector: 'app-ratings-list', templateUrl: './list.html', styleUrls: ['./list.css'],
   standalone: false
 })
-export class RatingsList implements OnInit {
+export class RatingsList implements OnInit, OnDestroy {
   ratings: Rating[] = []; receivedRatings: Rating[] = []; completedBookings: Booking[] = []; loading = true; error = '';
   pageMy = 1; size = 10; totalMy = 0;
   pageReceived = 1; totalReceived = 0;
   pendingPage = 1; pendingSize = 10; pendingTotal = 0;
+  private realtimeSub: Subscription | undefined;
 
   get totalPagesMy(): number { return Math.ceil(this.totalMy / this.size) || 1; }
   get totalPagesReceived(): number { return Math.ceil(this.totalReceived / this.size) || 1; }
   get totalPagesPending(): number { return Math.ceil(this.pendingTotal / this.pendingSize) || 1; }
 
-  constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef) {}
+  constructor(private api: Api, private auth: Auth, private dialog: MatDialog, private cdr: ChangeDetectorRef, private socket: SocketService) {}
 
-  ngOnInit(): void { this.loadAll(); }
+  ngOnInit(): void {
+    this.loadAll();
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('machinery.');
+      },
+      () => this.loadAll()
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
+  }
 
   prevPageMy(): void { if (this.pageMy > 1) { this.pageMy--; this.loadRatings(); } }
   nextPageMy(): void { if (this.pageMy * this.size < this.totalMy) { this.pageMy++; this.loadRatings(); } }

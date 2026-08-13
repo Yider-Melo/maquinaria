@@ -1,9 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
+import { SocketService } from '../../core/services/socket.service';
+import { watchRealtime } from '../../shared/realtime';
 import { formatDate, formatDateTime, formatId, estadoLabel } from '../../shared/utils';
 import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
 
@@ -11,19 +14,21 @@ import { Payment, Booking, Machinery, ApiResponse } from '../../core/models';
   standalone: false,
   selector: 'app-payments-detail', templateUrl: './detail.html', styleUrls: ['./detail.css']
 })
-export class PaymentsDetail implements OnInit {
+export class PaymentsDetail implements OnInit, OnDestroy {
   formatDate = formatDate;
   formatDateTime = formatDateTime;
   formatId = formatId;
   estadoLabel = estadoLabel;
   payment: any = null; loading = true; error = '';
+  private realtimeSub: Subscription | undefined;
 
   constructor(
     private route: ActivatedRoute,
     public router: Router,
     private api: Api,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private socket: SocketService
   ) {}
 
   ngOnInit(): void {
@@ -35,6 +40,23 @@ export class PaymentsDetail implements OnInit {
       return;
     }
     this.loadPayment(id);
+    this.realtimeSub = watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        if (t.startsWith('payment.')) return true;
+        if (t.startsWith('booking.')) {
+          const ref = String(ev?.referencia_id || '');
+          return !ref || ref === this.payment?.reserva_id;
+        }
+        return false;
+      },
+      () => { if (this.payment?.id) this.loadPayment(this.payment.id); }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.realtimeSub?.unsubscribe();
   }
 
   private loadPayment(id: string): void {
