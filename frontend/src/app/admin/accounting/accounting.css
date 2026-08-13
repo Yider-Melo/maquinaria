@@ -12,9 +12,13 @@
 .summary-card { display:flex; flex-direction:column; align-items:center; text-align:center; padding:24px 16px; }
 .summary-card mat-icon { font-size:36px; width:36px; height:36px; color:var(--rm-primary); margin-bottom:8px; }
 .summary-card.error mat-icon { color:var(--rm-danger); }
+.summary-card.clickable { cursor:pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.summary-card.clickable:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
 .summary-value { font-size:26px; font-weight:bold; color:var(--rm-ink); }
 .summary-label { font-size:14px; font-weight:700; color:var(--rm-secondary); margin-top:4px; }
 .summary-desc { font-size:12px; color:var(--rm-muted); margin-top:6px; line-height:1.4; }
+.table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+.table-scroll > .admin-table { min-width:max-content; }
 .admin-table { width:100%; border-collapse:collapse; }
 .admin-table th { text-align:left; padding:12px 8px; border-bottom:2px solid var(--rm-border); color:var(--rm-secondary); font-weight:800; font-size:13px; }
 .admin-table td { padding:10px 8px; border-bottom:1px solid var(--rm-border); font-size:14px; color:var(--rm-ink); }

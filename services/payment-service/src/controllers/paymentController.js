@@ -27,6 +27,16 @@ async function getPaymentsByMonth(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function getFailedPayments(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 10;
+        const result = await paymentService.getFailedPayments(page, size);
+        const { paginated } = require('shared');
+        paginated(res, result.data, result.total, page, size);
+    } catch (err) { next(err); }
+}
+
 async function createCheckout(req, res, next) {
     try {
         const checkout = await paymentService.createCheckout(req.body.reserva_id, req.user.id, req.body.metodo_pago);
@@ -128,6 +138,7 @@ module.exports = {
     handleWebhook,
     getPaymentsByBooking,
     getMyPayments,
+    getFailedPayments,
     getPaymentById,
     simulateApproval,
     releaseFunds,

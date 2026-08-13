@@ -6,6 +6,7 @@ const { validate, validateParams, uuidParam, validateToken, requireRole, errorHa
 
 router.get('/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
 router.get('/by-month', validateToken, requireRole('admin'), paymentController.getPaymentsByMonth);
+router.get('/failed', validateToken, requireRole('admin'), paymentController.getFailedPayments);
 router.get('/admin/payouts/pending', validateToken, requireRole('admin'), paymentController.getPendingPayouts);
 router.get('/admin/payouts/failed', validateToken, requireRole('admin'), paymentController.getFailedPayouts);
 router.post('/admin/payouts/:id/retry', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.retryPayout);

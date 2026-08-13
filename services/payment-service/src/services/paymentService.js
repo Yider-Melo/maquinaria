@@ -702,9 +702,13 @@ async function getDashboard(q) {
 
 async function getPaymentsByMonth(mes, page = 1, size = 10) {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
-        throw new ValidationError('Mes inválido. Usa el formato YYYY-MM');
+        throw new ValidationError('Mes inv�lido. Usa el formato YYYY-MM');
     }
     return await pagoRepository.findByMonth(mes, page, size);
+}
+
+async function getFailedPayments(page = 1, size = 10) {
+    return await pagoRepository.findByEstado('fallido', page, size);
 }
 
 module.exports = {
@@ -712,5 +716,6 @@ module.exports = {
     getPaymentById, getPaymentsByBooking, getMyPayments,
     simulateApproval, releaseFunds, refund, refundByBooking, releaseByBooking,
     retryPayout, getPendingPayouts, getFailedPayouts,
-    markPayoutManuallyCompleted, getDashboard, getPaymentsByMonth
+    markPayoutManuallyCompleted, getDashboard, getPaymentsByMonth,
+    getFailedPayments
 };

@@ -6,6 +6,7 @@ import { SocketService } from '../../core/services/socket.service';
 import { MatDialog } from '@angular/material/dialog';
 import { watchRealtime } from '../../shared/realtime';
 import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
+import { PagosFallidosDialog } from '../../shared/pagos-fallidos-dialog/pagos-fallidos-dialog';
 
 @Component({
   selector: 'app-admin-accounting', templateUrl: './accounting.html', styleUrls: ['./accounting.css'],
@@ -33,6 +34,10 @@ export class AdminAccounting implements OnInit, OnDestroy {
 
   verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
     this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
+  }
+
+  abrirPagosFallidos(): void {
+    this.dialog.open(PagosFallidosDialog, { data: {}, maxWidth: '680px' });
   }
 
   ngOnInit(): void {

@@ -122,6 +122,24 @@ async function findByMonth(mes, page = 1, size = 10) {
     return { data: result.rows, total };
 }
 
+async function findByEstado(estado, page = 1, size = 10) {
+    const offset = (page - 1) * size;
+    const countResult = await pool.query(
+        `SELECT COUNT(*) FROM pago WHERE estado = $1`,
+        [estado]
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+    const result = await pool.query(
+        `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
+         FROM pago
+         WHERE estado = $1
+         ORDER BY creado_en DESC
+         LIMIT $2 OFFSET $3`,
+        [estado, size, offset]
+    );
+    return { data: result.rows, total };
+}
+
 async function findByIdSimple(pagoId) {
     const result = await pool.query(
         `SELECT id, usuario_id, propietario_id, reserva_id, monto,
@@ -288,5 +306,5 @@ module.exports = {
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,
     markLiberado, findFailedPayouts, findPendingPayouts, getDashboard,
-    findByMonth
+    findByMonth, findByEstado
 };

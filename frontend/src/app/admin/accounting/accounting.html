@@ -30,11 +30,11 @@
       <span class="summary-label">Pagos Realizados</span>
       <span class="summary-desc">Cantidad total de pagos hechos en la plataforma.</span>
     </mat-card>
-    <mat-card class="summary-card error">
+    <mat-card class="summary-card error clickable" (click)="abrirPagosFallidos()" title="Ver los pagos fallidos">
       <mat-icon>error_outline</mat-icon>
       <span class="summary-value">{{ dashboard.resumen.total_fallidos || 0 }}</span>
       <span class="summary-label">Pagos Fallidos</span>
-      <span class="summary-desc">Pagos que no se pudieron completar.</span>
+      <span class="summary-desc">Click para ver cuáles son y su detalle.</span>
     </mat-card>
     <mat-card class="summary-card">
       <mat-icon>trending_up</mat-icon>
