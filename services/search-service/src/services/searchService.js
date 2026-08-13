@@ -34,16 +34,9 @@ async function search(filters) {
         values.push(Number(filters.maxPrice));
     }
 
-    if (filters.ciudad) {
-        conditions.push(`unaccent(LOWER(m.ciudad)) LIKE unaccent($${idx++})`);
-        values.push(`%${filters.ciudad.trim().toLowerCase()}%`);
-    }
-
-    if (filters.departamento) {
-        conditions.push(`unaccent(LOWER(m.departamento)) = unaccent($${idx++})`);
-        values.push(filters.departamento.trim().toLowerCase());
-    }
-
+    // La geolocalización (GPS) es el filtro principal de ubicación cuando está activa.
+    // Por eso se evalúa primero: si viene lat/lng/radius, reemplaza a ciudad y departamento
+    // (que pasan a ser secundarios y no deben restringir los resultados de cercanía).
     let hasLocation = false;
     if (filters.lat !== undefined && filters.lng !== undefined && filters.radius) {
         const lat = Number(filters.lat);
@@ -56,6 +49,16 @@ async function search(filters) {
         conditions.push(`m.ubicacion_lng BETWEEN $${idx++} AND $${idx++}`);
         values.push(lng - lngDiff, lng + lngDiff);
         hasLocation = true;
+    }
+
+    if (!hasLocation && filters.ciudad) {
+        conditions.push(`unaccent(LOWER(m.ciudad)) LIKE unaccent($${idx++})`);
+        values.push(`%${filters.ciudad.trim().toLowerCase()}%`);
+    }
+
+    if (!hasLocation && filters.departamento) {
+        conditions.push(`unaccent(LOWER(m.departamento)) = unaccent($${idx++})`);
+        values.push(filters.departamento.trim().toLowerCase());
     }
 
     conditions.push('m.disponible = true', 'm.activo = true');

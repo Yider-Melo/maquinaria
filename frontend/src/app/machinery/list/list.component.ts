@@ -182,6 +182,17 @@ export class MachineryList implements OnInit, OnDestroy {
     this.load();
   }
   buscarCerca(): void {
+    // Si el GPS ya está activo, lo desactiva (vuelve a los filtros secundarios).
+    if (this.ubicacionActiva) {
+      this.ubicacionActiva = false;
+      delete this.filters.lat;
+      delete this.filters.lng;
+      delete this.filters.radius;
+      if (this.filters.sort === 'distance') this.filters.sort = 'price_asc';
+      this.search();
+      this.snackBar.open('Filtro de cercanía desactivado', 'Cerrar', { duration: 2500 });
+      return;
+    }
     if (!navigator.geolocation) {
       this.snackBar.open('La geolocalización no está disponible en este navegador.', 'Cerrar', { duration: 4000 });
       return;
@@ -193,6 +204,10 @@ export class MachineryList implements OnInit, OnDestroy {
         this.filters.lng = pos.coords.longitude;
         this.filters.radius = 50;
         this.filters.sort = 'distance';
+        // El GPS es el filtro primordial de ubicación: reemplaza ciudad y departamento.
+        this.filters.ciudad = '';
+        this.filters.departamento = '';
+        this.ciudadesPorDepto = [];
         this.ubicacionActiva = true;
         this.buscandoUbicacion = false;
         this.snackBar.open('📍 Mostrando maquinaria cerca de tu ubicación (radio 50km)', 'Cerrar', { duration: 4000 });
@@ -214,6 +229,7 @@ export class MachineryList implements OnInit, OnDestroy {
     this.search();
     this.snackBar.open('Filtros limpiados', 'Cerrar', { duration: 2000 });
   }
+
   onQueryChange(): void {
     this.suggestionSubject.next(this.filters.q?.trim() || '');
   }
@@ -244,8 +260,15 @@ export class MachineryList implements OnInit, OnDestroy {
 
   private cleanFilters(): any {
     const cleaned: any = Object.fromEntries(Object.entries(this.filters).filter(([, value]) => value !== '' && value !== null && value !== undefined));
-    if (cleaned['ciudad']) cleaned['ciudad'] = this.normalize(cleaned['ciudad']);
-    if (cleaned['departamento']) cleaned['departamento'] = this.normalize(cleaned['departamento']);
+    // Con el GPS activo, la ubicación la define la cercanía (filtro primordial),
+    // por lo que ciudad y departamento quedan fuera.
+    if (this.ubicacionActiva) {
+      delete cleaned['ciudad'];
+      delete cleaned['departamento'];
+    } else {
+      if (cleaned['ciudad']) cleaned['ciudad'] = this.normalize(cleaned['ciudad']);
+      if (cleaned['departamento']) cleaned['departamento'] = this.normalize(cleaned['departamento']);
+    }
     return cleaned;
   }
 }

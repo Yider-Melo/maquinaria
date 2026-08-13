@@ -41,6 +41,10 @@
 .suggestion-hint { margin-top: 8px; font-size: 14px; color: var(--rm-muted); }
 .suggestion-hint a { color: var(--rm-primary); text-decoration: underline; cursor: pointer; font-weight: 700; }
 .pagination span { color: #888; font-size: 14px; }
+.nearby-btn.active { background: var(--rm-primary) !important; color: #fff8ec !important; border-color: var(--rm-primary) !important; font-weight: 700 !important; }
+.location-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--rm-primary); color: #fff8ec; border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer; transition: filter .2s, transform .2s; }
+.location-badge:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.location-badge mat-icon { color: #ffe2a8; }
 @media (max-width: 1000px) { .filters-card mat-form-field { flex: 1 1 120px; } }
 @media (max-width: 640px) { .container { padding: 20px 14px; } .filters-card { flex-direction: column; } .filters-card mat-form-field { width: 100%; flex: none; } .filter-actions { width: 100%; } .search-btn, .clear-btn { flex: 1; } }
 @media (max-width: 480px) { .list-hero { padding: 20px; border-radius: 18px; } .grid { grid-template-columns: 1fr; gap: 16px; } .card-img { height: 170px; } .pagination { flex-direction: column; } }

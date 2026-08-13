@@ -42,10 +42,10 @@
       </mat-select>
       <mat-icon matPrefix>location_on</mat-icon>
     </mat-form-field>
-    <button mat-stroked-button class="nearby-btn" (click)="buscarCerca()" [disabled]="buscandoUbicacion" title="Buscar cerca de mi ubicación">
+    <button mat-stroked-button class="nearby-btn" [class.active]="ubicacionActiva" (click)="buscarCerca()" [disabled]="buscandoUbicacion" [title]="ubicacionActiva ? 'Desactivar cercanía' : 'Buscar cerca de mi ubicación'">
       <mat-icon *ngIf="!buscandoUbicacion">my_location</mat-icon>
       <mat-icon *ngIf="buscandoUbicacion" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
-      {{ buscandoUbicacion ? 'Obteniendo ubicación...' : 'Cerca de mí' }}
+      {{ buscandoUbicacion ? 'Obteniendo ubicación...' : (ubicacionActiva ? 'Cerca de mí (activo)' : 'Cerca de mí') }}
     </button>
     <mat-form-field appearance="outline">
       <mat-label>Mínimo</mat-label>
@@ -71,7 +71,9 @@
     <p class="filter-hint" *ngIf="!auth.esTipo('propietario')">💡 Selecciona una maquinaria para ver disponibilidad por fechas y reservar.</p>
   </div>
   <div class="result-summary" *ngIf="!loading && !error" aria-live="polite">
-    <span *ngIf="ubicacionActiva" class="location-badge"><mat-icon style="font-size:16px;width:16px;height:16px;">my_location</mat-icon> Cerca de ti · radio 50km</span>
+    <span *ngIf="ubicacionActiva" class="location-badge" role="button" tabindex="0" (click)="buscarCerca()" (keydown.enter)="buscarCerca()" title="Click para desactivar la cercanía">
+      <mat-icon style="font-size:16px;width:16px;height:16px;">my_location</mat-icon> Cerca de ti · radio 50km · filtro principal
+    </span>
     {{ total }} resultado{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}
   </div>
   <div class="error-box" *ngIf="error"><mat-icon>error_outline</mat-icon><span>{{ error }}</span></div>
