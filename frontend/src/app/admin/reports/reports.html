@@ -73,7 +73,7 @@
         </mat-form-field>
       </div>
       <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
-        <tr *ngFor="let b of recentBookings"><td>{{ b.id?.substring(0,8) }}</td><td>{{ b.maquinaria_id?.substring(0,8) }}</td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
+        <tr *ngFor="let b of recentBookings"><td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
       </tbody></table>
     </mat-tab>
     <mat-tab label="Pagos">
@@ -85,7 +85,7 @@
         </mat-form-field>
       </div>
       <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
-        <tr *ngFor="let p of payments"><td>{{ p.id?.substring(0,8) }}</td><td>{{ p.reserva_id?.substring(0,8) }}</td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
+        <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
       </tbody></table>
     </mat-tab>
   </mat-tab-group>

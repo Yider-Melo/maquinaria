@@ -6,6 +6,7 @@ import { Observable, forkJoin, of, Subject, Subscription } from 'rxjs';
 import { catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
+import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
 import { UserStats, RatingStats, Booking, Machinery, PaymentDashboard, Usuario } from '../../core/models';
 
 @Component({
@@ -159,6 +160,10 @@ export class AdminReports implements OnInit, OnDestroy {
   private confirmAction(msg: string): Observable<boolean> {
     const dialogRef = this.dialog.open(ConfirmActionDialog, { data: { message: msg } });
     return dialogRef.afterClosed();
+  }
+
+  verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
+    this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
   }
 
   toggleUser(user: Usuario): void {

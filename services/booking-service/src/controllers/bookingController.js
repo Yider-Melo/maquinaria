@@ -74,7 +74,7 @@ async function getByMachinery(req, res, next) {
 
 async function getById(req, res, next) {
     try {
-        const booking = await bookingService.getById(req.params.id, req.user.id);
+        const booking = await bookingService.getById(req.params.id, req.user.id, req.user.tipo_usuario === 'admin');
         success(res, booking);
     } catch (err) { next(err); }
 }

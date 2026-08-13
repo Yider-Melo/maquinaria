@@ -69,6 +69,14 @@ async function findByIdWithReserva(pagoId, userId) {
     return result.rows[0] || null;
 }
 
+async function findByIdAdmin(pagoId) {
+    const result = await pool.query(
+        `SELECT ${PAGO_COLUMNS} FROM pago WHERE id = $1`,
+        [pagoId]
+    );
+    return result.rows[0] || null;
+}
+
 async function findByBooking(bookingId, userId) {
     const result = await pool.query(
         `SELECT ${PAGO_COLUMNS} FROM pago
@@ -276,7 +284,7 @@ async function getDashboard(q) {
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
     findByReferenciaPasarela, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
-    findByIdWithReserva, findByBooking, findByUser, findByIdSimple,
+    findByIdWithReserva, findByIdAdmin, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,
     markLiberado, findFailedPayouts, findPendingPayouts, getDashboard,

@@ -60,7 +60,7 @@ async function getMyPayments(req, res, next) {
 
 async function getPaymentById(req, res, next) {
     try {
-        const payment = await paymentService.getPaymentById(req.params.id, req.user.id);
+        const payment = await paymentService.getPaymentById(req.params.id, req.user.id, req.user.tipo_usuario === 'admin');
         success(res, payment);
     } catch (err) { next(err); }
 }

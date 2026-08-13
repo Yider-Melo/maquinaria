@@ -3,7 +3,9 @@ import { Subscription } from 'rxjs';
 import { catchError, of } from 'rxjs';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
+import { MatDialog } from '@angular/material/dialog';
 import { watchRealtime } from '../../shared/realtime';
+import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
 
 @Component({
   selector: 'app-admin-accounting', templateUrl: './accounting.html', styleUrls: ['./accounting.css'],
@@ -27,7 +29,11 @@ export class AdminAccounting implements OnInit, OnDestroy {
 
   private realtimeSub: Subscription | undefined;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService, private dialog: MatDialog) {}
+
+  verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
+    this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
+  }
 
   ngOnInit(): void {
     this.loadDashboard();

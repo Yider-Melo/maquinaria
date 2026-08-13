@@ -85,8 +85,8 @@
         <thead><tr><th>ID</th><th>Maquinaria</th><th>Estado</th><th>Total</th><th>Fecha</th></tr></thead>
         <tbody>
           <tr *ngFor="let b of stats.recentBookings">
-            <td>{{ b.id?.substring(0, 8) }}...</td>
-            <td>{{ b.maquinaria_id?.substring(0, 8) }}...</td>
+            <td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td>
+            <td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td>
             <td><span class="status-badge" [class]="b.estado">{{ b.estado }}</span></td>
             <td>${{ b.precio_total | number }}</td>
             <td>{{ b.creado_en | date:'short':'':'es-CO' }}</td>

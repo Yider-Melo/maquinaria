@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
 import { watchRealtime } from '../../shared/realtime';
+import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -17,7 +19,11 @@ export class AdminDashboard implements OnInit, OnDestroy {
   loading = true;
   private realtimeSub: Subscription | undefined;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService, private dialog: MatDialog) {}
+
+  verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
+    this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
+  }
 
   ngOnInit(): void {
     this.loadStats();

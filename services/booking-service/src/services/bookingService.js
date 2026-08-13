@@ -143,12 +143,12 @@ async function checkAvailability(machineryId, startDate, endDate) {
     return { disponible: true, fechas_no_disponibles: [] };
 }
 
-async function getById(id, userId) {
+async function getById(id, userId, isAdmin = false) {
     const reserva = await reservaRepository.findById(id);
     if (!reserva) {
         throw new NotFoundError('Reserva no encontrada');
     }
-    if (reserva.arrendatario_id !== userId && reserva.propietario_id !== userId) {
+    if (!isAdmin && reserva.arrendatario_id !== userId && reserva.propietario_id !== userId) {
         throw new ForbiddenError('No tienes acceso a esta reserva');
     }
     try {

@@ -1,4 +1,4 @@
-.page { padding:24px; max-width:1200px; margin:0 auto; }
+﻿.page { padding:24px; max-width:1200px; margin:0 auto; }
 .page h1 { margin-bottom:8px; }
 .page h2 { margin:32px 0 8px; }
 .intro { color:var(--rm-muted); font-size:14px; margin:0 0 20px; }
@@ -27,5 +27,7 @@
 .status-badge.liberado { background:#e8f5e9; color:#2e7d32; }
 .status-badge.reembolsado { background:#fce4ec; color:#c62828; }
 .status-badge.fallido { background:#ffebee; color:#b71c1c; }
+.id-link { font-family:'Courier New', monospace; font-size:12px; color:var(--rm-primary); text-decoration:none; font-weight:600; word-break:break-all; cursor:pointer; }
+.id-link:hover { text-decoration:underline; }
 .empty { color:var(--rm-muted); text-align:center; padding:16px; }
 @media (max-width:640px){ .summary-grid { grid-template-columns:1fr; } .summary-card { padding:18px 12px; } }

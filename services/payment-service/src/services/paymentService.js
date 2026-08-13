@@ -277,8 +277,10 @@ async function handleMpWebhook(payload) {
     return { message: 'Evento ignorado' };
 }
 
-async function getPaymentById(pagoId, userId) {
-    const pago = await pagoRepository.findByIdWithReserva(pagoId, userId);
+async function getPaymentById(pagoId, userId, isAdmin = false) {
+    const pago = isAdmin
+        ? await pagoRepository.findByIdAdmin(pagoId)
+        : await pagoRepository.findByIdWithReserva(pagoId, userId);
     if (!pago) {
         throw new NotFoundError('Pago no encontrado');
     }

@@ -1,4 +1,4 @@
-.page { padding:24px; max-width:1200px; margin:0 auto; }
+﻿.page { padding:24px; max-width:1200px; margin:0 auto; }
 .page h1 { margin-bottom:24px; }
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
 .stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
@@ -43,4 +43,6 @@
 .status-badge.completada { background:#e8f5e9; color:#2e7d32; }
 .status-badge.cancelada { background:#fbe9e7; color:#bf360c; }
 .status-badge.rechazada { background:#ffebee; color:#c62828; }
+.id-link { font-family:'Courier New', monospace; font-size:12px; color:var(--rm-primary); text-decoration:none; font-weight:600; word-break:break-all; cursor:pointer; }
+.id-link:hover { text-decoration:underline; }
 .empty { color:var(--rm-muted); text-align:center; padding:16px; }
