@@ -7,12 +7,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { watchRealtime } from '../../shared/realtime';
 import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
 import { PagosFallidosDialog } from '../../shared/pagos-fallidos-dialog/pagos-fallidos-dialog';
+import { estadoLabel, estadoPagoLabel } from '../../shared/utils';
 
 @Component({
   selector: 'app-admin-accounting', templateUrl: './accounting.html', styleUrls: ['./accounting.css'],
   standalone: false
 })
 export class AdminAccounting implements OnInit, OnDestroy {
+  estadoLabel = estadoLabel;
+  estadoPagoLabel = estadoPagoLabel;
   dashboard: any = {
     resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 },
     por_mes: [],

@@ -258,15 +258,43 @@ async function findPendingPayouts() {
     return result.rows;
 }
 
+// Un pago efectivo por reserva: se elige el pago en el estado "más avanzado"
+// (liberado/reembolsado > retenido > pendiente/procesando > fallido) y, en empate,
+// el más reciente. Evita que los totales se inflen con pagos duplicados de una
+// misma reserva (p. ej. reintentos de checkout) y excluye intentos fallidos.
+const RANKED_PAGO_CTE = `
+    WITH ranked_pagos AS (
+        SELECT p.*,
+               ROW_NUMBER() OVER (
+                   PARTITION BY p.reserva_id
+                   ORDER BY
+                       CASE p.estado
+                           WHEN 'liberado' THEN 3
+                           WHEN 'reembolsado' THEN 3
+                           WHEN 'retenido' THEN 2
+                           WHEN 'procesando' THEN 1
+                           WHEN 'pendiente' THEN 1
+                           ELSE 0
+                       END DESC,
+                       p.creado_en DESC
+               ) AS rn
+        FROM pago p
+    )
+`;
+
 async function getDashboard(q) {
     const totals = await pool.query(
-        `SELECT
-           COUNT(*) as total_transacciones,
-           COALESCE(SUM(CASE WHEN estado = 'liberado' THEN monto ELSE 0 END), 0) as total_liberado,
-           COALESCE(SUM(CASE WHEN estado = 'retenido' THEN monto ELSE 0 END), 0) as total_retenido,
-           COALESCE(SUM(CASE WHEN estado = 'reembolsado' THEN monto ELSE 0 END), 0) as total_reembolsado,
-           COUNT(CASE WHEN estado = 'fallido' THEN 1 END) as total_fallidos
-         FROM pago`
+        `${RANKED_PAGO_CTE}
+         SELECT
+            COUNT(*) FILTER (WHERE estado IN ('retenido', 'liberado')) AS total_transacciones,
+            COALESCE(SUM(monto) FILTER (WHERE estado = 'liberado'), 0) AS total_liberado,
+            COALESCE(SUM(monto) FILTER (WHERE estado = 'retenido'), 0) AS total_retenido,
+            COALESCE(SUM(monto) FILTER (WHERE estado = 'reembolsado'), 0) AS total_reembolsado
+         FROM ranked_pagos WHERE rn = 1`
+    );
+    // Los fallidos se cuentan como intentos (coherente con el listado de pagos fallidos).
+    const fallidos = await pool.query(
+        `SELECT COUNT(*) AS total FROM pago WHERE estado = 'fallido'`
     );
     const comisiones = await pool.query(
         `SELECT
@@ -281,26 +309,37 @@ async function getDashboard(q) {
          FROM movimiento WHERE tipo = 'comision_plataforma'`
     );
     const ultimosPagos = await pool.query(
-        `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
-         FROM pago
-         ${q ? 'WHERE CAST(id AS TEXT) ILIKE $1 OR CAST(reserva_id AS TEXT) ILIKE $1 OR CAST(usuario_id AS TEXT) ILIKE $1 OR CAST(propietario_id AS TEXT) ILIKE $1 OR referencia_pasarela ILIKE $1 OR estado ILIKE $1' : ''}
+        `${RANKED_PAGO_CTE}
+         SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
+         FROM ranked_pagos
+         WHERE rn = 1${q
+            ? ' AND (CAST(id AS TEXT) ILIKE $1 OR CAST(reserva_id AS TEXT) ILIKE $1 OR CAST(usuario_id AS TEXT) ILIKE $1 OR CAST(propietario_id AS TEXT) ILIKE $1 OR referencia_pasarela ILIKE $1 OR estado ILIKE $1)'
+            : ''}
          ORDER BY creado_en DESC LIMIT ${q ? 200 : 10}`,
         q ? [`%${q}%`] : []
     );
     const porMes = await pool.query(
-        `SELECT
-           to_char(creado_en, 'YYYY-MM') as mes,
-           COUNT(*) as total_transacciones,
-           COALESCE(SUM(CASE WHEN estado = 'liberado' THEN monto ELSE 0 END), 0) as total_liberado,
-           COALESCE(SUM(CASE WHEN estado = 'retenido' THEN monto ELSE 0 END), 0) as total_retenido,
-           COALESCE(SUM(CASE WHEN estado = 'reembolsado' THEN monto ELSE 0 END), 0) as total_reembolsado,
-           COUNT(CASE WHEN estado = 'fallido' THEN 1 END) as total_fallidos
-         FROM pago
-         GROUP BY mes
+        `${RANKED_PAGO_CTE},
+         fallidos_mes AS (
+             SELECT to_char(creado_en, 'YYYY-MM') AS mes, COUNT(*) AS total_fallidos
+             FROM pago WHERE estado = 'fallido'
+             GROUP BY to_char(creado_en, 'YYYY-MM')
+         )
+         SELECT
+            to_char(rp.creado_en, 'YYYY-MM') AS mes,
+            COUNT(*) FILTER (WHERE rp.estado IN ('retenido', 'liberado')) AS total_transacciones,
+            COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'liberado'), 0) AS total_liberado,
+            COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'retenido'), 0) AS total_retenido,
+            COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'reembolsado'), 0) AS total_reembolsado,
+            COALESCE(fm.total_fallidos, 0) AS total_fallidos
+         FROM ranked_pagos rp
+         LEFT JOIN fallidos_mes fm ON fm.mes = to_char(rp.creado_en, 'YYYY-MM')
+         WHERE rp.rn = 1
+         GROUP BY to_char(rp.creado_en, 'YYYY-MM'), fm.total_fallidos
          ORDER BY mes DESC`
     );
     return {
-        resumen: totals.rows[0],
+        resumen: { ...totals.rows[0], total_fallidos: parseInt(fallidos.rows[0].total, 10) || 0 },
         comisiones: comisiones.rows[0],
         ganancia_total: earnings.rows[0].ganancia_total,
         ultimos_pagos: ultimosPagos.rows,

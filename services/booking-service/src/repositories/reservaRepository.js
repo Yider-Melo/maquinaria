@@ -131,8 +131,8 @@ async function getAdminStats() {
             COUNT(CASE WHEN estado = 'completada' THEN 1 END) as completadas,
             COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) as canceladas,
             COUNT(CASE WHEN estado = 'rechazada' THEN 1 END) as rechazadas,
-            COALESCE(SUM(precio_total), 0) as ingresos_totales,
-            COALESCE(AVG(precio_total), 0) as promedio_por_reserva
+            COALESCE(SUM(CASE WHEN estado IN ('pagada', 'en_curso', 'completada') THEN precio_total ELSE 0 END), 0) as ingresos_totales,
+            COALESCE(AVG(CASE WHEN estado IN ('pagada', 'en_curso', 'completada') THEN precio_total ELSE NULL END), 0) as promedio_por_reserva
          FROM reserva`
     );
     return result.rows[0];

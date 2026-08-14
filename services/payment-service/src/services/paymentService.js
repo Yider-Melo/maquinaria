@@ -536,14 +536,17 @@ async function releaseByBooking(bookingId) {
                 logger.info('Payout real exitoso en MP:', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco, mpId: payoutResult.id });
             }
         } else {
-            payoutError = 'Payout rechazado por MercadoPago o error de conexión';
-            await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'fallido', payoutError });
-            logger.warn('Payout a propietario FALLÓ:', {
+            // Payout automático no disponible (proveedor sin transferencias habilitadas,
+            // p. ej. Wompi en sandbox, o error del proveedor): se registra como manual
+            // para que el administrador complete el pago al propietario, y los fondos
+            // se liberan (la reserva ya está completada).
+            await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'manual', payoutError: null });
+            payoutResult = { manual: true, amount: montoPropietario };
+            logger.warn('Payout automático no disponible; registrado como manual:', {
                 propietarioId: pago.propietario_id,
                 montoPropietario,
                 banco: bankAccount.banco,
-                bookingId,
-                mensaje: payoutError
+                bookingId
             });
         }
     } else {

@@ -92,7 +92,7 @@
       </div>
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
-          <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td>{{ p.estado }}</td><td>{{ p.referencia_pasarela }}</td></tr>
+          <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td><span class="status-badge" [class]="p.estado">{{ estadoPagoLabel(p.estado) }}</span></td><td>{{ p.referencia_pasarela }}</td></tr>
         </tbody></table>
       </div>
     </mat-tab>

@@ -93,7 +93,7 @@
             <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
             <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
             <td>${{ p.monto | number }}</td>
-            <td><span class="status-badge" [class]="p.estado">{{ p.estado }}</span></td>
+            <td><span class="status-badge" [class]="p.estado">{{ estadoPagoLabel(p.estado) }}</span></td>
             <td>{{ p.metodo_pago || 'N/A' }}</td>
             <td>{{ p.creado_en | date:'short':'':'es-CO' }}</td>
           </tr>
@@ -119,7 +119,7 @@
             <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
             <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
             <td>${{ p.monto | number }}</td>
-            <td><span class="status-badge" [class]="p.estado">{{ p.estado }}</span></td>
+            <td><span class="status-badge" [class]="p.estado">{{ estadoPagoLabel(p.estado) }}</span></td>
             <td>{{ p.metodo_pago || 'N/A' }}</td>
             <td>{{ p.creado_en | date:'short':'':'es-CO' }}</td>
           </tr>

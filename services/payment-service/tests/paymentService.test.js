@@ -243,7 +243,10 @@ describe('getDashboard', () => {
                     rows: [{ total_transacciones: '5', total_liberado: '100000', total_retenido: '50000', total_reembolsado: '20000', total_fallidos: '1' }]
                 });
             }
-            if (callCount === 5) {
+            if (callCount === 2) {
+                return Promise.resolve({ rows: [{ total: '1' }] });
+            }
+            if (callCount === 6) {
                 return Promise.resolve({
                     rows: [{ mes: '2026-07', total_transacciones: '5', total_liberado: '100000', total_retenido: '50000', total_reembolsado: '20000', total_fallidos: '1' }]
                 });
@@ -253,6 +256,7 @@ describe('getDashboard', () => {
 
         const result = await paymentService.getDashboard();
         assert.equal(result.resumen.total_transacciones, '5');
+        assert.equal(result.resumen.total_fallidos, 1);
         assert.equal(result.ultimos_pagos.length, 1);
         assert.equal(result.por_mes.length, 1);
         assert.equal(result.por_mes[0].mes, '2026-07');

@@ -35,6 +35,33 @@
     </mat-card>
   </div>
 
+  <div class="stats-grid" style="margin-top:0;">
+    <mat-card class="stat-card payments" [routerLink]="['/admin/accounting']">
+      <mat-icon>account_balance</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">${{ (stats.payments?.resumen?.total_liberado || 0) | number }}</span>
+        <span class="stat-label">Total Facturado</span>
+        <span class="stat-sub">Pagos liberados de alquileres</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card payments" [routerLink]="['/admin/accounting']">
+      <mat-icon>lock</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">${{ (stats.payments?.resumen?.total_retenido || 0) | number }}</span>
+        <span class="stat-label">En Garantía</span>
+        <span class="stat-sub">Pagos retenidos por completar</span>
+      </div>
+    </mat-card>
+    <mat-card class="stat-card payments" [routerLink]="['/admin/accounting']">
+      <mat-icon>payments</mat-icon>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.payments?.resumen?.total_transacciones || 0 }}</span>
+        <span class="stat-label">Pagos Realizados</span>
+        <span class="stat-sub">Transacciones aprobadas</span>
+      </div>
+    </mat-card>
+  </div>
+
   <div class="charts-row">
     <mat-card class="chart-card">
       <mat-card-header><mat-card-title>Reservas por Estado</mat-card-title></mat-card-header>

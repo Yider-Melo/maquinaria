@@ -8,12 +8,14 @@ import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
 import { UserStats, RatingStats, Booking, Machinery, PaymentDashboard, Usuario } from '../../core/models';
+import { estadoPagoLabel } from '../../shared/utils';
 
 @Component({
   selector: 'app-admin-reports', templateUrl: './reports.html', styleUrls: ['./reports.css'],
   standalone: false
 })
 export class AdminReports implements OnInit, OnDestroy {
+  estadoPagoLabel = estadoPagoLabel;
   stats: any = {};
   ratingReportadas = 0;
   users: Usuario[] = [];
