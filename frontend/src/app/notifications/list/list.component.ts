@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
-import { watchNotifications } from '../../shared/realtime';
+import { NotificationState } from '../../core/services/notification-state.service';
+import { watchNotifications, watchRealtime } from '../../shared/realtime';
 import { formatDateTime, formatDateRelative } from '../../shared/utils';
 import { Notification, PaginatedResponse } from '../../core/models';
 
@@ -20,11 +21,28 @@ export class NotificationsList implements OnInit, OnDestroy {
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
-  constructor(private api: Api, private router: Router, private cdr: ChangeDetectorRef, private socket: SocketService) {}
+  constructor(
+    private api: Api,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private socket: SocketService,
+    private notificationState: NotificationState
+  ) {}
 
   ngOnInit(): void {
     this.loadNotifications();
-    this.realtimeSub = watchNotifications(this.socket, () => this.loadNotifications());
+    // Refresco inmediato: ante una notificación nueva (evento 'notification') y
+    // ante cualquier actividad de reserva/pago/maquinaria (evento 'refresh').
+    this.realtimeSub = new Subscription();
+    this.realtimeSub.add(watchNotifications(this.socket, () => this.loadNotifications()));
+    this.realtimeSub.add(watchRealtime(
+      this.socket,
+      (ev) => {
+        const t = String(ev?.tipo || '');
+        return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+      },
+      () => this.loadNotifications()
+    ));
   }
 
   ngOnDestroy(): void {
@@ -34,8 +52,8 @@ export class NotificationsList implements OnInit, OnDestroy {
   prevPage(): void { if (this.page > 1) { this.page--; this.loadNotifications(); } }
   nextPage(): void { if (this.page * this.size < this.total) { this.page++; this.loadNotifications(); } }
 
-  private loadNotifications(): void {
-    this.loading = true; this.error = '';
+  private loadNotifications(showLoading = true): void {
+    if (showLoading) { this.loading = true; this.error = ''; }
     this.api.get<Notification[]>(`/notifications?page=${this.page}&size=${this.size}`).subscribe({
       next: (res) => {
         const r = res as any;
@@ -53,7 +71,11 @@ export class NotificationsList implements OnInit, OnDestroy {
   }
 
   markAsRead(id: string): void {
-    this.api.put<Notification>(`/notifications/${id}/read`, {}).subscribe(() => { const n = this.notifications.find(x => x.id === id); if (n) n.leida = true; });
+    this.api.put<Notification>(`/notifications/${id}/read`, {}).subscribe(() => {
+      const n = this.notifications.find(x => x.id === id);
+      if (n) n.leida = true;
+      this.notificationState.notifyChanged();
+    });
   }
 
   goToNotification(n: Notification): void {
@@ -70,7 +92,10 @@ export class NotificationsList implements OnInit, OnDestroy {
     }
   }
   markAllAsRead(): void {
-    this.api.put<{ success: boolean }>('/notifications/read-all', {}).subscribe(() => this.notifications.forEach(n => n.leida = true));
+    this.api.put<{ success: boolean }>('/notifications/read-all', {}).subscribe(() => {
+      this.loadNotifications(false);
+      this.notificationState.notifyChanged();
+    });
   }
 
   getIcon(tipo: string): string {

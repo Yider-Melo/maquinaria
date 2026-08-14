@@ -6,9 +6,11 @@ import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Auth } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
+import { NotificationState } from '../../core/services/notification-state.service';
 import { Api } from '../../core/services/api.service';
 import { Subscription } from 'rxjs';
 import { UnreadCount } from '../../core/models';
+import { watchRealtime } from '../realtime';
 
 @Component({
   selector: 'app-header', templateUrl: './header.html', styleUrls: ['./header.css'],
@@ -24,7 +26,8 @@ export class Header implements OnInit, OnDestroy {
     private router: Router,
     private socket: SocketService,
     private api: Api,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private notificationState: NotificationState
   ) {}
 
   // Al iniciar, si el usuario está autenticado, carga el conteo de
@@ -44,10 +47,28 @@ export class Header implements OnInit, OnDestroy {
               }).onAction().subscribe(() => this.router.navigate(['/notifications']));
             });
           }
+          // Recarga el conteo de no leídas ante cualquier actividad de reserva/pago/
+          // maquinaria, para que la campanita siempre refleje el estado real.
+          if (this.subs.length === 1) {
+            this.subs.push(watchRealtime(
+              this.socket,
+              (ev) => {
+                const t = String(ev?.tipo || '');
+                return t.startsWith('booking.') || t.startsWith('payment.') || t.startsWith('machinery.');
+              },
+              () => this.loadUnreadCount()
+            ));
+          }
         } else {
           this.socket.disconnect();
           this.unreadCount = 0;
         }
+      })
+    );
+    // Refresca el contador al marcar notificaciones como leídas (local).
+    this.subs.push(
+      this.notificationState.refresh$.subscribe(() => {
+        if (this.auth.isLoggedIn()) this.loadUnreadCount();
       })
     );
   }
