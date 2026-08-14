@@ -140,6 +140,53 @@ async function getTransaction(transactionId) {
     }
 }
 
+// Devuelve la transaccion mas reciente asociada a un link de pago (payment_link_id).
+// Los webhooks de Wompi para links de pago llegan con referencia autogenerada
+// (p. ej. "<linkId>_<timestamp>_<hash>") en vez del external reference propio,
+// asi que esta consulta permite reconciliar pagos que el webhook no pudo casar.
+// Nota: el endpoint de transacciones ignora los filtros por query, por lo que se
+// recuperan las transacciones del rango y se filtran localmente por link/referencia.
+async function getTransactionsByLink(linkId) {
+    if (!isConfigured() || !linkId) return null;
+    const matches = [];
+    const until = new Date();
+    const from = new Date(until.getTime() - 90 * 24 * 60 * 60 * 1000);
+    try {
+        for (let page = 1; page <= 10; page++) {
+            const params = new URLSearchParams({
+                from_date: from.toISOString(),
+                until_date: until.toISOString(),
+                page: String(page),
+                page_size: '200'
+            });
+            const response = await fetch(`${WOMPI_API}/transactions?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${PRIVATE_KEY}` }
+            });
+            if (!response.ok) break;
+            const data = await response.json();
+            const transactions = data.data || [];
+            for (const txn of transactions) {
+                const ref = String(txn.reference || '');
+                if (txn.payment_link_id === linkId
+                    || ref === linkId
+                    || ref.startsWith(`${linkId}_`)) {
+                    matches.push(txn);
+                }
+            }
+            const meta = data.meta || {};
+            const total = parseInt(meta.total_results, 10) || 0;
+            const pages = Math.max(1, Math.ceil(total / 200));
+            if (page >= pages || transactions.length === 0) break;
+        }
+    } catch (err) {
+        logger.error('Error consultando transacciones por link Wompi:', { message: err.message, linkId });
+        return null;
+    }
+    if (matches.length === 0) return null;
+    return matches
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
+}
+
 async function createTransfer({ amount, description, bankCode, accountNumber, accountType, holderName, holderDocType, holderDocNumber, externalRef }) {
     if (!isConfigured()) {
         logger.warn('Wompi no configurado, transferencia simulada:', { amount, bankCode });
@@ -208,5 +255,6 @@ async function getBankList() {
 
 module.exports = {
     configure, isConfigured, isSandboxMode, createPreference, getTransaction,
+    getTransactionsByLink,
     createTransfer, getBankList
 };

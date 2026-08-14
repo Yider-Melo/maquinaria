@@ -54,6 +54,7 @@ export class BookingsDetail implements OnInit, OnDestroy {
   estadoLabel = estadoLabel;
   booking: any = null; loading = true; error = ''; paying = false;
   private realtimeSub: Subscription | undefined;
+  private lastReconcile = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -104,6 +105,9 @@ export class BookingsDetail implements OnInit, OnDestroy {
           return;
         }
         this.booking = res.data;
+        if (this.booking?.estado === 'confirmada') {
+          this.reconciliarPago(this.booking.id);
+        }
         if (this.booking?.maquinaria_id) {
           this.api.get<Machinery>(`/machinery/${this.booking.maquinaria_id}`).subscribe({
             next: (machineRes) => {
@@ -133,6 +137,19 @@ export class BookingsDetail implements OnInit, OnDestroy {
         this.loading = false;
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  // Dispara la reconciliación del pago contra Wompi consultando los pagos de la
+  // reserva: si el usuario ya pagó pero el webhook no llegó, el backend marca la
+  // reserva como pagada y esta vista se recarga sola vía tiempo real.
+  private reconciliarPago(bookingId: string): void {
+    const now = Date.now();
+    if (now - this.lastReconcile < 15000) return;
+    this.lastReconcile = now;
+    this.api.get<any[]>(`/payments/booking/${bookingId}`).subscribe({
+      next: () => { if (this.booking?.id) this.loadBooking(this.booking.id); },
+      error: () => {}
     });
   }
 

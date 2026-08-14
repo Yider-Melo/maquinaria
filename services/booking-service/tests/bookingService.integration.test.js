@@ -15,6 +15,12 @@ const bookingService = require('../src/services/bookingService');
 
 eventBus.publishEvent = async () => {};
 
+function dateFromNow(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+}
+
 const ARRENDATARIO_ID = 'b0000001-0000-0000-0000-000000000001';
 const PROPIETARIO_ID = 'b0000001-0000-0000-0000-000000000002';
 const MAQUINARIA_ID = 'b0000001-0000-0000-0000-000000000010';
@@ -22,7 +28,7 @@ const MAQUINARIA_ID = 'b0000001-0000-0000-0000-000000000010';
 before(async () => {
     await pool.query('DELETE FROM reserva');
     await pool.query(`INSERT INTO reserva (id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin, precio_total, estado) VALUES
-        ('b0000001-0000-0000-0000-000000000020', '${MAQUINARIA_ID}', '${ARRENDATARIO_ID}', '${PROPIETARIO_ID}', '2025-06-01', '2025-06-05', 2000000, 'confirmada')`);
+        ('b0000001-0000-0000-0000-000000000020', '${MAQUINARIA_ID}', '${ARRENDATARIO_ID}', '${PROPIETARIO_ID}', '${dateFromNow(10)}', '${dateFromNow(14)}', 2000000, 'confirmada')`);
 });
 
 after(async () => {
@@ -33,13 +39,13 @@ describe('booking integration', () => {
     let bookingId;
 
     it('debe verificar disponibilidad de maquinaria', async () => {
-        const result = await bookingService.checkAvailability(MAQUINARIA_ID, '2025-07-01', '2025-07-05');
+        const result = await bookingService.checkAvailability(MAQUINARIA_ID, dateFromNow(20), dateFromNow(24));
         assert.equal(result.disponible, true);
         assert.deepEqual(result.fechas_no_disponibles, []);
     });
 
     it('debe detectar overlapping con reserva existente', async () => {
-        const result = await bookingService.checkAvailability(MAQUINARIA_ID, '2025-06-02', '2025-06-04');
+        const result = await bookingService.checkAvailability(MAQUINARIA_ID, dateFromNow(11), dateFromNow(13));
         assert.equal(result.disponible, false);
         assert.equal(result.fechas_no_disponibles.length, 1);
     });
@@ -52,8 +58,8 @@ describe('booking integration', () => {
 
         const result = await bookingService.create({
             maquinaria_id: MAQUINARIA_ID,
-            fecha_inicio: '2025-08-01',
-            fecha_fin: '2025-08-03'
+            fecha_inicio: dateFromNow(30),
+            fecha_fin: dateFromNow(32)
         }, ARRENDATARIO_ID);
 
         bookingId = result.id;
@@ -117,6 +123,7 @@ describe('booking integration', () => {
     });
 
     it('debe completar reserva (propietario)', async () => {
+        await bookingService.markAsPaid(bookingId);
         const result = await bookingService.complete(bookingId, PROPIETARIO_ID);
         assert.equal(result.estado, 'completada');
     });

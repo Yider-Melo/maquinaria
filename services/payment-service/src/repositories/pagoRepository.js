@@ -14,7 +14,7 @@ async function findReservaById(bookingId) {
 
 async function findActivePaymentByBooking(bookingId) {
     const result = await pool.query(
-        `SELECT id, estado, referencia_pasarela, checkout_url FROM pago WHERE reserva_id = $1 AND estado IN ('pendiente', 'procesando', 'retenido')`,
+        `SELECT id, reserva_id, estado, referencia_pasarela, checkout_url FROM pago WHERE reserva_id = $1 AND estado IN ('pendiente', 'procesando', 'retenido')`,
         [bookingId]
     );
     return result.rows[0] || null;
@@ -39,6 +39,15 @@ async function findByReferenciaPasarela(referencia) {
     const result = await pool.query(
         'SELECT id, estado, reserva_id FROM pago WHERE referencia_pasarela = $1',
         [referencia]
+    );
+    return result.rows[0] || null;
+}
+
+async function findByWompiLinkId(linkId) {
+    const result = await pool.query(
+        `SELECT id, estado, reserva_id FROM pago
+         WHERE checkout_url LIKE '%/l/' || $1`,
+        [linkId]
     );
     return result.rows[0] || null;
 }
@@ -301,7 +310,7 @@ async function getDashboard(q) {
 
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
-    findByReferenciaPasarela, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
+    findByReferenciaPasarela, findByWompiLinkId, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
     findByIdWithReserva, findByIdAdmin, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,

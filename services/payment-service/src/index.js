@@ -22,6 +22,36 @@ app.use(helmet());
 app.use(cors({ origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : (process.env.NODE_ENV === 'development' ? ['http://localhost:4200', 'http://127.0.0.1:4200'] : ['http://localhost:3000']), credentials: true }));
 app.use(correlationId);
 app.use(requestLogger);
+// Parser tolerante para el webhook de pagos: Wompi a veces envía bodies que no
+// son JSON puro (p. ej. form-urlencoded o malformado). Si el parseo falla, se
+// responde igual (el estado real se reconcilia luego contra la pasarela).
+app.use('/webhook', (req, res, next) => {
+    let raw = '';
+    req.setEncoding('utf8');
+    req.on('data', (chunk) => { raw += chunk; });
+    req.on('end', () => {
+        req._body = true;
+        req.body = {};
+        if (raw) {
+            try {
+                req.body = JSON.parse(raw);
+            } catch (err) {
+                try {
+                    const params = new URLSearchParams(raw);
+                    params.forEach((v, k) => { req.body[k] = v; });
+                    if (typeof req.body.data === 'string') {
+                        try { req.body.data = JSON.parse(req.body.data); } catch { }
+                    }
+                } catch { }
+                if (Object.keys(req.body).length === 0) {
+                    logger.warn('Webhook con body no parseable:', { raw: raw.slice(0, 500) });
+                }
+            }
+        }
+        next();
+    });
+    req.on('error', () => { req._body = true; req.body = {}; next(); });
+});
 app.use(express.json());
 
 app.get('/health', async (_req, res) => {

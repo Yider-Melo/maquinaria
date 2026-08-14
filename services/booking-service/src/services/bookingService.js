@@ -347,7 +347,25 @@ async function cancel(id, userId, motivo) {
         setImmediate(() => refundPayment(id));
     }
 
+    setImmediate(() => restoreDisponibilidad(reserva.maquinaria_id));
+
     return booking;
+}
+
+async function restoreDisponibilidad(maquinariaId) {
+    try {
+        await axios.patch(
+            `${MACHINERY_SERVICE_URL}/internal/${maquinariaId}/disponible`,
+            { disponible: true },
+            {
+                headers: { 'x-api-key': INTERNAL_API_KEY, 'Content-Type': 'application/json' },
+                timeout: 5000,
+            }
+        );
+        logger.info('Maquinaria restaurada como disponible:', { maquinariaId });
+    } catch (err) {
+        logger.error(`Error al disponibilizar maquinaria ${maquinariaId}:`, { message: err.message });
+    }
 }
 
 async function releasePayment(bookingId) {
@@ -411,6 +429,7 @@ async function complete(id, userId) {
         );
 
         setImmediate(() => releasePayment(id));
+        setImmediate(() => restoreDisponibilidad(booking.maquinaria_id));
 
         return booking;
     });

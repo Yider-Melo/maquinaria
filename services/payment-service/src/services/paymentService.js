@@ -87,6 +87,24 @@ async function createCheckout(bookingId, userId, metodoPago) {
         if (existingPayment.estado === 'retenido' || existingPayment.estado === 'liberado') {
             throw new ValidationError('Esta reserva ya tiene un pago aprobado. Verifica el estado de tu reserva antes de intentar pagar de nuevo.');
         }
+
+        if (existingPayment.estado === 'pendiente' && existingPayment.checkout_url) {
+            await reconciliarPago(existingPayment);
+            const reconciliado = await pagoRepository.findActivePaymentByBooking(bookingId);
+            if (reconciliado && (reconciliado.estado === 'retenido' || reconciliado.estado === 'liberado')) {
+                throw new ValidationError('Esta reserva ya tiene un pago aprobado. Verifica el estado de tu reserva antes de intentar pagar de nuevo.');
+            }
+            if (reconciliado && reconciliado.checkout_url) {
+                return {
+                    pago_id: reconciliado.id,
+                    checkout_url: reconciliado.checkout_url,
+                    estado: reconciliado.estado,
+                    referencia: reconciliado.referencia_pasarela,
+                    monto: reserva.precio_total
+                };
+            }
+        }
+
         id = existingPayment.id;
         externalReference = existingPayment.referencia_pasarela;
         if (existingPayment.checkout_url && !existingPayment.checkout_url.includes('mercadopago')
@@ -200,23 +218,37 @@ async function handleWompiWebhook(payload) {
     const status = transaction.status;
     const transactionId = transaction.id;
 
-    if (!externalReference || !externalReference.startsWith('RENTAMAQ-')) {
-        return { message: 'Referencia externa no reconocida' };
+    let pago = null;
+    if (externalReference && externalReference.startsWith('RENTAMAQ-')) {
+        pago = await pagoRepository.findByReferenciaPasarela(externalReference);
     }
-
-    const pago = await pagoRepository.findByReferenciaPasarela(externalReference);
+    const linkId = transaction.payment_link_id || transaction.link_id;
+    if (!pago && linkId) {
+        pago = await pagoRepository.findByWompiLinkId(linkId);
+    }
     if (!pago) return { message: 'Pago no encontrado' };
 
-    const nuevoEstado = status === 'APPROVED' ? 'retenido'
+    const result = await aplicarEstadoWompi(pago, status, transactionId);
+    if (!result) return { message: 'Transición de estado no aplicable (webhook duplicado o estado final)' };
+    return { message: 'Webhook procesado', estado: result.estado };
+}
+
+function estadoDesdeStatusWompi(status) {
+    return status === 'APPROVED' ? 'retenido'
         : status === 'DECLINED' || status === 'ERROR' || status === 'VOIDED' ? 'fallido'
         : status === 'REFUNDED' ? 'reembolsado'
         : 'procesando';
+}
 
+// Aplica la transición de estado de un pago según el status de Wompi y,
+// si quedó aprobado (retenido), marca la reserva como pagada.
+async function aplicarEstadoWompi(pago, status, transactionId) {
+    const nuevoEstado = estadoDesdeStatusWompi(status);
     const fromEstados = transicionesValidas(nuevoEstado);
-    if (!fromEstados.length) return { message: 'Evento ignorado' };
+    if (!fromEstados.length) return null;
 
     const updated = await pagoRepository.updateEstadoTransicion(pago.id, fromEstados, nuevoEstado);
-    if (!updated) return { message: 'Transición de estado no aplicable (webhook duplicado o estado final)' };
+    if (!updated) return null;
 
     await pagoRepository.updateReferenciaPasarela(pago.id, String(transactionId));
     pago.referencia_pasarela_mp = String(transactionId);
@@ -228,7 +260,31 @@ async function handleWompiWebhook(payload) {
     try {
         eventBus.publishEvent(EVENT_TYPES.PAYMENT.UPDATED, { pago_id: pago.id, estado: nuevoEstado, reserva_id: pago.reserva_id });
     } catch { }
-    return { message: 'Webhook procesado', estado: nuevoEstado };
+    return updated;
+}
+
+function extraerLinkIdWompi(checkoutUrl) {
+    if (!checkoutUrl) return null;
+    const match = String(checkoutUrl).match(/\/l\/([^/?#]+)$/);
+    return match ? match[1] : null;
+}
+
+// Reconciliación contra Wompi para pagos que quedaron en 'pendiente' porque el
+// webhook no llegó o porque la referencia del link no casó con la pasarela.
+// En los links de pago Wompi la transacción usa una referencia autogenerada
+// ("<linkId>_<timestamp>_<hash>") y el campo payment_link_id, así que se
+// consulta la transacción por el link del checkout y se aplica el estado real.
+async function reconciliarPago(pago) {
+    if (!pago || pago.estado !== 'pendiente') return null;
+    if (PROVIDER !== 'wompi') return null;
+
+    const linkId = extraerLinkIdWompi(pago.checkout_url);
+    if (!linkId) return null;
+
+    const txn = await paymentProvider.getTransactionByLinkId(linkId);
+    if (!txn) return null;
+
+    return aplicarEstadoWompi(pago, txn.status, txn.id);
 }
 
 async function handleMpWebhook(payload) {
@@ -284,11 +340,27 @@ async function getPaymentById(pagoId, userId, isAdmin = false) {
     if (!pago) {
         throw new NotFoundError('Pago no encontrado');
     }
+    if (pago.estado === 'pendiente') {
+        await reconciliarPago(pago);
+        const actualizado = isAdmin
+            ? await pagoRepository.findByIdAdmin(pagoId)
+            : await pagoRepository.findByIdWithReserva(pagoId, userId);
+        return actualizado || pago;
+    }
     return pago;
 }
 
 async function getPaymentsByBooking(bookingId, userId) {
-    return await pagoRepository.findByBooking(bookingId, userId);
+    const pagos = await pagoRepository.findByBooking(bookingId, userId);
+    for (const pago of pagos) {
+        if (pago.estado === 'pendiente') {
+            await reconciliarPago(pago);
+        }
+    }
+    if (pagos.some(p => p.estado === 'pendiente')) {
+        return await pagoRepository.findByBooking(bookingId, userId);
+    }
+    return pagos;
 }
 
 async function getMyPayments(userId, page = 1, size = 20) {

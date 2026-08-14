@@ -45,6 +45,18 @@ async function getPayment(paymentId) {
     return prov.getPayment(paymentId);
 }
 
+// Consulta la transaccion asociada a un link de pago (solo Wompi).
+// Se usa para reconciliar pagos pendientes cuando el webhook no llega o no casa.
+async function getTransactionByLinkId(linkId) {
+    if (PROVIDER === 'wompi') {
+        const prov = getProvider();
+        if (prov.getTransactionsByLink) {
+            return prov.getTransactionsByLink(linkId);
+        }
+    }
+    return null;
+}
+
 async function capturePayment(paymentId) {
     const prov = getProvider();
     if (prov.capturePayment) {
@@ -82,7 +94,7 @@ async function createPayout(options) {
 module.exports = {
     getProvider,
     configure, isConfigured, isSandboxMode,
-    createPreference, getPayment,
+    createPreference, getPayment, getTransactionByLinkId,
     capturePayment, refundPayment, createPayout,
     PROVIDER
 };
