@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const machineryController = require('../controllers/machineryController');
-const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, ForbiddenError, getInternalApiKey } = require('shared');
 const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('machinery-routes');
 
@@ -22,7 +22,7 @@ router.delete('/:id/images/:imageId', validateToken, validateParams(uuidParam('i
 router.put('/:id/availability', validateToken, validateParams(uuidParam('id')), validate(schemas.updateAvailability), machineryController.updateAvailability);
 router.get('/:id/availability', validateParams(uuidParam('id')), machineryController.getAvailability);
 
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada en machinery-service. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
+const INTERNAL_API_KEY = getInternalApiKey();
 
 function internalAuth(req, res, next) {
     if (req.headers['x-api-key'] !== INTERNAL_API_KEY) {

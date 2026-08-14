@@ -8,6 +8,45 @@
     <mat-card><mat-icon>report</mat-icon><div><strong>{{ ratingReportadas || 0 }}</strong><span>Calificaciones reportadas</span></div></mat-card>
   </div>
 
+  <mat-card class="chart-card">
+    <mat-card-header><mat-card-title>Reservas por Estado</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <div class="bar-chart">
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">Pendientes</span>
+          <div class="bar-track"><div class="bar-fill pending" [style.width.%]="barPercent(bookingStats.pendientes, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.pendientes || 0 }}</span>
+        </div>
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">Confirmadas</span>
+          <div class="bar-track"><div class="bar-fill confirmed" [style.width.%]="barPercent(bookingStats.confirmadas, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.confirmadas || 0 }}</span>
+        </div>
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">Pagadas</span>
+          <div class="bar-track"><div class="bar-fill paid" [style.width.%]="barPercent(bookingStats.pagadas, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.pagadas || 0 }}</span>
+        </div>
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">En curso</span>
+          <div class="bar-track"><div class="bar-fill en_curso" [style.width.%]="barPercent(bookingStats.en_curso, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.en_curso || 0 }}</span>
+        </div>
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">Completadas</span>
+          <div class="bar-track"><div class="bar-fill completed" [style.width.%]="barPercent(bookingStats.completadas, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.completadas || 0 }}</span>
+        </div>
+        <div class="bar-item" *ngIf="bookingStats.total">
+          <span class="bar-label">Canceladas</span>
+          <div class="bar-track"><div class="bar-fill cancelled" [style.width.%]="barPercent(bookingStats.canceladas, bookingStats.total)"></div></div>
+          <span class="bar-value">{{ bookingStats.canceladas || 0 }}</span>
+        </div>
+        <p class="empty" *ngIf="!bookingStats.total">Sin reservas registradas</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
   <mat-tab-group>
     <mat-tab label="Usuarios">
       <div class="filter-bar">
@@ -16,6 +55,7 @@
           <input matInput type="text" placeholder="Buscar usuario, email o rol..." [value]="userSearch" (input)="onUserSearch($event.target.value)">
           <button mat-icon-button matSuffix *ngIf="userSearch" (click)="clearUserSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
+        <button mat-stroked-button color="primary" class="export-btn" (click)="exportarUsuariosCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table">
@@ -44,6 +84,7 @@
           <input matInput type="text" placeholder="Buscar máquina, marca, modelo o tipo..." [value]="machSearch" (input)="onMachSearch($event.target.value)">
           <button mat-icon-button matSuffix *ngIf="machSearch" (click)="clearMachSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
+        <button mat-stroked-button color="primary" class="export-btn" (click)="exportarMaquinariaCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table">
@@ -75,6 +116,7 @@
           <input matInput type="text" placeholder="Buscar reserva por ID, máquina o estado..." [value]="bookingSearch" (input)="onBookingSearch($event.target.value)">
           <button mat-icon-button matSuffix *ngIf="bookingSearch" (click)="clearBookingSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
+        <button mat-stroked-button color="primary" class="export-btn" (click)="exportarReservasCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
@@ -89,11 +131,38 @@
           <input matInput type="text" placeholder="Buscar pago por ID, reserva, referencia o estado..." [value]="paymentSearch" (input)="onPaymentSearch($event.target.value)">
           <button mat-icon-button matSuffix *ngIf="paymentSearch" (click)="clearPaymentSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
+        <button mat-stroked-button color="primary" class="export-btn" (click)="exportarPagosCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
           <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td><span class="status-badge" [class]="p.estado">{{ estadoPagoLabel(p.estado) }}</span></td><td>{{ p.referencia_pasarela }}</td></tr>
         </tbody></table>
+      </div>
+    </mat-tab>
+    <mat-tab label="Calificaciones">
+      <div class="table-scroll">
+        <table class="admin-table" *ngIf="reportedRatings?.length">
+          <thead><tr><th>Calificador</th><th>Calificado</th><th>Máquina</th><th>Puntuación</th><th>Comentario</th><th>Motivo del reporte</th><th>Acción</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of reportedRatings">
+              <td>{{ r.calificador_nombre || r.calificador_id }}</td>
+              <td>{{ r.calificado_nombre || r.calificado_id }}</td>
+              <td>{{ r.maquinaria_titulo || r.maquinaria_id }}</td>
+              <td>{{ r.puntuacion }} <mat-icon style="font-size:14px;vertical-align:middle;color:#f59e0b;">star</mat-icon></td>
+              <td>{{ r.comentario || '—' }}</td>
+              <td>{{ r.motivo_reporte || '—' }}</td>
+              <td>
+                <button mat-stroked-button color="primary" (click)="resolverRating(r.id, 'conservar')" [disabled]="ratingAccion === r.id">
+                  Conservar
+                </button>
+                <button mat-stroked-button color="warn" style="margin-left:6px;" (click)="resolverRating(r.id, 'eliminar')" [disabled]="ratingAccion === r.id">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="empty" *ngIf="!reportedRatings?.length">No hay calificaciones reportadas.</p>
       </div>
     </mat-tab>
   </mat-tab-group>

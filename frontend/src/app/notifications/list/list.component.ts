@@ -72,14 +72,18 @@ export class NotificationsList implements OnInit, OnDestroy {
 
   markAsRead(id: string): void {
     this.api.put<Notification>(`/notifications/${id}/read`, {}).subscribe(() => {
-      const n = this.notifications.find(x => x.id === id);
-      if (n) n.leida = true;
+      this.loadNotifications(false);
       this.notificationState.notifyChanged();
     });
   }
 
   goToNotification(n: Notification): void {
-    this.markAsRead(n.id);
+    // Marca como leída sin recargar (inmediatamente se navega al detalle).
+    this.api.put<Notification>(`/notifications/${n.id}/read`, {}).subscribe(() => {
+      const found = this.notifications.find(x => x.id === n.id);
+      if (found) found.leida = true;
+      this.notificationState.notifyChanged();
+    });
     if (!n.referencia_id || !n.referencia_tipo) return;
     if (n.referencia_tipo === 'reserva') {
       this.router.navigate(['/bookings', n.referencia_id]);

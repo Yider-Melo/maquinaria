@@ -32,3 +32,31 @@ CREATE INDEX IF NOT EXISTS idx_indice_ubicacion ON maquinaria(ubicacion_lat, ubi
 CREATE INDEX IF NOT EXISTS idx_indice_disponible ON maquinaria(disponible);
 CREATE INDEX IF NOT EXISTS idx_indice_ciudad ON maquinaria(ciudad);
 CREATE INDEX IF NOT EXISTS idx_indice_activo ON maquinaria(activo);
+
+-- Poblar texto_completo automáticamente (full-text search en español)
+CREATE OR REPLACE FUNCTION actualizar_texto_completo() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.texto_completo := to_tsvector('spanish',
+        coalesce(NEW.titulo,'') || ' ' ||
+        coalesce(NEW.descripcion,'') || ' ' ||
+        coalesce(NEW.marca,'') || ' ' ||
+        coalesce(NEW.modelo,'') || ' ' ||
+        coalesce(NEW.tipo,''));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_texto_completo ON maquinaria;
+CREATE TRIGGER trg_texto_completo
+    BEFORE INSERT OR UPDATE OF titulo, descripcion, marca, modelo, tipo
+    ON maquinaria
+    FOR EACH ROW
+    EXECUTE FUNCTION actualizar_texto_completo();
+
+UPDATE maquinaria SET texto_completo = to_tsvector('spanish',
+    coalesce(titulo,'') || ' ' ||
+    coalesce(descripcion,'') || ' ' ||
+    coalesce(marca,'') || ' ' ||
+    coalesce(modelo,'') || ' ' ||
+    coalesce(tipo,''))
+WHERE texto_completo IS NULL;

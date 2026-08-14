@@ -1,6 +1,8 @@
 const pool = require('../db');
 
-const RESERVA_COLUMNS = `id, maquinaria_id, arrendatario_id, propietario_id, fecha_inicio, fecha_fin,
+const RESERVA_COLUMNS = `id, maquinaria_id, arrendatario_id, propietario_id,
+    to_char(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio,
+    to_char(fecha_fin, 'YYYY-MM-DD') AS fecha_fin,
     precio_unitario, precio_total, estado,
     motivo_cancelacion, creado_en, actualizado_en`;
 
@@ -22,7 +24,7 @@ async function findConflictingBookings(machineryId, startDate, endDate, client) 
     const db = client || pool;
     const lockClause = client ? ' FOR NO KEY UPDATE' : '';
     const result = await db.query(
-        `SELECT fecha_inicio, fecha_fin FROM reserva
+        `SELECT to_char(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, to_char(fecha_fin, 'YYYY-MM-DD') AS fecha_fin FROM reserva
          WHERE maquinaria_id = $1
            AND estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso')
            AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)${lockClause}`,
@@ -33,7 +35,7 @@ async function findConflictingBookings(machineryId, startDate, endDate, client) 
 
 async function findOccupiedRanges(machineryId, startDate, endDate) {
     const result = await pool.query(
-        `SELECT fecha_inicio, fecha_fin, estado FROM reserva
+        `SELECT to_char(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio, to_char(fecha_fin, 'YYYY-MM-DD') AS fecha_fin, estado FROM reserva
          WHERE maquinaria_id = $1
            AND estado IN ('pendiente', 'confirmada', 'pagada', 'en_curso')
            AND (fecha_inicio, fecha_fin) OVERLAPS ($2::date, $3::date)

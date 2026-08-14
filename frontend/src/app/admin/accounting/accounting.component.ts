@@ -4,6 +4,7 @@ import { catchError, of } from 'rxjs';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { watchRealtime } from '../../shared/realtime';
 import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
 import { PagosFallidosDialog } from '../../shared/pagos-fallidos-dialog/pagos-fallidos-dialog';
@@ -31,9 +32,13 @@ export class AdminAccounting implements OnInit, OnDestroy {
   pagoSize = 8;
   pagoTotal = 0;
 
+  payoutsPendientes: any[] = [];
+  payoutsFallidos: any[] = [];
+  payoutAccion: string | null = null;
+
   private realtimeSub: Subscription | undefined;
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService, private dialog: MatDialog) {}
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService, private dialog: MatDialog, private snackBar: MatSnackBar) {}
 
   verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {
     this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
@@ -45,13 +50,14 @@ export class AdminAccounting implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadDashboard();
+    this.loadPayouts();
     this.realtimeSub = watchRealtime(
       this.socket,
       (ev) => {
         const t = String(ev?.tipo || '');
         return t.startsWith('payment.') || t.startsWith('booking.');
       },
-      () => this.loadDashboard()
+      () => { this.loadDashboard(); this.loadPayouts(); }
     );
   }
 
@@ -138,5 +144,38 @@ export class AdminAccounting implements OnInit, OnDestroy {
 
   get gananciaNeta(): number {
     return (this.dashboard.resumen.total_liberado || 0) - (this.dashboard.resumen.total_reembolsado || 0);
+  }
+
+  private loadPayouts(): void {
+    this.api.get<any>('/admin/payments/payouts/pending').pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe({ next: (res) => { this.payoutsPendientes = res?.data || []; this.cdr.detectChanges(); } });
+    this.api.get<any>('/admin/payments/payouts/failed').pipe(
+      catchError(() => of({ success: true, data: [] } as any))
+    ).subscribe({ next: (res) => { this.payoutsFallidos = res?.data || []; this.cdr.detectChanges(); } });
+  }
+
+  marcarPayoutCompletado(pagoId: string): void {
+    if (this.payoutAccion) return;
+    this.payoutAccion = pagoId;
+    this.api.post<any>(`/admin/payments/payouts/${pagoId}/mark-completed`, {}).subscribe({
+      next: () => {
+        this.snackBar.open('Payout marcado como completado.', 'Cerrar', { duration: 3000 });
+        this.payoutAccion = null;
+        this.loadPayouts();
+      },
+      error: (err) => {
+        this.snackBar.open(err.error?.error?.message || 'No se pudo marcar el payout.', 'Cerrar', { duration: 4000 });
+        this.payoutAccion = null;
+      }
+    });
+  }
+
+  estadoPayoutLabel(estado: string): string {
+    const labels: Record<string, string> = {
+      pendiente: 'Pendiente', manual: 'Manual', simulado: 'Simulado',
+      fallido: 'Fallido', completado: 'Completado', procesando: 'Procesando'
+    };
+    return labels[estado] || estado || 'Pendiente';
   }
 }

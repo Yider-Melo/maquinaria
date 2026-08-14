@@ -4,6 +4,10 @@
 .notif-card.unread { border-left: 4px solid var(--rm-primary); background: #fff5e4; }
 .notif-time { color: var(--rm-muted); font-size: 12px; }
 .notif-card.unread .notif-time { color: #e65100; }
+.read-btn { width: 32px; height: 32px; line-height: 32px; flex-shrink: 0; }
+.read-btn mat-icon { font-size: 19px; width: 19px; height: 19px; color: var(--rm-primary); }
+.read-btn:hover mat-icon { color: #fff; }
+.read-btn:hover { background: var(--rm-primary); }
 .mark-btn { margin-bottom: 16px; border-radius: 8px !important; }
 .notif-header { display: flex; align-items: center; gap: 8px; }
 .notif-icon { font-size: 20px; width: 20px; height: 20px; flex-shrink: 0; }

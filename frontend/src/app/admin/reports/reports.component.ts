@@ -18,6 +18,9 @@ export class AdminReports implements OnInit, OnDestroy {
   estadoPagoLabel = estadoPagoLabel;
   stats: any = {};
   ratingReportadas = 0;
+  reportedRatings: any[] = [];
+  ratingAccion: string | null = null;
+  bookingStats: any = {};
   users: Usuario[] = [];
   userMap: { [key: string]: string } = {};
   machinery: Machinery[] = [];
@@ -89,12 +92,15 @@ export class AdminReports implements OnInit, OnDestroy {
       this.api.get<UserStats>('/admin/users/stats').pipe(catchError(() => of({ success: true, data: { total: 0, propietarios: 0, arrendatarios: 0 } }))),
       this.api.get<RatingStats>('/admin/ratings/stats').pipe(catchError(() => of({ success: true, data: { resumen: { total: 0, puntuacion_promedio: 0, reportadas: 0 }, reportadas: [] } }))),
       this.api.get<PaymentDashboard>('/admin/payments/dashboard').pipe(catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } }))),
-      this.api.get<Booking[]>('/admin/bookings/recent?limit=100').pipe(catchError(() => of({ success: true, data: [] } as any)))
+      this.api.get<Booking[]>('/admin/bookings/recent?limit=100').pipe(catchError(() => of({ success: true, data: [] } as any))),
+      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ success: true, data: {} } as any)))
     ]).pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); })).subscribe({
-      next: ([users, ratings, payments, bookings]) => {
+      next: ([users, ratings, payments, bookings, bstats]) => {
         this.stats = users?.data || {};
         this.ratingReportadas = ratings?.data?.resumen?.reportadas || 0;
+        this.reportedRatings = (ratings as any)?.data?.reportadas || [];
         this.payments = payments?.data?.ultimos_pagos || [];
+        this.bookingStats = bstats?.data || {};
         if ((bookings as any)?.data) { this.recentBookings = (bookings as any).data; }
         else { this.recentBookings = (bookings as any) || []; }
         this.cdr.markForCheck();
@@ -197,6 +203,65 @@ export class AdminReports implements OnInit, OnDestroy {
     this.dialog.open(DetailDialog, { data: { tipo, id }, maxWidth: '560px' });
   }
 
+  barPercent(value: number, total: number): number {
+    if (!total) return 0;
+    return Math.round((value / total) * 100);
+  }
+
+  private toCSV(rows: any[], cols: { key: string; label: string }[]): string {
+    const esc = (v: any) => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const header = cols.map(c => esc(c.label)).join(',');
+    const body = rows.map(r => cols.map(c => esc(r[c.key])).join(',')).join('\r\n');
+    return header + '\r\n' + body;
+  }
+
+  private downloadCSV(filename: string, rows: any[], cols: { key: string; label: string }[]): void {
+    const blob = new Blob(['\uFEFF' + this.toCSV(rows, cols)], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  exportarUsuariosCSV(): void {
+    this.downloadCSV('usuarios.csv', this.users, [
+      { key: 'id', label: 'ID' }, { key: 'email', label: 'Email' }, { key: 'nombre', label: 'Nombre' },
+      { key: 'apellido', label: 'Apellido' }, { key: 'tipo_usuario', label: 'Rol' },
+      { key: 'telefono', label: 'Teléfono' }, { key: 'ciudad', label: 'Ciudad' },
+      { key: 'activo', label: 'Activo' }
+    ]);
+  }
+
+  exportarMaquinariaCSV(): void {
+    this.downloadCSV('maquinaria.csv', this.machinery, [
+      { key: 'id', label: 'ID' }, { key: 'titulo', label: 'Máquina' }, { key: 'tipo', label: 'Tipo' },
+      { key: 'marca', label: 'Marca' }, { key: 'modelo', label: 'Modelo' }, { key: 'anio', label: 'Año' },
+      { key: 'ciudad', label: 'Ciudad' }, { key: 'precio_por_dia', label: 'Precio/día' },
+      { key: 'propietario_id', label: 'Propietario' }, { key: 'activo', label: 'Activa' }
+    ]);
+  }
+
+  exportarReservasCSV(): void {
+    this.downloadCSV('reservas.csv', this.recentBookings, [
+      { key: 'id', label: 'ID' }, { key: 'maquinaria_id', label: 'Máquina' },
+      { key: 'estado', label: 'Estado' }, { key: 'precio_total', label: 'Total' },
+      { key: 'fecha_inicio', label: 'Inicio' }, { key: 'fecha_fin', label: 'Fin' }
+    ]);
+  }
+
+  exportarPagosCSV(): void {
+    this.downloadCSV('pagos.csv', this.payments, [
+      { key: 'id', label: 'ID' }, { key: 'reserva_id', label: 'Reserva' }, { key: 'monto', label: 'Monto' },
+      { key: 'estado', label: 'Estado' }, { key: 'metodo_pago', label: 'Método' },
+      { key: 'referencia_pasarela', label: 'Referencia' }
+    ]);
+  }
+
   toggleId(id: string): void {
     if (this.idsExpandidos.has(id)) this.idsExpandidos.delete(id);
     else this.idsExpandidos.add(id);
@@ -220,6 +285,28 @@ export class AdminReports implements OnInit, OnDestroy {
       this.api.put<Machinery>(`/admin/machinery/all/${item.id}/status`, { activo: !item.activo }).subscribe({
         next: res => { if (res?.data) item.activo = res.data.activo; this.cdr.detectChanges(); },
         error: () => console.error('Error al cambiar estado de la maquinaria')
+      });
+    });
+  }
+
+  resolverRating(id: string, accion: 'conservar' | 'eliminar'): void {
+    const msg = accion === 'eliminar'
+      ? '¿Ocultar esta calificación? Ya no se mostrará y se quitará del promedio.'
+      : '¿Quitar el reporte y conservar la calificación?';
+    this.confirmAction(msg).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.ratingAccion = id;
+      this.api.post<any>(`/admin/ratings/${id}/resolve`, { accion }).subscribe({
+        next: () => {
+          this.reportedRatings = this.reportedRatings.filter(r => r.id !== id);
+          this.ratingReportadas = this.reportedRatings.length;
+          this.ratingAccion = null;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error al resolver calificación', err);
+          this.ratingAccion = null;
+        }
       });
     });
   }

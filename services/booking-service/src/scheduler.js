@@ -1,14 +1,14 @@
 const cron = require('node-cron');
 const axios = require('axios');
 const reservaRepository = require('./repositories/reservaRepository');
-const { eventBus, EVENT_TYPES } = require('shared');
+const { eventBus, EVENT_TYPES, getInternalApiKey } = require('shared');
 const createServiceLogger = require('../../../shared/logger');
 
 const logger = createServiceLogger('booking-scheduler');
 
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
 const PAYMENT_SERVICE_URL = process.env.PAYMENT_SERVICE_URL || 'http://localhost:3005';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = getInternalApiKey();
 
 async function autoCompleteExpiredBookings() {
     try {

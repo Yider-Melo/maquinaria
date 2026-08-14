@@ -58,7 +58,8 @@ const schemas = {
         password: Joi.string().required().messages({
             'any.required': 'La contraseña es requerida',
             'string.empty': 'La contraseña no puede estar vacía'
-        })
+        }),
+        code: Joi.string().allow('', null).optional()
     }),
 
     resetPassword: Joi.object({
@@ -253,7 +254,10 @@ const schemas = {
     }),
 
     updateAvailability: Joi.object({
-        fechas: Joi.array().items(Joi.date().iso()).optional(),
+        fechas: Joi.array().items(Joi.object({
+            fecha: Joi.date().iso().required(),
+            disponible: Joi.boolean().required()
+        })).optional(),
         disponible: Joi.boolean().optional()
     }),
 

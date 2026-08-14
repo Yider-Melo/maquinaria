@@ -40,6 +40,20 @@ async function adminRatingStats(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function adminListReported(req, res, next) {
+    try {
+        const reportadas = await ratingService.adminListReported();
+        success(res, reportadas);
+    } catch (err) { next(err); }
+}
+
+async function adminResolveRating(req, res, next) {
+    try {
+        const result = await ratingService.adminResolveRating(req.params.id, req.body.accion);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function getByMachinery(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -84,6 +98,8 @@ module.exports = {
     getMyRatings,
     getAverage,
     adminRatingStats,
+    adminListReported,
+    adminResolveRating,
     getByMachinery,
     update,
     remove,

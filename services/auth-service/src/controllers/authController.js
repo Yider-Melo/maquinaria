@@ -101,6 +101,13 @@ async function verify2FA(req, res, next) {
     }
 }
 
+async function disable2FA(req, res, next) {
+    try {
+        const result = await authService.disable2FA(req.user.id, req.body.token);
+        success(res, result);
+    } catch (err) { next(err); }
+}
+
 async function forgotPassword(req, res, next) {
     try {
         const result = await authService.forgotPassword(req.body.email);
@@ -154,6 +161,15 @@ async function adminSetUserStatus(req, res, next) {
 
 async function getUserById(req, res, next) {
     try {
+        // Endpoint público: solo perfil mínimo (sin PII).
+        const user = await authService.getPublicProfile(req.params.id);
+        success(res, user);
+    } catch (err) { next(err); }
+}
+
+async function getUserByIdInternal(req, res, next) {
+    try {
+        // Solo accesible con API key interna (datos completos para microservicios).
         const user = await authService.getProfile(req.params.id);
         success(res, user);
     } catch (err) { next(err); }
@@ -214,6 +230,7 @@ module.exports = {
     resendVerificationEmail,
     setup2FA,
     verify2FA,
+    disable2FA,
     forgotPassword,
     resetPassword,
     validateToken,
@@ -221,6 +238,7 @@ module.exports = {
     adminUserStats,
     adminSetUserStatus,
     getUserById,
+    getUserByIdInternal,
     getBankAccount,
     saveBankAccount,
     deleteBankAccount,

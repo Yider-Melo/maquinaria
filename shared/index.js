@@ -9,7 +9,7 @@ const {
 const { errorHandler } = require('./errors/errorHandler');
 const { success, paginated } = require('./utils/response');
 const { validate, validateQuery, validateParams, uuidParam } = require('./utils/validate');
-const { validateToken, requireRole, extractUser, getJwtSecret } = require('./middleware/authMiddleware');
+const { validateToken, requireRole, extractUser, getJwtSecret, getInternalApiKey } = require('./middleware/authMiddleware');
 const { correlationId } = require('./middleware/correlationId');
 const { requestLogger } = require('./middleware/requestLogger');
 const { schemas } = require('./validators/schemas');
@@ -24,7 +24,7 @@ module.exports = {
     errorHandler,
     success, paginated,
     validate, validateQuery, validateParams, uuidParam,
-    validateToken, requireRole, extractUser, getJwtSecret,
+    validateToken, requireRole, extractUser, getJwtSecret, getInternalApiKey,
     correlationId,
     requestLogger,
     schemas,

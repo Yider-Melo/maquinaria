@@ -41,6 +41,8 @@ function getEmailTemplate(tipo, data) {
         'booking.completed': emailService.sendBookingCompleted,
         'payment.confirmed': emailService.sendPaymentConfirmed,
         'payment.released': emailService.sendPaymentReleased,
+        'payment.refunded': emailService.sendPaymentRefunded,
+        'rating.created': emailService.sendRatingCreated,
     };
     return map[tipo] || null;
 }
@@ -119,6 +121,7 @@ app.listen(PORT, async () => {
     eventBus.subscribeToEvent('booking.*', handleBookingEvent, 'notification-booking-queue');
     eventBus.subscribeToEvent('payment.*', handleBookingEvent, 'notification-payment-queue');
     eventBus.subscribeToEvent('machinery.*', handleMachineryEvent, 'notification-machinery-queue');
+    eventBus.subscribeToEvent('rating.*', handleBookingEvent, 'notification-rating-queue');
 
     logger.info('Notification Service iniciado', { port: PORT });
 });

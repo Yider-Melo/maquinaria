@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { ConflictError, ValidationError, NotFoundError, ForbiddenError } = require('shared');
+const { ConflictError, ValidationError, NotFoundError, ForbiddenError, getInternalApiKey, eventBus, EVENT_TYPES } = require('shared');
 const calificacionRepository = require('../repositories/calificacionRepository');
 const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('rating-service');
@@ -7,7 +7,7 @@ const logger = createServiceLogger('rating-service');
 const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL || 'http://localhost:3004';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const MACHINERY_SERVICE_URL = process.env.MACHINERY_SERVICE_URL || 'http://localhost:3002';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = getInternalApiKey();
 
 async function actualizarRatingMaquinaria(maquinariaId) {
     try {
@@ -26,7 +26,7 @@ async function fetchUser(userId) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(`${AUTH_SERVICE_URL}/users/${userId}`, {
+        const res = await fetch(`${AUTH_SERVICE_URL}/internal/users/${userId}`, {
             headers: { 'x-api-key': INTERNAL_API_KEY },
             signal: controller.signal
         });
@@ -119,6 +119,21 @@ async function create(data, userId) {
         puntuacion: data.puntuacion, puntuacion_maquinaria: data.puntuacion_maquinaria, comentario: data.comentario
     });
     actualizarRatingMaquinaria(data.maquinaria_id);
+    try {
+        eventBus.publishEvent(EVENT_TYPES.RATING.CREATED, {
+            usuario_id: data.calificado_id,
+            tipo: 'rating.created',
+            titulo: 'Nueva calificación',
+            mensaje: `Recibiste una calificación de ${data.puntuacion} / 5${data.comentario ? `: "${data.comentario}"` : ''}.`,
+            puntuacion: data.puntuacion,
+            comentario: data.comentario || '',
+            reserva_id: data.reserva_id,
+            referencia_id: result.id,
+            referencia_tipo: 'calificacion'
+        });
+    } catch (err) {
+        logger.warn('No se pudo publicar evento de calificación:', { error: err.message });
+    }
     return result;
 }
 
@@ -204,7 +219,18 @@ async function adminRatingStats() {
     return await calificacionRepository.getAdminStats();
 }
 
+async function adminListReported() {
+    return await enrichRatings(await calificacionRepository.findReported());
+}
+
+async function adminResolveRating(id, accion) {
+    const result = await calificacionRepository.resolveReport(id, accion === 'eliminar' ? 'eliminar' : 'conservar');
+    if (!result) throw new NotFoundError('Calificación no encontrada');
+    if (result.maquinaria_id) actualizarRatingMaquinaria(result.maquinaria_id);
+    return result;
+}
+
 module.exports = {
     create, getById, getByUser, getMyRatings, getByMachinery, getAverage,
-    update, remove, report, adminRatingStats
+    update, remove, report, adminRatingStats, adminListReported, adminResolveRating
 };

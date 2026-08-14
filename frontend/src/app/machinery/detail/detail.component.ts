@@ -224,6 +224,15 @@ export class MachineryDetail implements OnInit, OnDestroy {
   get estimatedTotalWithIVA(): number { return Math.round(this.estimatedTotal * 1.19); }
   get grandTotal(): number { return this.estimatedTotalWithIVA + this.appFee; }
 
+  // Convierte una fecha a 'YYYY-MM-DD' usando la fecha LOCAL del navegador.
+  // Evita el corrimiento de un día que produce toISOString() (UTC) en algunas zonas.
+  private toDateString(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   canGoPrevMonth(): boolean {
     const min = new Date();
     return this.currentMonth.getFullYear() > min.getFullYear() ||
@@ -415,7 +424,7 @@ export class MachineryDetail implements OnInit, OnDestroy {
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
     const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const today = this.toDateString(now);
 
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     this.calendarTitle = `${monthNames[month]} ${year}`;
@@ -429,7 +438,7 @@ export class MachineryDetail implements OnInit, OnDestroy {
     for (let i = firstDay - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, daysInPrevMonth - i);
       allDays.push({
-        date: date.toISOString().slice(0, 10), day: daysInPrevMonth - i,
+        date: this.toDateString(date), day: daysInPrevMonth - i,
         occupied: false, selected: false, past: true, isPadding: true,
         isStart: false, isEnd: false, isToday: false
       });
@@ -437,7 +446,7 @@ export class MachineryDetail implements OnInit, OnDestroy {
 
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d);
-      const iso = date.toISOString().slice(0, 10);
+      const iso = this.toDateString(date);
       const isToday = iso === today;
       const isBeforeMin = new Date(iso) < new Date(this.minDate);
       allDays.push({
@@ -458,7 +467,7 @@ export class MachineryDetail implements OnInit, OnDestroy {
       for (let i = 1; i <= remaining; i++) {
         const date = new Date(year, month + 1, i);
         allDays.push({
-          date: date.toISOString().slice(0, 10), day: i,
+          date: this.toDateString(date), day: i,
           occupied: false, selected: false, past: false, isPadding: true,
           isStart: false, isEnd: false, isToday: false
         });
@@ -476,7 +485,7 @@ export class MachineryDetail implements OnInit, OnDestroy {
     const endDate = new Date(this.currentMonth);
     endDate.setMonth(endDate.getMonth() + 13);
     endDate.setDate(0);
-    this.api.get<OccupiedDates>(`/bookings/machinery/${this.item!.id}/occupied`, { start, end: endDate.toISOString().slice(0, 10) }).subscribe({
+    this.api.get<OccupiedDates>(`/bookings/machinery/${this.item!.id}/occupied`, { start, end: this.toDateString(endDate) }).subscribe({
       next: (res) => {
         this.occupiedDates = new Set(res.data?.dates || []);
         this.buildCalendar();

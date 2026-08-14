@@ -3,13 +3,25 @@ const { UnauthorizedError, ForbiddenError } = require('../errors/AppError');
 const createServiceLogger = require('../logger');
 const logger = createServiceLogger('auth-middleware');
 
-function getJwtSecret() {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        logger.warn('JWT_SECRET no configurado. Usando secreto por defecto (inseguro). Configura JWT_SECRET en producción.');
-        return 'rentamaq-secret-key-dev';
+// Devuelve un secreto de entorno. En producción falla si no está configurado;
+// en desarrollo usa un valor por defecto (inseguro) para poder levantar el stack.
+function getSecret(envName, devFallback) {
+    const value = process.env[envName];
+    if (value) return value;
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error(`${envName} no configurado. Configúralo en producción.`);
     }
-    return secret;
+    logger.warn(`${envName} no configurado. Usando valor por defecto (INSEGURO) — SOLO para desarrollo.`);
+    return devFallback;
+}
+
+function getJwtSecret() {
+    return getSecret('JWT_SECRET', 'rentamaq-secret-key-dev');
+}
+
+// Clave para comunicación entre microservicios.
+function getInternalApiKey() {
+    return getSecret('INTERNAL_API_KEY', 'rentamaq-internal-key-dev');
 }
 
 // Valida que la request tenga un Bearer token valido.
@@ -49,4 +61,4 @@ function extractUser(req, _res, next) {
     next();
 }
 
-module.exports = { validateToken, requireRole, extractUser, getJwtSecret };
+module.exports = { validateToken, requireRole, extractUser, getJwtSecret, getInternalApiKey };

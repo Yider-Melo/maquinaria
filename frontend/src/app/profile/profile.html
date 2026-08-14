@@ -36,7 +36,6 @@
               <mat-form-field appearance="outline"><mat-label>Número de documento</mat-label><input matInput [(ngModel)]="profile.numero_documento" placeholder="Cédula de ciudadanía"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Foto URL</mat-label><input matInput [(ngModel)]="profile.foto_url" placeholder="https://..."></mat-form-field>
               <div class="verify-row"><mat-icon>{{ profile.email_verificado ? 'verified' : 'mark_email_unread' }}</mat-icon><span>{{ profile.email_verificado ? 'Correo verificado' : 'Correo pendiente de verificación' }}</span></div>
-              <button mat-stroked-button type="button" *ngIf="!profile.email_verificado" (click)="verifyEmail()">Verificar correo demo</button>
             </mat-card-content>
             <mat-card-actions><button mat-raised-button class="primary" [disabled]="saving" (click)="saveProfile()">Guardar perfil</button></mat-card-actions>
           </mat-card>
@@ -48,6 +47,40 @@
               <p class="hint">Debe incluir mínimo 8 caracteres, mayúscula, minúscula y número.</p>
             </mat-card-content>
             <mat-card-actions><button mat-raised-button class="primary" [disabled]="passwordSaving" (click)="changePassword()">Cambiar contraseña</button></mat-card-actions>
+          </mat-card>
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Verificación en dos pasos (2FA)</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p class="hint" *ngIf="!profile.verificado_2fa">Refuerza tu cuenta con un código adicional al iniciar sesión usando una app autenticadora (Google Authenticator, Authy, etc.).</p>
+              <p class="hint" *ngIf="profile.verificado_2fa">El 2FA está activo: al iniciar sesión se te pedirá un código de tu app autenticadora.</p>
+
+              <div *ngIf="!profile.verificado_2fa && !twoFASetup">
+                <button mat-stroked-button type="button" (click)="setup2FA()" [disabled]="twoFALoading">
+                  <mat-icon>shield</mat-icon> {{ twoFALoading ? 'Generando...' : 'Activar 2FA' }}
+                </button>
+              </div>
+
+              <div *ngIf="twoFASetup" class="twofa-setup">
+                <img [src]="twoFAQR" alt="QR de 2FA" style="max-width:180px;border:1px solid #ddd;border-radius:8px;">
+                <p class="hint">Escanea el QR con tu app autenticadora o ingresa esta clave manualmente:</p>
+                <code class="twofa-secret">{{ twoFASecret }}</code>
+                <mat-form-field appearance="outline" style="width:100%;margin-top:12px;">
+                  <mat-label>Código de verificación</mat-label>
+                  <input matInput type="text" [(ngModel)]="twoFACode" inputmode="numeric" placeholder="6 dígitos">
+                </mat-form-field>
+                <button mat-raised-button color="primary" (click)="confirm2FA()" [disabled]="!twoFACode.trim()">Confirmar y activar</button>
+              </div>
+
+              <div *ngIf="profile.verificado_2fa" class="twofa-disable">
+                <mat-form-field appearance="outline" style="width:100%;margin-top:4px;">
+                  <mat-label>Código de verificación</mat-label>
+                  <input matInput type="text" [(ngModel)]="twoFACode" inputmode="numeric" placeholder="6 dígitos de tu app">
+                </mat-form-field>
+                <button mat-stroked-button color="warn" (click)="disable2FA()" [disabled]="!twoFACode.trim()">Desactivar 2FA</button>
+              </div>
+            </mat-card-content>
           </mat-card>
           <mat-card class="delete-card">
             <mat-card-header><mat-card-title>Eliminar cuenta</mat-card-title></mat-card-header>

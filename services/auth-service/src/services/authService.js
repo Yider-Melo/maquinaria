@@ -42,7 +42,7 @@ async function register({ email, password, nombre, apellido, telefono, tipo_usua
     return { id, email, nombre, apellido, tipo_usuario };
 }
 
-async function login({ email, password }) {
+async function login({ email, password, code }) {
     const user = await usuarioRepository.findByEmailWithPassword(email);
     if (!user) {
         throw new UnauthorizedError('Credenciales inválidas');
@@ -55,6 +55,22 @@ async function login({ email, password }) {
 
     if (!user.email_verificado) {
         throw new ForbiddenError('Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada (o spam) y haz clic en el enlace de confirmación.');
+    }
+
+    // 2FA: si está configurado y verificado, se exige el código TOTP.
+    if (user.secreto_2fa && user.verificado_2fa) {
+        if (!code) {
+            return {
+                requires_2fa: true,
+                message: 'Introduce el código de verificación (2FA) para completar el inicio de sesión.'
+            };
+        }
+        const verified = speakeasy.totp.verify({
+            secret: user.secreto_2fa, encoding: 'base32', token: String(code).trim(), window: 1
+        });
+        if (!verified) {
+            throw new UnauthorizedError('Código 2FA inválido');
+        }
     }
 
     await usuarioRepository.updateLastAccess(user.id);
@@ -86,6 +102,24 @@ async function getProfile(userId) {
         throw new NotFoundError('Usuario no encontrado');
     }
     return user;
+}
+
+// Perfil público mínimo: sin PII (email, teléfono, documento, etc.).
+// Se usa para el endpoint público /users/:id.
+async function getPublicProfile(userId) {
+    const user = await usuarioRepository.findById(userId);
+    if (!user) {
+        throw new NotFoundError('Usuario no encontrado');
+    }
+    return {
+        id: user.id,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        foto_url: user.foto_url,
+        tipo_usuario: user.tipo_usuario,
+        ciudad: user.ciudad,
+        departamento: user.departamento
+    };
 }
 
 async function updateProfile(userId, data) {
@@ -171,6 +205,24 @@ async function verify2FA(userId, token) {
 
     await usuarioRepository.verify2FA(userId);
     return true;
+}
+
+async function disable2FA(userId, token) {
+    const user = await usuarioRepository.findSecret2FA(userId);
+    if (!user || !user.secreto_2fa) {
+        throw new ValidationError('2FA no configurado');
+    }
+
+    const verified = speakeasy.totp.verify({
+        secret: user.secreto_2fa, encoding: 'base32', token: String(token).trim(), window: 1
+    });
+
+    if (!verified) {
+        throw new UnauthorizedError('Código 2FA inválido');
+    }
+
+    await usuarioRepository.clear2FA(userId);
+    return { message: '2FA deshabilitado correctamente' };
 }
 
 async function forgotPassword(email) {
@@ -318,8 +370,8 @@ async function getBankAccountInternal(userId) {
 }
 
 module.exports = {
-    register, login, getProfile, updateProfile, changePassword, verifyEmail, verifyEmailByToken, resendVerificationEmail,
-    setup2FA, verify2FA, forgotPassword, resetPassword,
+    register, login, getProfile, getPublicProfile, updateProfile, changePassword, verifyEmail, verifyEmailByToken, resendVerificationEmail,
+    setup2FA, verify2FA, disable2FA, forgotPassword, resetPassword,
     refreshToken, logout, logoutAll,
     validateToken, adminListUsers, adminUserStats, adminSetUserStatus,
     getBankAccount, saveBankAccount, deleteBankAccount, getBankAccountInternal,

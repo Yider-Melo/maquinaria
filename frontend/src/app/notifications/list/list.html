@@ -14,6 +14,9 @@
           <div style="flex:1;min-width:0;">
             <strong [style.color]="n.leida ? '#333' : '#000'">{{ n.titulo }}</strong>
           </div>
+          <button mat-icon-button class="read-btn" *ngIf="!n.leida" (click)="$event.stopPropagation(); markAsRead(n.id)" title="Marcar como leída" aria-label="Marcar como leída">
+            <mat-icon>mark_email_read</mat-icon>
+          </button>
           <span class="notif-time">{{ formatDateRelative(n.creado_en) }}</span>
         </div>
         <p class="notif-mensaje">{{ n.mensaje }}</p>

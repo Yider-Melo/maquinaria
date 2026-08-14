@@ -4,12 +4,12 @@
 const express = require('express');
 const router = express.Router();
 const notificationService = require('../services/notificationService');
-const { validateToken, success, errorHandler, ForbiddenError } = require('shared');
+const { validateToken, success, errorHandler, ForbiddenError, getInternalApiKey } = require('shared');
 
 // Importar helpers de tiempo real para emitir socket también en modo fallback HTTP
 const { notifyGatewayViaHttp, broadcastRefreshViaHttp } = notificationService;
 
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = getInternalApiKey();
 
 // Middleware de autenticacion interna entre microservicios via API key
 function internalAuth(req, res, next) {

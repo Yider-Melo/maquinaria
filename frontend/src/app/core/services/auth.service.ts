@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Api } from './api.service';
-import { Observable, tap } from 'rxjs';
-import { BehaviorSubject } from 'rxjs';
+import { Observable, tap, map, catchError, of, BehaviorSubject } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Usuario, LoginResponse, ApiResponse } from '../models';
 
 export type { Usuario, LoginResponse };
@@ -13,18 +14,17 @@ export class Auth {
   private userKey = 'rentamaq_user';
   private authState = new BehaviorSubject<boolean>(!!this.getToken());
 
-  constructor(private api: Api) {}
+  constructor(private api: Api, private http: HttpClient) {}
 
-  login(email: string, password: string): Observable<ApiResponse<LoginResponse>> {
-    return this.api.post<LoginResponse>('/auth/login', { email, password }).pipe(
+  login(email: string, password: string, code?: string): Observable<ApiResponse<LoginResponse>> {
+    return this.api.post<LoginResponse>('/auth/login', { email, password, code }).pipe(
       tap((res: ApiResponse<LoginResponse>) => {
-        if (!res.success || !res.data?.token) {
-          throw new Error('Respuesta inválida del servidor');
+        if (res.success && res.data?.token) {
+          localStorage.setItem(this.tokenKey, res.data.token);
+          if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
+          localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
+          this.authState.next(true);
         }
-        localStorage.setItem(this.tokenKey, res.data.token);
-        if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
-        localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
-        this.authState.next(true);
       })
     );
   }
@@ -48,6 +48,27 @@ export class Auth {
   }
 
   getRefreshToken(): string | null { return localStorage.getItem(this.refreshTokenKey); }
+
+  // Renueva el access token usando el refresh token (con rotación). Devuelve
+  // true si se obtuvo un nuevo token, false si no hay sesión o falló.
+  refreshAccessToken(): Observable<boolean> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) return of(false);
+    return this.http.post<ApiResponse<LoginResponse>>(`${environment.apiUrl}/auth/refresh`, { refresh_token: refreshToken }).pipe(
+      tap((res) => {
+        if (res?.data?.token) {
+          localStorage.setItem(this.tokenKey, res.data.token);
+          if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
+          this.authState.next(true);
+        }
+      }),
+      map((res) => !!res?.data?.token),
+      catchError(() => {
+        this.logout();
+        return of(false);
+      })
+    );
+  }
 
   // Devuelve el token JWT almacenado o null si no hay sesión activa.
   getToken(): string | null { return localStorage.getItem(this.tokenKey); }

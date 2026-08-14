@@ -123,6 +123,34 @@ async function report(id, motivo) {
     return result.rows[0] || null;
 }
 
+async function findReported() {
+    const result = await pool.query(
+        `SELECT ${CALIFICACION_COLUMNS} FROM calificacion
+         WHERE reportado = true AND activo = true
+         ORDER BY creado_en DESC`
+    );
+    return result.rows;
+}
+
+// Resolución de una reseña reportada por el admin.
+// accion = 'conservar' (quita el reporte) | 'eliminar' (oculta la reseña).
+async function resolveReport(id, accion) {
+    if (accion === 'eliminar') {
+        const result = await pool.query(
+            `UPDATE calificacion SET reportado = false, motivo_reporte = NULL, activo = false, actualizado_en = CURRENT_TIMESTAMP
+             WHERE id = $1 RETURNING ${CALIFICACION_COLUMNS}`,
+            [id]
+        );
+        return result.rows[0] || null;
+    }
+    const result = await pool.query(
+        `UPDATE calificacion SET reportado = false, motivo_reporte = NULL, actualizado_en = CURRENT_TIMESTAMP
+         WHERE id = $1 RETURNING ${CALIFICACION_COLUMNS}`,
+        [id]
+    );
+    return result.rows[0] || null;
+}
+
 async function getAdminStats() {
     const result = await pool.query(
         `SELECT
@@ -156,5 +184,5 @@ async function withTransaction(callback) {
 module.exports = {
     findByReservaAndCalificador, insert,
     findByCalificado, findByCalificador, findByMaquinaria, getAverage, getAverageByMachinery,
-    findById, update, markAsEdited, softDelete, report, getAdminStats, withTransaction
+    findById, update, markAsEdited, softDelete, report, findReported, resolveReport, getAdminStats, withTransaction
 };

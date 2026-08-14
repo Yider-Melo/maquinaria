@@ -48,6 +48,7 @@ export class Profile implements OnInit, OnDestroy {
   profile: Usuario = { id: '', email: '', nombre: '', apellido: '', tipo_usuario: 'arrendatario', telefono: '', departamento: '', ciudad: '', numero_documento: '', foto_url: '' };
   departamentos = ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'];
   password = { currentPassword: '', newPassword: '' };
+  twoFASetup = false; twoFALoading = false; twoFAQR = ''; twoFASecret = ''; twoFACode = '';
   ownerMachines: Machinery[] = [];
   ownerMachPage = 1; ownerMachSize = 6; ownerMachTotal = 0;
   renterBookings: Booking[] = [];
@@ -328,10 +329,45 @@ export class Profile implements OnInit, OnDestroy {
     });
   }
 
-  verifyEmail(): void {
-    this.api.post<Usuario>('/auth/profile/verify-email', {}).subscribe({
-      next: (res) => { this.profile = res.data; this.snackBar.open('Correo verificado en modo demo.', 'Cerrar', { duration: 3000 }); },
-      error: () => this.error = 'No se pudo verificar el correo.'
+  setup2FA(): void {
+    this.twoFALoading = true; this.error = '';
+    this.api.post<any>('/auth/2fa/setup', {}).subscribe({
+      next: (res) => {
+        this.twoFASetup = true;
+        this.twoFAQR = res.data?.qrCode || '';
+        this.twoFASecret = res.data?.secret || '';
+        this.twoFALoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => { this.error = err.error?.error?.message || 'No se pudo configurar el 2FA.'; this.twoFALoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  confirm2FA(): void {
+    this.twoFALoading = true; this.error = '';
+    this.api.post<any>('/auth/2fa/verify', { token: this.twoFACode.trim() }).subscribe({
+      next: () => {
+        this.snackBar.open('2FA activado correctamente.', 'Cerrar', { duration: 3000 });
+        this.twoFACode = ''; this.twoFASetup = false;
+        if (this.profile) this.profile.verificado_2fa = true;
+        this.twoFALoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => { this.error = err.error?.error?.message || 'Código inválido.'; this.twoFALoading = false; this.cdr.detectChanges(); }
+    });
+  }
+
+  disable2FA(): void {
+    this.twoFALoading = true; this.error = '';
+    this.api.post<any>('/auth/2fa/disable', { token: this.twoFACode.trim() }).subscribe({
+      next: () => {
+        this.snackBar.open('2FA desactivado.', 'Cerrar', { duration: 3000 });
+        this.twoFACode = '';
+        if (this.profile) this.profile.verificado_2fa = false;
+        this.twoFALoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => { this.error = err.error?.error?.message || 'No se pudo desactivar el 2FA.'; this.twoFALoading = false; this.cdr.detectChanges(); }
     });
   }
 

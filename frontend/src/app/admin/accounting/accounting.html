@@ -108,6 +108,50 @@
     </mat-card-content>
   </mat-card>
 
+  <h2>Payouts a Propietarios</h2>
+  <p class="intro">Pagos liberados pendientes de transferir al propietario. Cuando completes la transferencia (Nequi, bancolombia, etc.), márcalos como completados.</p>
+  <mat-card>
+    <mat-card-content>
+      <table class="admin-table" *ngIf="payoutsPendientes?.length">
+        <thead><tr><th>ID Pago</th><th>Reserva</th><th>Monto</th><th>Al propietario</th><th>Comisión</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of payoutsPendientes">
+            <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
+            <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
+            <td>${{ p.monto | number }}</td>
+            <td>${{ (p.monto_propietario || 0) | number }}</td>
+            <td>${{ (p.comision || 0) | number }}</td>
+            <td><span class="status-badge">{{ estadoPayoutLabel(p.payout_estado) }}</span></td>
+            <td>
+              <button mat-stroked-button color="primary" (click)="marcarPayoutCompletado(p.id)" [disabled]="payoutAccion === p.id">
+                <mat-icon *ngIf="payoutAccion === p.id" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
+                <mat-icon *ngIf="payoutAccion !== p.id">check_circle</mat-icon>
+                {{ payoutAccion === p.id ? 'Guardando...' : 'Marcar completado' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="!payoutsPendientes?.length" class="empty">No hay payouts pendientes.</p>
+    </mat-card-content>
+  </mat-card>
+  <mat-card *ngIf="payoutsFallidos?.length" style="margin-top:16px;">
+    <mat-card-content>
+      <h3 style="margin:0 0 12px;">Payouts fallidos</h3>
+      <table class="admin-table">
+        <thead><tr><th>ID Pago</th><th>Reserva</th><th>Monto</th><th>Error</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let p of payoutsFallidos">
+            <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
+            <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
+            <td>${{ p.monto | number }}</td>
+            <td>{{ p.payout_error || 'Sin error registrado' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
   <h2>Últimos Pagos</h2>
   <p class="intro">Estos son los pagos más recientes registrados en la plataforma.</p>
   <mat-card>

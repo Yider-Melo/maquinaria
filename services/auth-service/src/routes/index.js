@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, schemas, errorHandler, getInternalApiKey } = require('shared');
 
 router.post('/register', validate(schemas.register), authController.register);
 router.post('/login', validate(schemas.login), authController.login);
@@ -12,9 +12,9 @@ router.post('/logout-all', validateToken, authController.logoutAll);
 router.get('/profile', validateToken, authController.getProfile);
 router.patch('/profile', validateToken, validate(schemas.updateProfile), authController.updateProfile);
 router.put('/profile/password', validateToken, validate(schemas.changePassword), authController.changePassword);
-router.post('/profile/verify-email', validateToken, authController.verifyEmail);
 router.post('/2fa/setup', validateToken, authController.setup2FA);
 router.post('/2fa/verify', validateToken, validate(schemas.verify2FA), authController.verify2FA);
+router.post('/2fa/disable', validateToken, validate(schemas.verify2FA), authController.disable2FA);
 router.post('/forgot-password', validate(schemas.forgotPassword), authController.forgotPassword);
 router.post('/reset-password', validate(schemas.resetPassword), authController.resetPassword);
 router.post('/validate-token', validate(schemas.validateToken), authController.validateToken);
@@ -31,11 +31,12 @@ router.delete('/bank-account', validateToken, authController.deleteBankAccount);
 
 function internalAuth(req, res, next) {
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== (process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev')) {
+    if (apiKey !== getInternalApiKey()) {
         return res.status(403).json({ success: false, error: { message: 'API key inválida' } });
     }
     next();
 }
+router.get('/internal/users/:id', internalAuth, validateParams(uuidParam('id')), authController.getUserByIdInternal);
 router.get('/internal/users/:id/bank-account', internalAuth, validateParams(uuidParam('id')), authController.getBankAccountInternal);
 
 router.use(errorHandler);

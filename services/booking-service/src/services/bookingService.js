@@ -1,6 +1,6 @@
-const { v4: uuidv4 } = require('uuid');
+﻿const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
-const { NotFoundError, ForbiddenError, ConflictError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
+const { NotFoundError, ForbiddenError, ConflictError, ValidationError, eventBus, EVENT_TYPES, getInternalApiKey } = require('shared');
 const reservaRepository = require('../repositories/reservaRepository');
 const createServiceLogger = require('../../../../shared/logger');
 const logger = createServiceLogger('booking-service');
@@ -29,8 +29,10 @@ function toDateOnly(value) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
     const date = new Date(value);
     if (isNaN(date.getTime())) return String(value);
-    const { year, month, day } = datePartsInTZ(date);
-    return `${year}-${month}-${day}`;
+    // Las fechas llegan como Date UTC (p. ej. tras validación Joi). Se toma la
+    // parte de fecha tal cual (UTC), sin reformatear en la zona local, para no
+    // desplazarlas un día.
+    return date.toISOString().slice(0, 10);
 }
 
 function minStartDate() {
@@ -40,13 +42,13 @@ function minStartDate() {
 function validateDateRange(startDate, endDate) {
     const start = toDateOnly(startDate);
     const end = toDateOnly(endDate);
-    if (start <= minStartDate()) throw new ValidationError('La fecha de inicio debe ser al menos 1 día después de hoy');
+    if (start <= minStartDate()) throw new ValidationError('La fecha de inicio debe ser al menos 1 dÃ­a despuÃ©s de hoy');
     if (end < start) throw new ValidationError('La fecha final no puede ser anterior a la fecha inicial');
     return { start, end };
 }
 
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3007';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = getInternalApiKey();
 
 async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
     const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'reserva' };
@@ -74,7 +76,7 @@ async function create(data, userId) {
         const res = await axios.get(`${MACHINERY_SERVICE_URL}/${data.maquinaria_id}`);
         const maq = res.data.data;
         if (maq.disponible === false) {
-            throw new ValidationError('La maquinaria no está disponible actualmente');
+            throw new ValidationError('La maquinaria no estÃ¡ disponible actualmente');
         }
         propietario_id = maq.propietario_id;
         precio_por_dia = parseFloat(maq.precio_por_dia);
@@ -90,15 +92,21 @@ async function create(data, userId) {
     const fechaInicio = new Date(start);
     const fechaFin = new Date(end);
     const dias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
-    if (dias <= 0) throw new ValidationError('El rango de fechas no es válido');
+    if (dias <= 0) throw new ValidationError('El rango de fechas no es vÃ¡lido');
 
     const precioUnitario = parseFloat(precio_por_dia);
     const precioTotal = dias * precioUnitario;
 
+    // Fechas marcadas manualmente como NO disponibles por el propietario.
+    const noDisponibles = await getManualUnavailableDates(data.maquinaria_id, start, end);
+    if (noDisponibles.length > 0) {
+        throw new ConflictError(`La maquinaria no está disponible en: ${noDisponibles.join(', ')}`);
+    }
+
     const booking = await reservaRepository.withTransaction(async (client) => {
         const conflictos = await reservaRepository.findConflictingBookings(data.maquinaria_id, start, end, client);
         if (conflictos.length > 0) {
-            throw new ConflictError('La maquinaria no está disponible en las fechas seleccionadas');
+            throw new ConflictError('La maquinaria no estÃ¡ disponible en las fechas seleccionadas');
         }
 
         const b = await reservaRepository.insert({
@@ -116,12 +124,34 @@ async function create(data, userId) {
         return b;
     }).catch((err) => {
         if (err && err.code === '23P01') {
-            throw new ConflictError('La maquinaria no está disponible en las fechas seleccionadas');
+            throw new ConflictError('La maquinaria no estÃ¡ disponible en las fechas seleccionadas');
         }
         throw err;
     });
 
     return booking;
+}
+
+// Consulta las fechas marcadas manualmente como NO disponibles por el propietario
+// (tabla disponibilidad_maquinaria) para el rango solicitado.
+async function getManualUnavailableDates(machineryId, start, end) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(`${MACHINERY_SERVICE_URL}/${machineryId}/availability?start=${start}&end=${end}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) return [];
+        const body = await res.json();
+        const rows = body.data || [];
+        return rows
+            .filter(r => r.disponible === false)
+            .map(r => String(r.fecha).slice(0, 10));
+    } catch (err) {
+        logger.warn('No se pudo consultar disponibilidad manual de la maquinaria:', { machineryId, error: err.message });
+        return [];
+    }
 }
 
 async function checkAvailability(machineryId, startDate, endDate) {
@@ -140,6 +170,14 @@ async function checkAvailability(machineryId, startDate, endDate) {
         };
     }
 
+    const noDisponibles = await getManualUnavailableDates(machineryId, start, end);
+    if (noDisponibles.length > 0) {
+        return {
+            disponible: false,
+            fechas_no_disponibles: noDisponibles.map(d => ({ inicio: d, fin: d }))
+        };
+    }
+
     return { disponible: true, fechas_no_disponibles: [] };
 }
 
@@ -152,8 +190,8 @@ async function getById(id, userId, isAdmin = false) {
         throw new ForbiddenError('No tienes acceso a esta reserva');
     }
     try {
-        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
-            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' }
+        const res = await axios.get(`${AUTH_SERVICE_URL}/internal/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY }
         });
         const user = res.data?.data;
         if (user) {
@@ -163,8 +201,8 @@ async function getById(id, userId, isAdmin = false) {
         }
     } catch { }
     try {
-        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.propietario_id}`, {
-            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' }
+        const res = await axios.get(`${AUTH_SERVICE_URL}/internal/users/${reserva.propietario_id}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY }
         });
         const user = res.data?.data;
         if (user) {
@@ -200,8 +238,8 @@ async function getInternalById(id) {
         throw new NotFoundError('Reserva no encontrada');
     }
     try {
-        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
-            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
+        const res = await axios.get(`${AUTH_SERVICE_URL}/internal/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
             timeout: 2000
         });
         const user = res.data?.data;
@@ -265,8 +303,8 @@ async function enrichArrendatarioRating(reserva) {
 
 async function enrichBookingWithUsers(reserva) {
     try {
-        const res = await axios.get(`${AUTH_SERVICE_URL}/users/${reserva.arrendatario_id}`, {
-            headers: { 'x-api-key': process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev' },
+        const res = await axios.get(`${AUTH_SERVICE_URL}/internal/users/${reserva.arrendatario_id}`, {
+            headers: { 'x-api-key': INTERNAL_API_KEY },
             timeout: 2000
         });
         const user = res.data?.data;
@@ -286,7 +324,7 @@ async function confirm(id, userId) {
         throw new ForbiddenError('Solo el propietario puede confirmar la reserva');
     }
     if (reserva.estado !== 'pendiente') {
-        throw new ValidationError('La reserva no está en estado pendiente');
+        throw new ValidationError('La reserva no estÃ¡ en estado pendiente');
     }
 
     return await reservaRepository.withTransaction(async (client) => {
@@ -308,7 +346,7 @@ async function reject(id, userId) {
         throw new ForbiddenError('Solo el propietario puede rechazar la reserva');
     }
     if (reserva.estado !== 'pendiente') {
-        throw new ValidationError('La reserva no está en estado pendiente');
+        throw new ValidationError('La reserva no estÃ¡ en estado pendiente');
     }
 
     return await reservaRepository.withTransaction(async (client) => {
@@ -381,12 +419,12 @@ async function releasePayment(bookingId) {
         clearTimeout(timeoutId);
         const body = await response.text();
         if (!response.ok) {
-            logger.warn('No se pudo liberar el pago automáticamente:', { status: response.status, bookingId, body });
+            logger.warn('No se pudo liberar el pago automÃ¡ticamente:', { status: response.status, bookingId, body });
         } else {
-            logger.info('Pago liberado automáticamente al completar reserva:', { bookingId });
+            logger.info('Pago liberado automÃ¡ticamente al completar reserva:', { bookingId });
         }
     } catch (err) {
-        logger.warn('Error al liberar pago automático:', { message: err.message, bookingId });
+        logger.warn('Error al liberar pago automÃ¡tico:', { message: err.message, bookingId });
     }
 }
 
@@ -425,7 +463,7 @@ async function complete(id, userId) {
             booking.arrendatario_id === userId ? booking.propietario_id : booking.arrendatario_id,
             EVENT_TYPES.BOOKING.COMPLETED, booking.id,
             'Reserva completada',
-            `La reserva ha sido completada. ¡Califica tu experiencia!`
+            `La reserva ha sido completada. Â¡Califica tu experiencia!`
         );
 
         setImmediate(() => releasePayment(id));

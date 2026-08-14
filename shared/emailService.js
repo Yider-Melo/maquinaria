@@ -190,10 +190,32 @@ async function sendPaymentReleased(email, nombre, data) {
     return await sendEmail({ to: email, subject: 'Fondos liberados - RentaMaq', html });
 }
 
+async function sendPaymentRefunded(email, nombre, data) {
+    const html = layout(`
+        <h2 style="color: #2f241d;">Reembolso procesado</h2>
+        <p>Hola <strong>${nombre}</strong>,</p>
+        <p>El pago de <strong>$${data.monto || 0}</strong> de tu reserva <strong>${data.maquinaria_titulo || ''}</strong> fue reembolsado.</p>
+        <p>El dinero será devuelto al medio de pago utilizado. Si tienes dudas, revisa el detalle del pago en la plataforma.</p>
+        ${data.pago_id ? button('Ver detalle del pago', `${PUBLIC_URL}/payments/${data.pago_id}`) : ''}
+    `);
+    return await sendEmail({ to: email, subject: 'Reembolso procesado - RentaMaq', html });
+}
+
+async function sendRatingCreated(email, nombre, data) {
+    const html = layout(`
+        <h2 style="color: #2f241d;">Nueva calificación</h2>
+        <p>Hola <strong>${nombre}</strong>,</p>
+        <p>Recibiste una nueva calificación de <strong>${data.puntuacion || 0} / 5</strong>${data.comentario ? ` con el comentario: "${data.comentario}"` : ''}.</p>
+        <p>Gracias por hacer parte de la comunidad RentaMaq.</p>
+        ${data.reserva_id ? button('Ver reserva', `${PUBLIC_URL}/bookings/${data.reserva_id}`) : ''}
+    `);
+    return await sendEmail({ to: email, subject: 'Nueva calificación - RentaMaq', html });
+}
+
 module.exports = {
     configure, isConfigured,
     sendPasswordReset, sendVerificationEmail,
     sendBookingCreated, sendBookingConfirmed, sendBookingRejected,
     sendBookingCancelled, sendBookingCompleted,
-    sendPaymentConfirmed, sendPaymentReleased
+    sendPaymentConfirmed, sendPaymentReleased, sendPaymentRefunded, sendRatingCreated
 };

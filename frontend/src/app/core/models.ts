@@ -10,13 +10,17 @@ export interface Usuario {
   ciudad?: string;
   numero_documento?: string;
   email_verificado?: boolean;
+  verificado_2fa?: boolean;
   activo?: boolean;
 }
 
 export interface LoginResponse {
-  token: string;
-  refresh_token: string;
-  usuario: Usuario;
+  token?: string;
+  refresh_token?: string;
+  expires_in?: string;
+  usuario?: Usuario;
+  requires_2fa?: boolean;
+  message?: string;
 }
 
 export interface BankAccount {

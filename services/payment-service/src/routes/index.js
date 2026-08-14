@@ -2,19 +2,19 @@ const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
-const { validate, validateParams, uuidParam, validateToken, requireRole, errorHandler, schemas } = require('shared');
+const { validate, validateParams, uuidParam, validateToken, requireRole, errorHandler, schemas, getInternalApiKey } = require('shared');
 
 router.get('/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
 router.get('/by-month', validateToken, requireRole('admin'), paymentController.getPaymentsByMonth);
 router.get('/failed', validateToken, requireRole('admin'), paymentController.getFailedPayments);
-router.get('/admin/payouts/pending', validateToken, requireRole('admin'), paymentController.getPendingPayouts);
-router.get('/admin/payouts/failed', validateToken, requireRole('admin'), paymentController.getFailedPayouts);
-router.post('/admin/payouts/:id/retry', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.retryPayout);
-router.post('/admin/payouts/:id/mark-completed', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.markPayoutCompleted);
+router.get('/payouts/pending', validateToken, requireRole('admin'), paymentController.getPendingPayouts);
+router.get('/payouts/failed', validateToken, requireRole('admin'), paymentController.getFailedPayouts);
+router.post('/payouts/:id/retry', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.retryPayout);
+router.post('/payouts/:id/mark-completed', validateToken, requireRole('admin'), validateParams(uuidParam('id')), paymentController.markPayoutCompleted);
 router.post('/checkout', validateToken, validate(schemas.pago), paymentController.createCheckout);
 function internalAuth(req, res, next) {
     const apiKey = req.headers['x-api-key'];
-    if (apiKey !== (process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev')) {
+    if (apiKey !== getInternalApiKey()) {
         return res.status(403).json({ success: false, error: { message: 'API key inválida' } });
     }
     next();

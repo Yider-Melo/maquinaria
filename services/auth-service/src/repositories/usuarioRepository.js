@@ -73,6 +73,13 @@ async function verify2FA(userId) {
     );
 }
 
+async function clear2FA(userId) {
+    await pool.query(
+        'UPDATE usuarios SET secreto_2fa = NULL, verificado_2fa = false WHERE id = $1',
+        [userId]
+    );
+}
+
 async function findIdByEmail(email) {
     const result = await pool.query('SELECT id, nombre FROM usuarios WHERE email = $1', [email]);
     return result.rows[0] || null;
@@ -192,6 +199,7 @@ module.exports = {
     findSecret2FA,
     update2FASecret,
     verify2FA,
+    clear2FA,
     findIdByEmail,
     setResetToken,
     findByResetToken,

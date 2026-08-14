@@ -14,9 +14,17 @@ async function search(filters) {
     }
 
     if (filters.q) {
-        conditions.push(`(m.titulo ILIKE $${idx} OR COALESCE(m.descripcion, '') ILIKE $${idx} OR COALESCE(m.marca, '') ILIKE $${idx} OR COALESCE(m.modelo, '') ILIKE $${idx})`);
-        values.push(`%${filters.q.trim()}%`);
-        idx++;
+        // Búsqueda full-text (TSVECTOR + GIN) con coincidencia de prefijos.
+        // El texto_completo se mantiene con un trigger al indexar la maquinaria.
+        const tokens = String(filters.q).trim().split(/\s+/).filter(Boolean)
+            .map(t => t.replace(/[^\p{L}\p{N}]/gu, '').trim())
+            .filter(Boolean);
+        if (tokens.length > 0) {
+            const tsquery = tokens.map(t => `${t}:*`).join(' & ');
+            conditions.push(`m.texto_completo @@ to_tsquery('spanish', $${idx})`);
+            values.push(tsquery);
+            idx++;
+        }
     }
 
     if (filters.tipo) {

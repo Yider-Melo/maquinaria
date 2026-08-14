@@ -11,13 +11,13 @@ import { Api } from '../../core/services/api.service';
   selector: 'app-login', templateUrl: './login.html', styleUrls: ['./login.css']
 })
 export class Login {
-  email = ''; password = ''; error = ''; loading = false; showPassword = false;
-  canResend = false; resending = false;
+  email = ''; password = ''; code = ''; error = ''; loading = false; showPassword = false;
+  canResend = false; resending = false; requires2fa = false;
 
   constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef, private api: Api, private snackBar: MatSnackBar) {}
 
-  // Procesa el envío del formulario: inicia sesión y redirige al inicio
-  // o muestra un mensaje de error en caso de fallo.
+  // Procesa el envío del formulario: inicia sesión y redirige al inicio,
+  // pide el código 2FA si la cuenta lo tiene activado, o muestra un error.
   onSubmit(): void {
     this.error = '';
     this.canResend = false;
@@ -26,10 +26,23 @@ export class Login {
       this.error = 'Ingresa tu correo y contraseña para continuar.';
       return;
     }
+    if (this.requires2fa && !this.code.trim()) {
+      this.error = 'Ingresa el código de verificación (2FA).';
+      return;
+    }
     this.loading = true;
     this.cdr.markForCheck();
-    this.auth.login(email, this.password).subscribe({
-      next: () => this.router.navigate(['/']),
+    this.auth.login(email, this.password, this.code.trim() || undefined).subscribe({
+      next: (res) => {
+        if (res.data?.requires_2fa) {
+          this.requires2fa = true;
+          this.error = '';
+          this.loading = false;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.router.navigate(['/']);
+      },
       error: (err) => {
         this.error = this.getAuthError(err);
         if (err.status === 403) this.canResend = true;

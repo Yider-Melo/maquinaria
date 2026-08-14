@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
-const { NotFoundError, ForbiddenError, ValidationError, eventBus, EVENT_TYPES } = require('shared');
+const { NotFoundError, ForbiddenError, ValidationError, eventBus, EVENT_TYPES, getInternalApiKey } = require('shared');
 const pagoRepository = require('../repositories/pagoRepository');
 const paymentProvider = require('../config/paymentProvider');
 const createServiceLogger = require('../../../../shared/logger');
@@ -13,7 +13,7 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001'
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://api-gateway:3000';
 const PUBLIC_URL = process.env.PUBLIC_URL || GATEWAY_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || (logger.warn('INTERNAL_API_KEY no configurada. Usando clave por defecto (inseguro).'), 'rentamaq-internal-key-dev');
+const INTERNAL_API_KEY = getInternalApiKey();
 const COMISION_PLATAFORMA = parseFloat(process.env.COMISION_PLATAFORMA_PORCENTAJE || '10') / 100;
 const { PROVIDER } = paymentProvider;
 
@@ -432,6 +432,14 @@ async function refund(pagoId, userId) {
             referenciaTipo: 'reserva',
             referenciaId: pago.reserva_id
         });
+        await enviarNotificacion(
+            pago.usuario_id,
+            EVENT_TYPES.PAYMENT.REFUNDED,
+            pagoId,
+            'Reembolso procesado',
+            `Tu pago de $${pago.monto} fue reembolsado.`,
+            { monto: pago.monto, pago_id: pagoId }
+        );
     }
     return result || { message: 'Pago no encontrado o no reembolsable' };
 }
@@ -462,6 +470,14 @@ async function refundByBooking(bookingId) {
             referenciaId: bookingId
         });
         logger.info('Pago reembolsado por cancelación:', { pagoId: pago.id, bookingId });
+        await enviarNotificacion(
+            pago.usuario_id,
+            EVENT_TYPES.PAYMENT.REFUNDED,
+            pago.id,
+            'Reembolso procesado',
+            `Tu pago de $${pago.monto} por la reserva cancelada fue reembolsado.`,
+            { monto: pago.monto, pago_id: pago.id }
+        );
     }
     return result || { message: 'Pago no encontrado o no reembolsable' };
 }
@@ -701,8 +717,8 @@ async function getFailedPayouts() {
     return await pagoRepository.findFailedPayouts();
 }
 
-async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje) {
-    const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'pago' };
+async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje, extra = {}) {
+    const payload = { usuario_id: userId, tipo, titulo, mensaje, referencia_id: referenciaId, referencia_tipo: 'pago', ...extra };
     const publicado = await eventBus.publishEvent(tipo, payload);
     if (publicado) return;
     try {

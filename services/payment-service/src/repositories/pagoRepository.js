@@ -252,7 +252,7 @@ async function findPendingPayouts() {
         `SELECT id, reserva_id, propietario_id, monto, comision, monto_propietario,
                 payout_estado, payout_intentos, payout_error, creado_en
          FROM pago
-         WHERE estado = 'liberado' AND (payout_estado IS NULL OR payout_estado IN ('pendiente', 'fallido'))
+         WHERE estado = 'liberado' AND (payout_estado IS NULL OR payout_estado IN ('pendiente', 'fallido', 'manual'))
          ORDER BY creado_en DESC`
     );
     return result.rows;

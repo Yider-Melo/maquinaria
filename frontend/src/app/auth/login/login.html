@@ -26,7 +26,15 @@
             <mat-error *ngIf="passwordRef.errors?.['required'] && passwordRef.touched">La contraseña es requerida</mat-error>
           </mat-form-field>
         </div>
-        <p class="auth-hint">Usa el correo con el que te registraste. Si falla, se mostrará el motivo aquí.</p>
+        <div class="form-field" *ngIf="requires2fa">
+          <mat-form-field appearance="outline" style="width:100%;">
+            <mat-label>Código de verificación (2FA)</mat-label>
+            <input matInput type="text" [(ngModel)]="code" name="code" autocomplete="one-time-code" inputmode="numeric" placeholder="6 dígitos de tu app autenticadora">
+            <mat-icon matPrefix>pin</mat-icon>
+          </mat-form-field>
+        </div>
+        <p class="auth-hint" *ngIf="requires2fa">Tu cuenta tiene la verificación en dos pasos activada. Abre tu app autenticadora e ingresa el código.</p>
+        <p class="auth-hint" *ngIf="!requires2fa">Usa el correo con el que te registraste. Si falla, se mostrará el motivo aquí.</p>
         <p class="forgot-link"><a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a></p>
         <div class="error-box" *ngIf="error">
           <mat-icon>error_outline</mat-icon>

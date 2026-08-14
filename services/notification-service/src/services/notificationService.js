@@ -1,11 +1,11 @@
 const { v4: uuidv4 } = require('uuid');
 const http = require('http');
-const { ValidationError } = require('shared');
+const { ValidationError, getInternalApiKey } = require('shared');
 const notificacionRepository = require('../repositories/notificacionRepository');
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:3000';
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'rentamaq-internal-key-dev';
+const INTERNAL_API_KEY = getInternalApiKey();
 
 function postToGateway(path, body) {
     const payload = JSON.stringify(body);
@@ -36,7 +36,7 @@ async function getUserEmail(userId) {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(`${AUTH_SERVICE_URL}/users/${userId}`, {
+        const res = await fetch(`${AUTH_SERVICE_URL}/internal/users/${userId}`, {
             headers: { 'x-api-key': INTERNAL_API_KEY },
             signal: controller.signal
         });

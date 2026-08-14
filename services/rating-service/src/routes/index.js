@@ -8,6 +8,8 @@ router.get('/user/:userId', validateParams(uuidParam('userId')), ratingControlle
 router.get('/user/:userId/average', validateParams(uuidParam('userId')), ratingController.getAverage);
 router.get('/my', validateToken, ratingController.getMyRatings);
 router.get('/stats', validateToken, requireRole('admin'), ratingController.adminRatingStats);
+router.get('/reported', validateToken, requireRole('admin'), ratingController.adminListReported);
+router.post('/:id/resolve', validateToken, requireRole('admin'), validateParams(uuidParam('id')), ratingController.adminResolveRating);
 router.get('/machinery/:machineryId', validateParams(uuidParam('machineryId')), ratingController.getByMachinery);
 router.get('/:id', validateToken, validateParams(uuidParam('id')), ratingController.getById);
 router.put('/:id', validateToken, validateParams(uuidParam('id')), ratingController.update);
