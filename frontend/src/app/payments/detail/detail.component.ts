@@ -72,23 +72,32 @@ export class PaymentsDetail implements OnInit, OnDestroy {
 
         if (this.payment?.reserva_id) {
           forkJoin({
-            booking: this.api.get<any>(`/bookings/${this.payment.reserva_id}`).pipe(catchError(() => of({ data: null }))),
-            machinery: this.payment.maquinaria_id
-              ? this.api.get<any>(`/machinery/${this.payment.maquinaria_id}`).pipe(catchError(() => of({ data: null })))
-              : of({ data: null })
+            booking: this.api.get<any>(`/bookings/${this.payment.reserva_id}`).pipe(catchError(() => of({ data: null })))
           }).subscribe({
-            next: ({ booking, machinery }) => {
+            next: ({ booking }) => {
               const b = booking?.data;
-              const m = machinery?.data;
               if (b) {
                 this.payment.fecha_inicio = b.fecha_inicio;
                 this.payment.fecha_fin = b.fecha_fin;
                 this.payment.modalidad = b.modalidad;
+                this.payment.maquinaria_id = this.payment.maquinaria_id || b.maquinaria_id;
               }
-              this.payment.maquinaria_titulo = m?.titulo || `Maquinaria #${(this.payment.maquinaria_id || '').substring(0, 8)}`;
-              this.payment.maquinaria_precio = m?.precio_por_dia;
-              this.loading = false;
-              this.cdr.markForCheck();
+              const machineryId = this.payment.maquinaria_id;
+              if (machineryId) {
+                this.api.get<any>(`/machinery/${machineryId}`).pipe(catchError(() => of({ data: null }))).subscribe({
+                  next: (machinery) => {
+                    const m = machinery?.data;
+                    this.payment.maquinaria_titulo = m?.titulo || `Maquinaria #${machineryId.substring(0, 8)}`;
+                    this.payment.maquinaria_precio = m?.precio_por_dia;
+                    this.loading = false;
+                    this.cdr.markForCheck();
+                  }
+                });
+              } else {
+                this.payment.maquinaria_titulo = `Maquinaria #${(this.payment.reserva_id || '').substring(0, 8)}`;
+                this.loading = false;
+                this.cdr.markForCheck();
+              }
             }
           });
         } else {
