@@ -182,6 +182,17 @@ async function resendVerificationEmail(email) {
 }
 
 async function setup2FA(userId) {
+    const existing = await usuarioRepository.findSecret2FA(userId);
+    if (existing && existing.secreto_2fa) {
+        const otpauthUrl = speakeasy.otpauthURL({
+            secret: existing.secreto_2fa,
+            encoding: 'base32',
+            label: `Rentamaq:${userId}`
+        });
+        const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
+        return { secret: existing.secreto_2fa, qrCode: qrCodeUrl };
+    }
+
     const secret = speakeasy.generateSecret({ name: `Rentamaq:${userId}` });
     await usuarioRepository.update2FASecret(userId, secret.base32);
 
