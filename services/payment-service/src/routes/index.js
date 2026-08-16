@@ -19,9 +19,61 @@ function internalAuth(req, res, next) {
     }
     next();
 }
+// Extrae el valor de una ruta de puntos (p. ej. "transaction.id") de un objeto.
+function getValueByPath(obj, path) {
+    return path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
+// Valida la firma de un evento de Wompi (checksum SHA256). Wompi firma cada
+// evento concatenando, en orden: los valores de las rutas listadas en
+// signature.properties (dentro de data), el timestamp y el event secret.
+// El checksum esperado llega en el header X-Event-Checksum o en
+// signature.checksum. Si el secret no está configurado en producción se
+// rechaza el evento; en desarrollo se permite (modo simulado).
+function verifyWompiSignature(req) {
+    const secret = process.env.WOMPI_EVENT_SECRET;
+    if (!secret) {
+        if (process.env.NODE_ENV === 'production') {
+            return { ok: false, status: 500, message: 'WOMPI_EVENT_SECRET no configurado' };
+        }
+        return { ok: true };
+    }
+
+    const payload = req.body || {};
+    const signature = payload.data?.signature || payload.signature || {};
+    const properties = Array.isArray(signature.properties) ? signature.properties : [];
+    const timestamp = signature.timestamp;
+    const provided = String(req.headers['x-event-checksum'] || signature.checksum || '').toLowerCase();
+
+    if (!provided || properties.length === 0 || timestamp == null) {
+        return { ok: false, status: 403, message: 'Checksum, propiedades o timestamp de firma ausentes' };
+    }
+
+    const data = payload.data || {};
+    let manifest = '';
+    for (const prop of properties) {
+        const value = getValueByPath(data, prop);
+        if (value == null) {
+            return { ok: false, status: 400, message: `Propiedad de firma no encontrada: ${prop}` };
+        }
+        manifest += String(value);
+    }
+    manifest += String(timestamp) + secret;
+
+    const expected = crypto.createHash('sha256').update(manifest).digest('hex');
+    if (expected !== provided) {
+        return { ok: false, status: 403, message: 'Firma inválida' };
+    }
+    return { ok: true };
+}
+
 function webhookAuth(req, res, next) {
     const provider = (process.env.PAYMENT_PROVIDER || 'mercadopago').toLowerCase();
     if (provider === 'wompi') {
+        const result = verifyWompiSignature(req);
+        if (!result.ok) {
+            return res.status(result.status || 403).json({ success: false, error: { message: result.message } });
+        }
         return next();
     }
     const signature = req.headers['x-signature'];
