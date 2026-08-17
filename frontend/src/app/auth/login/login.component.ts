@@ -16,6 +16,17 @@ export class Login {
 
   constructor(private auth: Auth, private router: Router, private cdr: ChangeDetectorRef, private api: Api, private snackBar: MatSnackBar) {}
 
+  // Limpia el estado 2FA cuando el usuario edita el email o la contraseña,
+  // para que al cambiar de cuenta no quede el formulario de código 2FA
+  // exigiendo el código de la cuenta anterior.
+  onCredentialsChange(): void {
+    this.requires2fa = false;
+    this.code = '';
+    this.canResend = false;
+    this.error = '';
+    this.cdr.markForCheck();
+  }
+
   // Procesa el envío del formulario: inicia sesión y redirige al inicio,
   // pide el código 2FA si la cuenta lo tiene activado, o muestra un error.
   onSubmit(): void {

@@ -10,7 +10,7 @@
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Email</mat-label>
-            <input matInput type="email" [(ngModel)]="email" name="email" #emailRef="ngModel" required email autocomplete="email" placeholder="tu@email.com">
+            <input matInput type="email" [(ngModel)]="email" (input)="onCredentialsChange()" name="email" #emailRef="ngModel" required email autocomplete="email" placeholder="tu@email.com">
             <mat-icon matPrefix>email</mat-icon>
             <mat-error *ngIf="emailRef.errors?.['email'] && emailRef.touched">El email no tiene un formato válido</mat-error>
           </mat-form-field>
@@ -18,7 +18,7 @@
         <div class="form-field">
           <mat-form-field appearance="outline" style="width:100%;">
             <mat-label>Contraseña</mat-label>
-            <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" #passwordRef="ngModel" required autocomplete="current-password" placeholder="Tu contraseña">
+            <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" (input)="onCredentialsChange()" name="password" #passwordRef="ngModel" required autocomplete="current-password" placeholder="Tu contraseña">
             <mat-icon matPrefix>lock</mat-icon>
             <button mat-icon-button matSuffix type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
               <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
