@@ -6,7 +6,7 @@
 .report-grid strong { display: block; font-size: 28px; color: var(--rm-ink); }
 .report-grid span { color: var(--rm-muted); }
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 16px; max-width: 100%; }
-.table-scroll > .admin-table { min-width: max-content; }
+.table-scroll > .admin-table { display: table; width: 80%; }
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 0; background: var(--rm-surface); border-radius: 14px; overflow: hidden; }
 .admin-table button { white-space: nowrap; }
 .admin-table th, .admin-table td { padding: 12px; border-bottom: 1px solid var(--rm-border); text-align: left; vertical-align: middle; color: var(--rm-ink); }

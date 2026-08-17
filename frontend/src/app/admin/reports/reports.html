@@ -165,6 +165,11 @@
           <tr *ngIf="!reservasVisibles.length"><td colspan="5" class="empty">No hay reservas{{ bookingEstadoFilter ? ' con estado ' + bookingEstadoFilter : '' }}</td></tr>
         </tbody></table>
       </div>
+      <div class="pagination" *ngIf="bookingTotal > bookingSize">
+        <button mat-stroked-button (click)="prevBookingPage()" [disabled]="bookingPage===1">Anterior</button>
+        <span>Página {{ bookingPage }} de {{ bookingTotalPages }} ({{ bookingTotal }} reservas)</span>
+        <button mat-stroked-button (click)="nextBookingPage()" [disabled]="bookingPage*bookingSize>=bookingTotal">Siguiente</button>
+      </div>
     </mat-tab>
     <mat-tab label="Pagos">
       <div class="filter-bar">
@@ -178,7 +183,13 @@
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Reserva</th><th>Monto</th><th>Estado</th><th>Referencia</th></tr></thead><tbody>
           <tr *ngFor="let p of payments"><td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td><td>${{ p.monto | number }}</td><td><span class="status-badge" [class]="p.estado">{{ estadoPagoLabel(p.estado) }}</span></td><td>{{ p.referencia_pasarela }}</td></tr>
+          <tr *ngIf="!payments.length"><td colspan="5" class="empty">No hay pagos registrados</td></tr>
         </tbody></table>
+      </div>
+      <div class="pagination" *ngIf="payTotal > paySize">
+        <button mat-stroked-button (click)="prevPayPage()" [disabled]="payPage===1">Anterior</button>
+        <span>Página {{ payPage }} de {{ payTotalPages }} ({{ payTotal }} pagos)</span>
+        <button mat-stroked-button (click)="nextPayPage()" [disabled]="payPage*paySize>=payTotal">Siguiente</button>
       </div>
     </mat-tab>
     <mat-tab label="Calificaciones">

@@ -5,6 +5,7 @@ const paymentController = require('../controllers/paymentController');
 const { validate, validateParams, uuidParam, validateToken, requireRole, errorHandler, schemas, getInternalApiKey } = require('shared');
 
 router.get('/dashboard', validateToken, requireRole('admin'), paymentController.getDashboard);
+router.get('/all', validateToken, requireRole('admin'), paymentController.getAllPayments);
 router.get('/by-month', validateToken, requireRole('admin'), paymentController.getPaymentsByMonth);
 router.get('/failed', validateToken, requireRole('admin'), paymentController.getFailedPayments);
 router.get('/payouts/pending', validateToken, requireRole('admin'), paymentController.getPendingPayouts);

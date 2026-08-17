@@ -48,6 +48,8 @@ export class AdminReports implements OnInit, OnDestroy {
 
   userPage = 1; userSize = 20; userTotal = 0;
   machPage = 1; machSize = 20; machTotal = 0;
+  bookingPage = 1; bookingSize = 20; bookingTotal = 0;
+  payPage = 1; paySize = 20; payTotal = 0;
 
   userSearch = '';
   machSearch = '';
@@ -63,6 +65,8 @@ export class AdminReports implements OnInit, OnDestroy {
 
   get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
   get machTotalPages(): number { return Math.ceil(this.machTotal / this.machSize) || 1; }
+  get bookingTotalPages(): number { return Math.ceil(this.bookingTotal / this.bookingSize) || 1; }
+  get payTotalPages(): number { return Math.ceil(this.payTotal / this.paySize) || 1; }
 
   get reservasVisibles(): Booking[] {
     if (!this.bookingEstadoFilter) return this.recentBookings;
@@ -76,6 +80,8 @@ export class AdminReports implements OnInit, OnDestroy {
 
   filtrarReservasPorEstado(estado: string): void {
     this.bookingEstadoFilter = estado;
+    this.bookingPage = 1;
+    this.loadBookings();
   }
 
   filtrarUsuariosPorRol(rol: string): void {
@@ -107,13 +113,14 @@ export class AdminReports implements OnInit, OnDestroy {
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab');
     const estado = this.route.snapshot.queryParamMap.get('estado');
+    if (tab === 'usuarios') this.selectedTab = 0;
     if (tab === 'maquinaria') this.selectedTab = 1;
     if (tab === 'reservas') this.selectedTab = 2;
     if (estado) this.bookingEstadoFilter = estado;
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
     this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.loadMachinery(); });
-    this.bookingSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadBookings());
-    this.paymentSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadPayments());
+    this.bookingSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.bookingPage = 1; this.loadBookings(); });
+    this.paymentSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.payPage = 1; this.loadPayments(); });
     const q = this.route.snapshot.queryParamMap.get('q');
     if (q) { this.machSearch = q; this.machSearch$.next(q); }
     this.loadAll();
@@ -149,33 +156,34 @@ export class AdminReports implements OnInit, OnDestroy {
   nextUserPage(): void { if (this.userPage * this.userSize < this.userTotal) { this.userPage++; this.loadUsers(); } }
   prevMachPage(): void { if (this.machPage > 1) { this.machPage--; this.loadMachinery(); } }
   nextMachPage(): void { if (this.machPage * this.machSize < this.machTotal) { this.machPage++; this.loadMachinery(); } }
+  prevBookingPage(): void { if (this.bookingPage > 1) { this.bookingPage--; this.loadBookings(); } }
+  nextBookingPage(): void { if (this.bookingPage * this.bookingSize < this.bookingTotal) { this.bookingPage++; this.loadBookings(); } }
+  prevPayPage(): void { if (this.payPage > 1) { this.payPage--; this.loadPayments(); } }
+  nextPayPage(): void { if (this.payPage * this.paySize < this.payTotal) { this.payPage++; this.loadPayments(); } }
 
   private loadAll(): void {
     forkJoin([
       this.api.get<UserStats>('/admin/users/stats').pipe(catchError(() => of({ success: true, data: { total: 0, propietarios: 0, arrendatarios: 0 } }))),
       this.api.get<RatingStats>('/admin/ratings/stats').pipe(catchError(() => of({ success: true, data: { resumen: { total: 0, puntuacion_promedio: 0, reportadas: 0 }, reportadas: [] } }))),
-      this.api.get<PaymentDashboard>('/admin/payments/dashboard').pipe(catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } }))),
-      this.api.get<Booking[]>('/admin/bookings/recent?limit=100').pipe(catchError(() => of({ success: true, data: [] } as any))),
       this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ success: true, data: {} } as any))),
       this.api.get<MachineryStats>('/admin/machinery/stats').pipe(catchError(() => of({ success: true, data: { resumen: {}, por_tipo: [] } } as any)))
     ]).pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); })).subscribe({
-      next: ([users, ratings, payments, bookings, bstats, machinery]) => {
+      next: ([users, ratings, bstats, machinery]) => {
         this.stats = users?.data || {};
         this.ratingReportadas = ratings?.data?.resumen?.reportadas || 0;
         this.reportedRatings = (ratings as any)?.data?.reportadas || [];
-        this.payments = payments?.data?.ultimos_pagos || [];
         this.bookingStats = bstats?.data || {};
         this.machineryStats = machinery?.data || {};
         this.allTipos = this.machineryStats?.por_tipo || [];
         this.tipoPage = 1;
-        if ((bookings as any)?.data) { this.recentBookings = (bookings as any).data; }
-        else { this.recentBookings = (bookings as any) || []; }
         this.cdr.markForCheck();
       },
       error: () => this.cdr.markForCheck()
     });
     this.loadUsers();
     this.loadMachinery();
+    this.loadBookings();
+    this.loadPayments();
     this.cargarMapaUsuarios();
   }
 
@@ -243,24 +251,27 @@ export class AdminReports implements OnInit, OnDestroy {
 
   private loadBookings(): void {
     const q = this.bookingSearch.trim() ? `&q=${encodeURIComponent(this.bookingSearch.trim())}` : '';
-    this.api.get<Booking[]>(`/admin/bookings/recent?limit=100${q}`).pipe(
+    const e = this.bookingEstadoFilter ? `&estado=${encodeURIComponent(this.bookingEstadoFilter)}` : '';
+    this.api.get<Booking[]>(`/admin/bookings/all?page=${this.bookingPage}&size=${this.bookingSize}${q}${e}`).pipe(
       catchError(() => of({ success: true, data: [] } as any))
     ).subscribe({
       next: (res) => {
         if ((res as any)?.data) { this.recentBookings = (res as any).data; }
         else { this.recentBookings = (res as any) || []; }
+        this.bookingTotal = (res as any)?.pagination?.total || 0;
         this.cdr.markForCheck();
       }
     });
   }
 
   private loadPayments(): void {
-    const q = this.paymentSearch.trim() ? `?q=${encodeURIComponent(this.paymentSearch.trim())}` : '';
-    this.api.get<PaymentDashboard>(`/admin/payments/dashboard${q}`).pipe(
-      catchError(() => of({ success: true, data: { ultimos_pagos: [] } } as any))
+    const q = this.paymentSearch.trim() ? `&q=${encodeURIComponent(this.paymentSearch.trim())}` : '';
+    this.api.get<PaymentDashboard>(`/admin/payments/all?page=${this.payPage}&size=${this.paySize}${q}`).pipe(
+      catchError(() => of({ success: true, data: [] } as any))
     ).subscribe({
       next: (res) => {
-        this.payments = (res as any)?.data?.ultimos_pagos || [];
+        this.payments = (res as any)?.data || [];
+        this.payTotal = (res as any)?.pagination?.total || 0;
         this.cdr.markForCheck();
       }
     });

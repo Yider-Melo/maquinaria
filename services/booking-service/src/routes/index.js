@@ -19,6 +19,7 @@ router.get('/check-availability', validateQuery(schemas.checkAvailability), book
 router.get('/my-bookings', validateToken, bookingController.getMyBookings);
 router.get('/stats', validateToken, requireRole('admin'), bookingController.adminBookingStats);
 router.get('/recent', validateToken, requireRole('admin'), bookingController.adminRecentBookings);
+router.get('/all', validateToken, requireRole('admin'), bookingController.adminAllBookings);
 router.get('/machinery/:machineryId/occupied', validateParams(uuidParam('machineryId')), bookingController.getOccupiedDates);
 router.get('/machinery/:machineryId/bookings', validateToken, validateParams(uuidParam('machineryId')), bookingController.getByMachinery);
 router.get('/internal/:id', internalAuth, validateParams(uuidParam('id')), bookingController.getInternalById);

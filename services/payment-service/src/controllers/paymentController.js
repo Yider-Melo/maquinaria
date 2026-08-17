@@ -1,5 +1,5 @@
 const paymentService = require('../services/paymentService');
-const { success } = require('shared');
+const { success, paginated } = require('shared');
 
 async function releaseByBooking(req, res, next) {
     try {
@@ -13,6 +13,16 @@ async function getDashboard(req, res, next) {
         const q = (req.query.q || '').trim();
         const dashboard = await paymentService.getDashboard(q);
         success(res, dashboard);
+    } catch (err) { next(err); }
+}
+
+async function getAllPayments(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const q = (req.query.q || '').trim();
+        const { data, total } = await paymentService.findAllPaginated(page, size, q || undefined);
+        paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
 
@@ -133,6 +143,7 @@ async function markPayoutCompleted(req, res, next) {
 
 module.exports = {
     getDashboard,
+    getAllPayments,
     getPaymentsByMonth,
     createCheckout,
     handleWebhook,

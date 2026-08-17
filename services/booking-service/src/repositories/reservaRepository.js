@@ -164,6 +164,30 @@ async function findRecent(limit, q) {
     return result.rows;
 }
 
+async function findAllPaginated(page, size, q, estado) {
+    const offset = (page - 1) * size;
+    const conditions = [];
+    const params = [];
+    if (q) {
+        params.push(`%${q}%`);
+        conditions.push('(CAST(id AS TEXT) ILIKE $1 OR CAST(maquinaria_id AS TEXT) ILIKE $1 OR estado ILIKE $1 OR CAST(precio_total AS TEXT) ILIKE $1)');
+    }
+    if (estado) {
+        params.push(estado);
+        conditions.push(`estado = $${params.length}`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const countResult = await pool.query(
+        `SELECT COUNT(*) AS total FROM reserva ${where}`,
+        params
+    );
+    const dataResult = await pool.query(
+        `SELECT ${RESERVA_COLUMNS} FROM reserva ${where} ORDER BY creado_en DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
+    );
+    return { data: dataResult.rows, total: parseInt(countResult.rows[0].total, 10) || 0 };
+}
+
 async function withTransaction(callback) {
     let client;
     try {
@@ -187,5 +211,5 @@ async function withTransaction(callback) {
 module.exports = {
     getClient, insert, findConflictingBookings, findOccupiedRanges, findById,
     findByUser, findByOwner, findByMachinery, updateEstado, cancel,
-    getAdminStats, findRecent, findExpiredBookings, withTransaction
+    getAdminStats, findRecent, findAllPaginated, findExpiredBookings, withTransaction
 };

@@ -40,6 +40,17 @@ async function adminRecentBookings(req, res, next) {
     } catch (err) { next(err); }
 }
 
+async function adminAllBookings(req, res, next) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const size = parseInt(req.query.size) || 20;
+        const q = (req.query.q || '').trim();
+        const estado = (req.query.estado || '').trim();
+        const { data, total } = await bookingService.findAllPaginated(page, size, q, estado || undefined);
+        paginated(res, data, total, page, size);
+    } catch (err) { next(err); }
+}
+
 async function getOccupiedDates(req, res, next) {
     try {
         const result = await bookingService.getOccupiedDates(req.params.machineryId, req.query.start, req.query.end);
@@ -127,6 +138,7 @@ module.exports = {
     getMyBookings,
     adminBookingStats,
     adminRecentBookings,
+    adminAllBookings,
     getOccupiedDates,
     getInternalById,
     getMyListings,

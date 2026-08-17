@@ -806,6 +806,10 @@ async function getDashboard(q) {
     return await pagoRepository.getDashboard(q);
 }
 
+async function findAllPaginated(page, size, q) {
+    return await pagoRepository.findAllPaginated(page, size, q);
+}
+
 async function getPaymentsByMonth(mes, page = 1, size = 10) {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
         throw new ValidationError('Mes inv�lido. Usa el formato YYYY-MM');
@@ -823,5 +827,5 @@ module.exports = {
     simulateApproval, releaseFunds, refund, refundByBooking, releaseByBooking,
     retryPayout, getPendingPayouts, getFailedPayouts,
     markPayoutManuallyCompleted, getDashboard, getPaymentsByMonth,
-    getFailedPayments
+    getFailedPayments, findAllPaginated
 };

@@ -520,8 +520,12 @@ async function adminRecentBookings(limit = 10, q) {
     return await reservaRepository.findRecent(limit, q);
 }
 
+async function findAllPaginated(page, size, q, estado) {
+    return await reservaRepository.findAllPaginated(page, size, q, estado);
+}
+
 module.exports = {
     create, checkAvailability, getOccupiedDates, getById, getInternalById, getByUser, getByOwner, getByMachinery,
     confirm, reject, cancel, startRental, complete, markAsPaid,
-    adminBookingStats, adminRecentBookings
+    adminBookingStats, adminRecentBookings, findAllPaginated
 };

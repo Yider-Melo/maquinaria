@@ -347,6 +347,31 @@ async function getDashboard(q) {
     };
 }
 
+async function findAllPaginated(page, size, q) {
+    const offset = (page - 1) * size;
+    const conditions = [];
+    const params = [];
+    if (q) {
+        params.push(`%${q}%`);
+        conditions.push('(CAST(id AS TEXT) ILIKE $1 OR CAST(reserva_id AS TEXT) ILIKE $1 OR CAST(usuario_id AS TEXT) ILIKE $1 OR CAST(propietario_id AS TEXT) ILIKE $1 OR referencia_pasarela ILIKE $1 OR estado ILIKE $1)');
+    }
+    const whereClause = conditions.length ? ` AND ${conditions.join(' AND ')}` : '';
+    const countResult = await pool.query(
+        `${RANKED_PAGO_CTE}
+         SELECT COUNT(*) AS total FROM ranked_pagos WHERE rn = 1${whereClause}`,
+        params
+    );
+    const dataResult = await pool.query(
+        `${RANKED_PAGO_CTE}
+         SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
+         FROM ranked_pagos
+         WHERE rn = 1${whereClause}
+         ORDER BY creado_en DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
+    );
+    return { data: dataResult.rows, total: parseInt(countResult.rows[0].total, 10) || 0 };
+}
+
 module.exports = {
     findReservaById, findActivePaymentByBooking, insert,
     findByReferenciaPasarela, findByWompiLinkId, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
@@ -354,5 +379,5 @@ module.exports = {
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
     updatePayoutInfo, markPayoutCompleted, insertMovimiento,
     markLiberado, findFailedPayouts, findPendingPayouts, getDashboard,
-    findByMonth, findByEstado
+    findAllPaginated, findByMonth, findByEstado
 };
