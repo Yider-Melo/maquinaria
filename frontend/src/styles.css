@@ -75,6 +75,16 @@ button[mat-raised-button] { border-radius: 10px !important; font-weight: 700 !im
 button[mat-button] { border-radius: 10px !important; }
 button[mat-raised-button], button[mat-stroked-button], button[mat-flat-button], button[mat-button] { min-height: 44px; }
 
+/* Botones de paginación (Anterior / Siguiente) más compactos */
+.pagination button {
+  min-height: 30px !important;
+  height: 30px;
+  padding: 0 12px !important;
+  font-size: 12px;
+  line-height: 28px;
+}
+.pagination button mat-icon { font-size: 16px; height: 16px; width: 16px; }
+
 .mat-mdc-raised-button.mat-primary, .mat-mdc-unelevated-button.mat-primary { background-color: var(--rm-primary) !important; color: #fffaf2 !important; }
 .mat-mdc-raised-button.mat-accent, .mat-mdc-unelevated-button.mat-accent { background-color: var(--rm-accent) !important; color: #3b2416 !important; }
 .mat-mdc-stroked-button { border-color: var(--rm-primary) !important; color: var(--rm-primary-dark) !important; }
