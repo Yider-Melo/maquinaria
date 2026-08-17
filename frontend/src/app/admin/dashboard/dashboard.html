@@ -9,7 +9,7 @@
         <span class="stat-sub">Propietarios: {{ stats.users?.propietarios || 0 }} | Arrendatarios: {{ stats.users?.arrendatarios || 0 }}</span>
       </div>
     </mat-card>
-    <mat-card class="stat-card machinery" routerLink="/admin/usuarios-maquinas">
+    <mat-card class="stat-card machinery" routerLink="/admin/reports" [queryParams]="{ tab: 'maquinaria' }">
       <mat-icon>construction</mat-icon>
       <div class="stat-info">
         <span class="stat-value">{{ stats.machinery?.resumen?.activas || 0 }}</span>

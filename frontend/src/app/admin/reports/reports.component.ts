@@ -97,7 +97,9 @@ export class AdminReports implements OnInit, OnDestroy {
   }
 
   irAMaquinaria(tipo: string): void {
-    this.router.navigate(['/admin/usuarios-maquinas'], { queryParams: { q: tipo } });
+    this.selectedTab = 1;
+    this.machSearch = tipo;
+    this.machSearch$.next(tipo);
   }
 
   constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog, private socket: SocketService, private route: ActivatedRoute, private router: Router) {}
@@ -105,12 +107,15 @@ export class AdminReports implements OnInit, OnDestroy {
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab');
     const estado = this.route.snapshot.queryParamMap.get('estado');
+    if (tab === 'maquinaria') this.selectedTab = 1;
     if (tab === 'reservas') this.selectedTab = 2;
     if (estado) this.bookingEstadoFilter = estado;
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
     this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.loadMachinery(); });
     this.bookingSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadBookings());
     this.paymentSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadPayments());
+    const q = this.route.snapshot.queryParamMap.get('q');
+    if (q) { this.machSearch = q; this.machSearch$.next(q); }
     this.loadAll();
     this.realtimeSub = watchRealtime(
       this.socket,

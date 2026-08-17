@@ -39,7 +39,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
 
   irAMaquinaria(tipo: string): void {
-    this.router.navigate(['/admin/usuarios-maquinas'], { queryParams: { q: tipo } });
+    this.router.navigate(['/admin/reports'], { queryParams: { tab: 'maquinaria', q: tipo } });
   }
 
   verDetalleEntidad(tipo: 'reserva' | 'pago' | 'maquinaria', id: string): void {

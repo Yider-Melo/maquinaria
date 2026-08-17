@@ -31,7 +31,7 @@
     <mat-card-header><mat-card-title>Maquinaria por Tipo</mat-card-title></mat-card-header>
     <mat-card-content>
       <div class="bar-chart">
-        <div class="bar-item clickable" *ngFor="let t of topTypes" (click)="irAMaquinaria(t.tipo)" title="Ver {{ t.tipo }} en Usuarios y Máquinas">
+        <div class="bar-item clickable" *ngFor="let t of topTypes" (click)="irAMaquinaria(t.tipo)" title="Ver {{ t.tipo }} en Gestión de maquinaria">
           <span class="bar-label">{{ t.tipo }}</span>
           <div class="bar-track"><div class="bar-fill type" [style.width.%]="barPercent(t.cantidad, machineryStats?.resumen?.total || machineryStats?.resumen?.activas || 0)"></div></div>
           <span class="bar-value">{{ t.cantidad }}</span>
