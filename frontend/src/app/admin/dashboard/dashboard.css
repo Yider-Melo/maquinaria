@@ -1,7 +1,7 @@
 ﻿.page { padding:24px; max-width:1200px; margin:0 auto; }
 .page h1 { margin-bottom:24px; }
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
-.stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
+.stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:pointer; }
 .stat-card.machinery, .stat-card.payments, .stat-card.reports { cursor:pointer; transition:transform .2s; }
 .stat-card.machinery:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
