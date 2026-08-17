@@ -171,7 +171,7 @@ async function getAdminStats() {
          FROM maquinaria`
     );
     const tipoResult = await pool.query(
-        `SELECT tipo, COUNT(*) as cantidad FROM maquinaria WHERE activo = true GROUP BY tipo ORDER BY cantidad DESC`
+        `SELECT MIN(tipo) as tipo, COUNT(*) as cantidad FROM maquinaria WHERE activo = true GROUP BY LOWER(tipo) ORDER BY cantidad DESC`
     );
     return { resumen: result.rows[0], por_tipo: tipoResult.rows };
 }

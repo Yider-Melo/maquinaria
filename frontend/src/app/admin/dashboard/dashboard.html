@@ -74,6 +74,11 @@
           </div>
           <p *ngIf="(!stats.machinery?.por_tipo || stats.machinery?.por_tipo?.length === 0)" class="empty">Sin datos</p>
         </div>
+        <div class="pagination pagination-tipos" *ngIf="stats.machinery?.por_tipo?.length > 6">
+          <button mat-stroked-button (click)="prevTipoPage()" [disabled]="tipoPage===1">Anterior</button>
+          <span>Página {{ tipoPage }} de {{ tipoTotalPages }}</span>
+          <button mat-stroked-button (click)="nextTipoPage()" [disabled]="tipoPage*tiposPorPagina>=stats.machinery?.por_tipo?.length">Siguiente</button>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

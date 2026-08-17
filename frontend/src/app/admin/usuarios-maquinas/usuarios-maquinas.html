@@ -11,6 +11,7 @@
       <input matInput type="text" placeholder="Buscar máquina, marca, modelo o tipo..." [value]="machSearch" (input)="onMachSearch($event.target.value)">
       <button mat-icon-button matSuffix *ngIf="machSearch" (click)="clearMachSearch()"><mat-icon>close</mat-icon></button>
     </mat-form-field>
+    <button mat-stroked-button (click)="verTodo()"><mat-icon>clear_all</mat-icon> Mostrar todo</button>
   </div>
   <p *ngIf="machSearch.trim()" class="search-summary">Se encontraron <strong>{{ maquinas.length }}</strong> máquina(s) para "{{ machSearch }}"</p>
   <div class="table-scroll">

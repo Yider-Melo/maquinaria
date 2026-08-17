@@ -26,7 +26,19 @@ export class AdminReports implements OnInit, OnDestroy {
   selectedTab = 0;
   bookingEstadoFilter = '';
   userRolFilter = '';
-  topTypes: { tipo: string; cantidad: number }[] = [];
+  private allTipos: { tipo: string; cantidad: number }[] = [];
+  tipoPage = 1;
+  tiposPorPagina = 6;
+
+  get topTypes(): { tipo: string; cantidad: number }[] {
+    const start = (this.tipoPage - 1) * this.tiposPorPagina;
+    return this.allTipos.slice(start, start + this.tiposPorPagina);
+  }
+
+  get tipoTotalPages(): number { return Math.ceil(this.allTipos.length / this.tiposPorPagina) || 1; }
+
+  prevTipoPage(): void { if (this.tipoPage > 1) this.tipoPage--; }
+  nextTipoPage(): void { if (this.tipoPage * this.tiposPorPagina < this.allTipos.length) this.tipoPage++; }
   users: Usuario[] = [];
   userMap: { [key: string]: string } = {};
   machinery: Machinery[] = [];
@@ -68,6 +80,20 @@ export class AdminReports implements OnInit, OnDestroy {
 
   filtrarUsuariosPorRol(rol: string): void {
     this.userRolFilter = rol;
+  }
+
+  verTodosUsuarios(): void {
+    this.userRolFilter = '';
+    this.clearUserSearch();
+  }
+
+  verTodasReservas(): void {
+    this.bookingEstadoFilter = '';
+    this.clearBookingSearch();
+  }
+
+  verTodaMaquinaria(): void {
+    this.clearMachSearch();
   }
 
   irAMaquinaria(tipo: string): void {
@@ -135,7 +161,8 @@ export class AdminReports implements OnInit, OnDestroy {
         this.payments = payments?.data?.ultimos_pagos || [];
         this.bookingStats = bstats?.data || {};
         this.machineryStats = machinery?.data || {};
-        this.topTypes = (this.machineryStats?.por_tipo || []).slice(0, 5);
+        this.allTipos = this.machineryStats?.por_tipo || [];
+        this.tipoPage = 1;
         if ((bookings as any)?.data) { this.recentBookings = (bookings as any).data; }
         else { this.recentBookings = (bookings as any) || []; }
         this.cdr.markForCheck();

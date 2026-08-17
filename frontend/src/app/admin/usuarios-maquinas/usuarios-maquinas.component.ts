@@ -132,6 +132,11 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
   onUserSearch(q: string): void { this.userSearch = q; this.userSearch$.next(q); }
   onMachSearch(q: string): void { this.machSearch = q; this.machSearch$.next(q); }
 
+  verTodo(): void {
+    this.clearUserSearch();
+    this.clearMachSearch();
+  }
+
   clearUserSearch(): void { this.userSearch = ''; this.userSearch$.next(''); }
   clearMachSearch(): void { this.machSearch = ''; this.machSearch$.next(''); }
 

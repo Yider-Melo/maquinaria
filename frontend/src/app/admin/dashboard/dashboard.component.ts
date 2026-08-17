@@ -16,9 +16,21 @@ import { UserStats, MachineryStats, BookingStats, Booking, ApiResponse } from '.
 })
 export class AdminDashboard implements OnInit, OnDestroy {
   stats: any = {};
-  topTypes: { tipo: string; cantidad: number }[] = [];
+  private allTipos: { tipo: string; cantidad: number }[] = [];
+  tipoPage = 1;
+  tiposPorPagina = 6;
   loading = true;
   private realtimeSub: Subscription | undefined;
+
+  get topTypes(): { tipo: string; cantidad: number }[] {
+    const start = (this.tipoPage - 1) * this.tiposPorPagina;
+    return this.allTipos.slice(start, start + this.tiposPorPagina);
+  }
+
+  get tipoTotalPages(): number { return Math.ceil(this.allTipos.length / this.tiposPorPagina) || 1; }
+
+  prevTipoPage(): void { if (this.tipoPage > 1) this.tipoPage--; }
+  nextTipoPage(): void { if (this.tipoPage * this.tiposPorPagina < this.allTipos.length) this.tipoPage++; }
 
   constructor(private api: Api, private cdr: ChangeDetectorRef, private socket: SocketService, private dialog: MatDialog, private router: Router) {}
 
@@ -70,7 +82,8 @@ export class AdminDashboard implements OnInit, OnDestroy {
           bookings: bookings?.data,
           recentBookings: recent?.data || []
         };
-        this.topTypes = (machinery?.data?.por_tipo || []).slice(0, 5);
+        this.allTipos = machinery?.data?.por_tipo || [];
+        this.tipoPage = 1;
         this.cdr.markForCheck();
       },
       error: () => {

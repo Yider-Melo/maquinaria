@@ -38,6 +38,11 @@
         </div>
         <p class="empty" *ngIf="!topTypes?.length">Sin maquinaria registrada</p>
       </div>
+      <div class="pagination pagination-tipos" *ngIf="machineryStats?.por_tipo?.length > 6">
+        <button mat-stroked-button (click)="prevTipoPage()" [disabled]="tipoPage===1">Anterior</button>
+        <span>Página {{ tipoPage }} de {{ tipoTotalPages }}</span>
+        <button mat-stroked-button (click)="nextTipoPage()" [disabled]="tipoPage*tiposPorPagina>=machineryStats?.por_tipo?.length">Siguiente</button>
+      </div>
     </mat-card-content>
   </mat-card>
 
@@ -89,6 +94,7 @@
           <button mat-icon-button matSuffix *ngIf="userSearch" (click)="clearUserSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
         <button mat-stroked-button color="primary" class="export-btn" (click)="exportarUsuariosCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
+        <button mat-stroked-button class="export-btn" (click)="verTodosUsuarios()"><mat-icon>clear_all</mat-icon> Mostrar todo</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table">
@@ -118,6 +124,7 @@
           <button mat-icon-button matSuffix *ngIf="machSearch" (click)="clearMachSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
         <button mat-stroked-button color="primary" class="export-btn" (click)="exportarMaquinariaCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
+        <button mat-stroked-button class="export-btn" (click)="verTodaMaquinaria()"><mat-icon>clear_all</mat-icon> Mostrar todo</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table">
@@ -150,6 +157,7 @@
           <button mat-icon-button matSuffix *ngIf="bookingSearch" (click)="clearBookingSearch()"><mat-icon>close</mat-icon></button>
         </mat-form-field>
         <button mat-stroked-button color="primary" class="export-btn" (click)="exportarReservasCSV()"><mat-icon>download</mat-icon> Exportar CSV</button>
+        <button mat-stroked-button class="export-btn" (click)="verTodasReservas()"><mat-icon>clear_all</mat-icon> Mostrar todo</button>
       </div>
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
