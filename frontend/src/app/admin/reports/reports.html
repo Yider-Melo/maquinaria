@@ -8,36 +8,69 @@
     <mat-card><mat-icon>report</mat-icon><div><strong>{{ ratingReportadas || 0 }}</strong><span>Calificaciones reportadas</span></div></mat-card>
   </div>
 
-  <mat-card class="chart-card">
+  <mat-card class="chart-card" *ngIf="selectedTab === 0">
+    <mat-card-header><mat-card-title>Usuarios por Rol</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <div class="bar-chart">
+        <div class="bar-item clickable" (click)="filtrarUsuariosPorRol('propietario')" title="Ver propietarios">
+          <span class="bar-label">Propietarios</span>
+          <div class="bar-track"><div class="bar-fill user-prop" [style.width.%]="barPercent(stats?.propietarios || 0, stats?.total || 0)"></div></div>
+          <span class="bar-value">{{ stats?.propietarios || 0 }}</span>
+        </div>
+        <div class="bar-item clickable" (click)="filtrarUsuariosPorRol('arrendatario')" title="Ver arrendatarios">
+          <span class="bar-label">Arrendatarios</span>
+          <div class="bar-track"><div class="bar-fill user-arren" [style.width.%]="barPercent(stats?.arrendatarios || 0, stats?.total || 0)"></div></div>
+          <span class="bar-value">{{ stats?.arrendatarios || 0 }}</span>
+        </div>
+        <p class="empty" *ngIf="!stats?.total">Sin usuarios registrados</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="chart-card" *ngIf="selectedTab === 1">
+    <mat-card-header><mat-card-title>Maquinaria por Tipo</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <div class="bar-chart">
+        <div class="bar-item clickable" *ngFor="let t of topTypes" (click)="irAMaquinaria(t.tipo)" title="Ver {{ t.tipo }} en Usuarios y Máquinas">
+          <span class="bar-label">{{ t.tipo }}</span>
+          <div class="bar-track"><div class="bar-fill type" [style.width.%]="barPercent(t.cantidad, machineryStats?.resumen?.total || machineryStats?.resumen?.activas || 0)"></div></div>
+          <span class="bar-value">{{ t.cantidad }}</span>
+        </div>
+        <p class="empty" *ngIf="!topTypes?.length">Sin maquinaria registrada</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="chart-card" *ngIf="selectedTab === 2">
     <mat-card-header><mat-card-title>Reservas por Estado</mat-card-title></mat-card-header>
     <mat-card-content>
       <div class="bar-chart">
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('pendiente')" title="Ver reservas pendientes">
           <span class="bar-label">Pendientes</span>
           <div class="bar-track"><div class="bar-fill pending" [style.width.%]="barPercent(bookingStats.pendientes, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.pendientes || 0 }}</span>
         </div>
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('confirmada')" title="Ver reservas confirmadas">
           <span class="bar-label">Confirmadas</span>
           <div class="bar-track"><div class="bar-fill confirmed" [style.width.%]="barPercent(bookingStats.confirmadas, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.confirmadas || 0 }}</span>
         </div>
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('pagada')" title="Ver reservas pagadas">
           <span class="bar-label">Pagadas</span>
           <div class="bar-track"><div class="bar-fill paid" [style.width.%]="barPercent(bookingStats.pagadas, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.pagadas || 0 }}</span>
         </div>
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('en_curso')" title="Ver reservas en curso">
           <span class="bar-label">En curso</span>
           <div class="bar-track"><div class="bar-fill en_curso" [style.width.%]="barPercent(bookingStats.en_curso, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.en_curso || 0 }}</span>
         </div>
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('completada')" title="Ver reservas completadas">
           <span class="bar-label">Completadas</span>
           <div class="bar-track"><div class="bar-fill completed" [style.width.%]="barPercent(bookingStats.completadas, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.completadas || 0 }}</span>
         </div>
-        <div class="bar-item" *ngIf="bookingStats.total">
+        <div class="bar-item clickable" *ngIf="bookingStats.total" (click)="filtrarReservasPorEstado('cancelada')" title="Ver reservas canceladas">
           <span class="bar-label">Canceladas</span>
           <div class="bar-track"><div class="bar-fill cancelled" [style.width.%]="barPercent(bookingStats.canceladas, bookingStats.total)"></div></div>
           <span class="bar-value">{{ bookingStats.canceladas || 0 }}</span>
@@ -47,7 +80,7 @@
     </mat-card-content>
   </mat-card>
 
-  <mat-tab-group>
+  <mat-tab-group [selectedIndex]="selectedTab" (selectedIndexChange)="onTabChange($event)">
     <mat-tab label="Usuarios">
       <div class="filter-bar">
         <mat-form-field appearance="outline" class="filter-search">
@@ -61,7 +94,7 @@
         <table class="admin-table">
           <thead><tr><th>Usuario</th><th>Rol</th><th>Teléfono</th><th>Estado</th><th>Acción</th></tr></thead>
           <tbody>
-            <tr *ngFor="let u of users">
+            <tr *ngFor="let u of usuariosVisibles">
               <td><strong>{{ u.nombre }} {{ u.apellido }}</strong><small>{{ u.email }}</small></td>
               <td>{{ u.tipo_usuario }}</td>
               <td>{{ u.telefono || 'N/A' }}</td>
@@ -120,7 +153,8 @@
       </div>
       <div class="table-scroll">
         <table class="admin-table"><thead><tr><th>ID</th><th>Máquina</th><th>Estado</th><th>Total</th><th>Fechas</th></tr></thead><tbody>
-          <tr *ngFor="let b of recentBookings"><td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
+          <tr *ngFor="let b of reservasVisibles"><td><a class="id-link" (click)="verDetalleEntidad('reserva', b.id)" title="Ver detalle de la reserva">{{ b.id }}</a></td><td><a class="id-link" (click)="verDetalleEntidad('maquinaria', b.maquinaria_id)" title="Ver detalle de la maquinaria">{{ b.maquinaria_id }}</a></td><td>{{ b.estado }}</td><td>${{ b.precio_total | number }}</td><td>{{ b.fecha_inicio | date:'mediumDate':'':'es-CO' }} - {{ b.fecha_fin | date:'mediumDate':'':'es-CO' }}</td></tr>
+          <tr *ngIf="!reservasVisibles.length"><td colspan="5" class="empty">No hay reservas{{ bookingEstadoFilter ? ' con estado ' + bookingEstadoFilter : '' }}</td></tr>
         </tbody></table>
       </div>
     </mat-tab>

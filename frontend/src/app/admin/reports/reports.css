@@ -27,6 +27,9 @@
 .chart-card { margin-bottom: 22px; border-radius: 16px !important; }
 .bar-chart { display: flex; flex-direction: column; gap: 10px; padding: 8px 0; }
 .bar-item { display: grid; grid-template-columns: 110px 1fr 60px; align-items: center; gap: 10px; }
+.bar-item.clickable { cursor: pointer; }
+.bar-item.clickable:hover .bar-label { color: var(--rm-primary); }
+.bar-item.clickable:hover .bar-fill { opacity: .8; }
 .bar-label { font-size: 13px; color: var(--rm-muted); text-align: right; }
 .bar-track { height: 20px; background: #f2dfc7; border-radius: 10px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 10px; transition: width .5s; min-width: 2px; }
@@ -36,6 +39,9 @@
 .bar-fill.en_curso { background: #7b1fa2; }
 .bar-fill.completed { background: var(--rm-success); }
 .bar-fill.cancelled { background: var(--rm-danger); }
+.bar-fill.user-prop { background: #1565c0; }
+.bar-fill.user-arren { background: #2e7d32; }
+.bar-fill.type { background: var(--rm-secondary); }
 .bar-value { font-size: 14px; font-weight: 600; color: var(--rm-ink); }
 .empty { color: var(--rm-muted); text-align: center; padding: 16px; }
 .filter-search { width: 260px; font-size: 13px; }

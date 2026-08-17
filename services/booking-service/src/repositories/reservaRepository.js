@@ -129,6 +129,7 @@ async function getAdminStats() {
             COUNT(*) as total,
             COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as pendientes,
             COUNT(CASE WHEN estado = 'confirmada' THEN 1 END) as confirmadas,
+            COUNT(CASE WHEN estado = 'pagada' THEN 1 END) as pagadas,
             COUNT(CASE WHEN estado = 'en_curso' THEN 1 END) as en_curso,
             COUNT(CASE WHEN estado = 'completada' THEN 1 END) as completadas,
             COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) as canceladas,

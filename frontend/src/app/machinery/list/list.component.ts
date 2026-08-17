@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -72,7 +73,7 @@ export class MachineryList implements OnInit, OnDestroy {
     {"departamento":"Vichada","ciudades":["Puerto Carreño","Cumaribo","La Primavera","Santa Rosalía"]}
   ];
 
-  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private router: Router, private socket: SocketService) {}
+  constructor(private api: Api, public auth: Auth, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private router: Router, private route: ActivatedRoute, private socket: SocketService) {}
 
   onCardEnter(event: Event): void {
     event.preventDefault();
@@ -83,6 +84,8 @@ export class MachineryList implements OnInit, OnDestroy {
   trackById(_index: number, item: Machinery): string { return item?.id || String(_index); }
 
   ngOnInit(): void {
+    const tipo = this.route.snapshot.queryParamMap.get('tipo');
+    if (tipo) this.filters.tipo = tipo;
     this.load();
     this.suggestionSub = this.suggestionSubject.pipe(
       debounceTime(300),

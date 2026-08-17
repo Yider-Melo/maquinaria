@@ -2,8 +2,8 @@
 .page h1 { margin-bottom:24px; }
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-bottom:24px; }
 .stat-card { display:flex; align-items:center; gap:16px; padding:20px; cursor:default; }
-.stat-card.machinery, .stat-card.bookings, .stat-card.payments, .stat-card.reports { cursor:pointer; transition:transform .2s; }
-.stat-card.machinery:focus-visible, .stat-card.bookings:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
+.stat-card.machinery, .stat-card.payments, .stat-card.reports { cursor:pointer; transition:transform .2s; }
+.stat-card.machinery:focus-visible, .stat-card.payments:focus-visible, .stat-card.reports:focus-visible { outline: 3px solid var(--rm-primary); outline-offset: 2px; }
 .stat-card:hover { transform:translateY(-2px); }
 .stat-card mat-icon { font-size:40px; width:40px; height:40px; }
 .stat-card.users mat-icon { color:var(--rm-primary); }
@@ -20,6 +20,9 @@
 @media (max-width:640px){ .stats-grid { grid-template-columns:1fr; } .bar-item { grid-template-columns:1fr; gap:4px; } .bar-label { text-align:left; } .bar-value { text-align:right; } }
 .bar-chart { display:flex; flex-direction:column; gap:8px; padding:8px 0; }
 .bar-item { display:grid; grid-template-columns:100px 1fr 50px; align-items:center; gap:8px; }
+.bar-item.clickable { cursor:pointer; }
+.bar-item.clickable:hover .bar-label { color:var(--rm-primary); }
+.bar-item.clickable:hover .bar-fill { opacity:.8; }
 .bar-label { font-size:13px; color:var(--rm-muted); text-align:right; }
 .bar-track { height:20px; background:#f2dfc7; border-radius:10px; overflow:hidden; }
 .bar-fill { height:100%; border-radius:10px; transition:width .5s; min-width:2px; }

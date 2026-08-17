@@ -205,6 +205,7 @@ export interface BookingStats {
   total: number;
   pendientes: number;
   confirmadas: number;
+  pagadas: number;
   en_curso: number;
   completadas: number;
   canceladas: number;

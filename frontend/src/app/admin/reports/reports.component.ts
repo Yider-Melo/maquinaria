@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
 import { Observable, forkJoin, of, Subject, Subscription } from 'rxjs';
@@ -7,7 +8,7 @@ import { catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/o
 import { watchRealtime } from '../../shared/realtime';
 import { ConfirmActionDialog } from '../../shared/confirm-dialog/confirm-action-dialog';
 import { DetailDialog } from '../../shared/detail-dialog/detail-dialog';
-import { UserStats, RatingStats, Booking, Machinery, PaymentDashboard, Usuario } from '../../core/models';
+import { UserStats, RatingStats, Booking, Machinery, PaymentDashboard, Usuario, MachineryStats } from '../../core/models';
 import { estadoPagoLabel } from '../../shared/utils';
 
 @Component({
@@ -17,10 +18,15 @@ import { estadoPagoLabel } from '../../shared/utils';
 export class AdminReports implements OnInit, OnDestroy {
   estadoPagoLabel = estadoPagoLabel;
   stats: any = {};
+  machineryStats: any = {};
   ratingReportadas = 0;
   reportedRatings: any[] = [];
   ratingAccion: string | null = null;
   bookingStats: any = {};
+  selectedTab = 0;
+  bookingEstadoFilter = '';
+  userRolFilter = '';
+  topTypes: { tipo: string; cantidad: number }[] = [];
   users: Usuario[] = [];
   userMap: { [key: string]: string } = {};
   machinery: Machinery[] = [];
@@ -46,9 +52,35 @@ export class AdminReports implements OnInit, OnDestroy {
   get userTotalPages(): number { return Math.ceil(this.userTotal / this.userSize) || 1; }
   get machTotalPages(): number { return Math.ceil(this.machTotal / this.machSize) || 1; }
 
-  constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog, private socket: SocketService) {}
+  get reservasVisibles(): Booking[] {
+    if (!this.bookingEstadoFilter) return this.recentBookings;
+    return this.recentBookings.filter(b => b.estado === this.bookingEstadoFilter);
+  }
+
+  get usuariosVisibles(): Usuario[] {
+    if (!this.userRolFilter) return this.users;
+    return this.users.filter(u => u.tipo_usuario === this.userRolFilter);
+  }
+
+  filtrarReservasPorEstado(estado: string): void {
+    this.bookingEstadoFilter = estado;
+  }
+
+  filtrarUsuariosPorRol(rol: string): void {
+    this.userRolFilter = rol;
+  }
+
+  irAMaquinaria(tipo: string): void {
+    this.router.navigate(['/admin/usuarios-maquinas'], { queryParams: { q: tipo } });
+  }
+
+  constructor(private api: Api, private cdr: ChangeDetectorRef, private dialog: MatDialog, private socket: SocketService, private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit(): void {
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    const estado = this.route.snapshot.queryParamMap.get('estado');
+    if (tab === 'reservas') this.selectedTab = 2;
+    if (estado) this.bookingEstadoFilter = estado;
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
     this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.loadMachinery(); });
     this.bookingSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.loadBookings());
@@ -93,14 +125,17 @@ export class AdminReports implements OnInit, OnDestroy {
       this.api.get<RatingStats>('/admin/ratings/stats').pipe(catchError(() => of({ success: true, data: { resumen: { total: 0, puntuacion_promedio: 0, reportadas: 0 }, reportadas: [] } }))),
       this.api.get<PaymentDashboard>('/admin/payments/dashboard').pipe(catchError(() => of({ success: true, data: { resumen: { total_liberado: 0, total_retenido: 0, total_reembolsado: 0, total_transacciones: 0, total_fallidos: 0 }, ultimos_pagos: [] } }))),
       this.api.get<Booking[]>('/admin/bookings/recent?limit=100').pipe(catchError(() => of({ success: true, data: [] } as any))),
-      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ success: true, data: {} } as any)))
+      this.api.get<any>('/admin/bookings/stats').pipe(catchError(() => of({ success: true, data: {} } as any))),
+      this.api.get<MachineryStats>('/admin/machinery/stats').pipe(catchError(() => of({ success: true, data: { resumen: {}, por_tipo: [] } } as any)))
     ]).pipe(finalize(() => { this.loading = false; this.cdr.markForCheck(); })).subscribe({
-      next: ([users, ratings, payments, bookings, bstats]) => {
+      next: ([users, ratings, payments, bookings, bstats, machinery]) => {
         this.stats = users?.data || {};
         this.ratingReportadas = ratings?.data?.resumen?.reportadas || 0;
         this.reportedRatings = (ratings as any)?.data?.reportadas || [];
         this.payments = payments?.data?.ultimos_pagos || [];
         this.bookingStats = bstats?.data || {};
+        this.machineryStats = machinery?.data || {};
+        this.topTypes = (this.machineryStats?.por_tipo || []).slice(0, 5);
         if ((bookings as any)?.data) { this.recentBookings = (bookings as any).data; }
         else { this.recentBookings = (bookings as any) || []; }
         this.cdr.markForCheck();
@@ -110,6 +145,11 @@ export class AdminReports implements OnInit, OnDestroy {
     this.loadUsers();
     this.loadMachinery();
     this.cargarMapaUsuarios();
+  }
+
+  onTabChange(index: number): void {
+    this.selectedTab = index;
+    this.cdr.markForCheck();
   }
 
   // Carga todos los usuarios para resolver los nombres de los propietarios

@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Api } from '../../core/services/api.service';
 import { SocketService } from '../../core/services/socket.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -87,7 +88,7 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
     return this.usuarios.filter(u => (this.maquinasPorUsuario[u.id]?.length || 0) > 0);
   }
 
-  constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef, private socket: SocketService) {}
+  constructor(private api: Api, private dialog: MatDialog, private cdr: ChangeDetectorRef, private socket: SocketService, private route: ActivatedRoute) {}
 
   toggleId(event: Event, id: string): void {
     event.stopPropagation();
@@ -109,6 +110,11 @@ export class AdminUsuariosMaquinas implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.userSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.userPage = 1; this.loadUsers(); });
     this.machSearch$.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => { this.machPage = 1; this.userPage = 1; this.loadAllMachinery(); this.loadUsers(); });
+    const q = this.route.snapshot.queryParamMap.get('q');
+    if (q) {
+      this.machSearch = q;
+      this.machSearch$.next(q);
+    }
     this.loadUsers(); this.loadAllMachinery();
     this.realtimeSub = watchRealtime(
       this.socket,

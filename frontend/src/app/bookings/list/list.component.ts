@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { forkJoin, of, timeout, Observable } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -88,9 +89,11 @@ export class BookingsList implements OnInit, OnDestroy {
 
   trackById(_index: number, item: Booking): string { return item?.id || String(_index); }
 
-  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router, private socket: SocketService) {}
+  constructor(private api: Api, public auth: Auth, private dialog: MatDialog, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef, private router: Router, private route: ActivatedRoute, private socket: SocketService) {}
 
   ngOnInit(): void {
+    const estado = this.route.snapshot.queryParamMap.get('estado');
+    if (estado) this.estadoFilter = estado;
     this.loadBookings(true);
     this.realtimeSub = watchRealtime(
       this.socket,
