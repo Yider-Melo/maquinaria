@@ -31,7 +31,8 @@ async function getPaymentsByMonth(req, res, next) {
         const mes = req.query.mes;
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 10;
-        const result = await paymentService.getPaymentsByMonth(mes, page, size);
+        const q = (req.query.q || '').trim();
+        const result = await paymentService.getPaymentsByMonth(mes, page, size, q || undefined);
         const { paginated } = require('shared');
         paginated(res, result.data, result.total, page, size);
     } catch (err) { next(err); }

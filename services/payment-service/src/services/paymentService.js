@@ -823,11 +823,11 @@ async function findAllPaginated(page, size, q) {
     return await pagoRepository.findAllPaginated(page, size, q);
 }
 
-async function getPaymentsByMonth(mes, page = 1, size = 10) {
+async function getPaymentsByMonth(mes, page = 1, size = 10, q) {
     if (!mes || !/^\d{4}-\d{2}$/.test(mes)) {
         throw new ValidationError('Mes inv�lido. Usa el formato YYYY-MM');
     }
-    return await pagoRepository.findByMonth(mes, page, size);
+    return await pagoRepository.findByMonth(mes, page, size, q);
 }
 
 async function getFailedPayments(page = 1, size = 10) {

@@ -126,20 +126,26 @@ async function findByUser(userId, page = 1, size = 20) {
     return { data: result.rows, total };
 }
 
-async function findByMonth(mes, page = 1, size = 10) {
+async function findByMonth(mes, page = 1, size = 10, q) {
     const offset = (page - 1) * size;
+    const params = [mes];
+    let filtro = '';
+    if (q) {
+        params.push(`%${q}%`);
+        filtro = ' AND (CAST(id AS TEXT) ILIKE $2 OR CAST(reserva_id AS TEXT) ILIKE $2)';
+    }
     const countResult = await pool.query(
-        `SELECT COUNT(*) FROM pago WHERE to_char(creado_en, 'YYYY-MM') = $1`,
-        [mes]
+        `SELECT COUNT(*) FROM pago WHERE to_char(creado_en, 'YYYY-MM') = $1${filtro}`,
+        params
     );
     const total = parseInt(countResult.rows[0].count, 10);
     const result = await pool.query(
         `SELECT ${PAGO_COLUMNS}, comision, monto_propietario, payout_estado
          FROM pago
-         WHERE to_char(creado_en, 'YYYY-MM') = $1
+         WHERE to_char(creado_en, 'YYYY-MM') = $1${filtro}
          ORDER BY creado_en DESC
-         LIMIT $2 OFFSET $3`,
-        [mes, size, offset]
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
     );
     return { data: result.rows, total };
 }
