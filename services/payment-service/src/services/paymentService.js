@@ -80,6 +80,13 @@ async function createCheckout(bookingId, userId, metodoPago) {
         throw new ValidationError('La reserva debe estar confirmada para procesar el pago');
     }
 
+    // Evita pagos duplicados: si la reserva ya tiene un pago aprobado
+    // (retenido o liberado), no se permite crear otro checkout.
+    const pagoAprobado = await pagoRepository.findApprovedPaymentByBooking(bookingId);
+    if (pagoAprobado) {
+        throw new ValidationError('Esta reserva ya tiene un pago aprobado. Verifica el estado de tu reserva antes de intentar pagar de nuevo.');
+    }
+
     const existingPayment = await pagoRepository.findActivePaymentByBooking(bookingId);
     let id, externalReference;
 
@@ -558,22 +565,17 @@ async function releaseByBooking(bookingId) {
                 await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'simulado' });
                 await pagoRepository.markPayoutCompleted(pago.id);
                 logger.info('Payout simulado OK (desarrollo):', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco });
-            } else if (payoutResult.manual) {
-                await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'manual' });
-                logger.info('Payout en modo manual:', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco });
             } else {
                 await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'completado' });
                 await pagoRepository.markPayoutCompleted(pago.id);
-                logger.info('Payout real exitoso en MP:', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco, mpId: payoutResult.id });
+                logger.info('Payout real exitoso:', { propietarioId: pago.propietario_id, montoPropietario, banco: bankAccount.banco, wompiId: payoutResult.id });
             }
         } else {
-            // Payout automático no disponible (proveedor sin transferencias habilitadas,
-            // p. ej. Wompi en sandbox, o error del proveedor): se registra como manual
-            // para que el administrador complete el pago al propietario, y los fondos
-            // se liberan (la reserva ya está completada).
-            await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'manual', payoutError: null });
-            payoutResult = { manual: true, amount: montoPropietario };
-            logger.warn('Payout automático no disponible; registrado como manual:', {
+            // La transferencia no se pudo crear en el proveedor: se registra como
+            // fallido y los fondos permanecen retenidos para reintentarlo luego.
+            payoutError = 'Error al crear la transferencia al propietario';
+            await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'fallido', payoutError });
+            logger.warn('Error creando la transferencia al propietario:', {
                 propietarioId: pago.propietario_id,
                 montoPropietario,
                 banco: bankAccount.banco,
@@ -615,7 +617,7 @@ async function releaseByBooking(bookingId) {
 
     const result = await pagoRepository.updateEstadoWhere(pago.id, 'retenido', 'liberado');
     if (result) {
-        const payoutState = payoutResult.simulated ? 'simulado' : payoutResult.manual ? 'manual' : 'real';
+        const payoutState = payoutResult.simulated ? 'simulado' : 'real';
         logger.info('Fondos liberados:', {
             pagoId: pago.id,
             bookingId,
@@ -678,10 +680,6 @@ async function retryPayout(pagoId, adminUserId) {
         await pagoRepository.updatePayoutInfo(pagoId, { comision, montoPropietario });
     }
 
-    if (PROVIDER === 'mercadopago') {
-        return { success: true, message: 'Payout en modo manual. Usa POST /admin/payouts/:id/mark-completed luego de transferir.' };
-    }
-
     const bookingId = pago.reserva_id;
     const montoPropietario = parseFloat(pago.monto_propietario) || 0;
     const bankAccount = await getOwnerBankAccount(pago.propietario_id);
@@ -724,12 +722,27 @@ async function retryPayout(pagoId, adminUserId) {
     }
 }
 
+// Completa los montos de comisión y pago al propietario cuando el registro aún
+// no los tiene calculados (pagos liberados sin información de payout almacenada).
+function completarMontosPayout(p) {
+    const monto = parseFloat(p.monto || 0);
+    const montoPropietario = p.monto_propietario != null
+        ? parseFloat(p.monto_propietario)
+        : Math.round(monto * (1 - COMISION_PLATAFORMA));
+    const comision = p.comision != null
+        ? parseFloat(p.comision)
+        : monto - montoPropietario;
+    return { ...p, monto_propietario: montoPropietario, comision };
+}
+
 async function getPendingPayouts() {
-    return await pagoRepository.findPendingPayouts();
+    const rows = await pagoRepository.findPendingPayouts();
+    return rows.map(completarMontosPayout);
 }
 
 async function getFailedPayouts() {
-    return await pagoRepository.findFailedPayouts();
+    const rows = await pagoRepository.findFailedPayouts();
+    return rows.map(completarMontosPayout);
 }
 
 async function enviarNotificacion(userId, tipo, referenciaId, titulo, mensaje, extra = {}) {
@@ -780,7 +793,7 @@ async function markPayoutManuallyCompleted(pagoId, adminUserId) {
             monto_propietario: montoPropietario,
             comision,
             payout_realizado: true,
-            tipo: 'manual'
+            tipo: 'admin'
         });
     } catch { }
 
@@ -795,7 +808,7 @@ async function markPayoutManuallyCompleted(pagoId, adminUserId) {
             comision,
             monto_propietario: montoPropietario,
             payout_estado: 'completado',
-            payout_tipo: 'manual',
+            payout_tipo: 'admin',
             completado_por: adminUserId,
             completado_en: new Date().toISOString()
         }
@@ -803,7 +816,7 @@ async function markPayoutManuallyCompleted(pagoId, adminUserId) {
 }
 
 async function getDashboard(q) {
-    return await pagoRepository.getDashboard(q);
+    return await pagoRepository.getDashboard(q, COMISION_PLATAFORMA);
 }
 
 async function findAllPaginated(page, size, q) {

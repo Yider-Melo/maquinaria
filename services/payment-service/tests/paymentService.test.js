@@ -53,7 +53,7 @@ describe('createCheckout', () => {
             if (callCount === 1) {
                 return Promise.resolve({ rows: [{ id: 'b-1', arrendatario_id: 'user-id', propietario_id: 'owner', precio_total: 100000, estado: 'confirmada' }] });
             }
-            if (callCount === 2) {
+            if (callCount === 2 || callCount === 3) {
                 return Promise.resolve({ rows: [], rowCount: 0 });
             }
             return Promise.resolve({ rows: [{ id: 'inserted-id' }], rowCount: 1 });
@@ -72,8 +72,11 @@ describe('createCheckout', () => {
     it('debe retornar pago existente si ya hay uno activo', async () => {
         const originalQuery = pool.query;
         pool.query = mock.fn((sql) => {
-            if (sql.includes('estado IN')) {
+            if (sql.includes('estado IN') && sql.includes("'pendiente'")) {
                 return Promise.resolve({ rows: [{ id: 'existing-payment', estado: 'pendiente' }] });
+            }
+            if (sql.includes('estado IN')) {
+                return Promise.resolve({ rows: [], rowCount: 0 });
             }
             return Promise.resolve({ rows: [{ id: 'b-1', arrendatario_id: 'user-id', propietario_id: 'owner', precio_total: 100000, estado: 'confirmada' }] });
         });
@@ -81,6 +84,23 @@ describe('createCheckout', () => {
         const result = await paymentService.createCheckout('b-1', 'user-id');
         assert.equal(result.pago_id, 'existing-payment');
         assert.equal(result.estado, 'pendiente');
+
+        pool.query = originalQuery;
+    });
+
+    it('debe rechazar checkout si la reserva ya tiene un pago liberado', async () => {
+        const originalQuery = pool.query;
+        pool.query = mock.fn((sql) => {
+            if (sql.includes('estado IN')) {
+                return Promise.resolve({ rows: [{ id: 'existing-payment', estado: 'liberado' }] });
+            }
+            return Promise.resolve({ rows: [{ id: 'b-1', arrendatario_id: 'user-id', propietario_id: 'owner', precio_total: 100000, estado: 'confirmada' }] });
+        });
+
+        await assert.rejects(
+            () => paymentService.createCheckout('b-1', 'user-id'),
+            (err) => { assert.equal(err.statusCode, 400); return true; }
+        );
 
         pool.query = originalQuery;
     });

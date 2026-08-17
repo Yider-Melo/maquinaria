@@ -20,6 +20,19 @@ async function findActivePaymentByBooking(bookingId) {
     return result.rows[0] || null;
 }
 
+// Busca si la reserva ya tiene un pago aprobado (retenido o liberado).
+// Se usa para evitar crear pagos duplicados cuando el arrendatario
+// vuelve a iniciar el checkout sobre una reserva ya pagada.
+async function findApprovedPaymentByBooking(bookingId) {
+    const result = await pool.query(
+        `SELECT id, estado FROM pago
+         WHERE reserva_id = $1 AND estado IN ('retenido', 'liberado')
+         ORDER BY creado_en DESC LIMIT 1`,
+        [bookingId]
+    );
+    return result.rows[0] || null;
+}
+
 async function updateCheckoutUrl(id, url) {
     await pool.query(
         'UPDATE pago SET checkout_url = $1, actualizado_en = CURRENT_TIMESTAMP WHERE id = $2',
@@ -252,7 +265,7 @@ async function findPendingPayouts() {
         `SELECT id, reserva_id, propietario_id, monto, comision, monto_propietario,
                 payout_estado, payout_intentos, payout_error, creado_en
          FROM pago
-         WHERE estado = 'liberado' AND (payout_estado IS NULL OR payout_estado IN ('pendiente', 'fallido', 'manual'))
+         WHERE estado = 'liberado' AND (payout_estado IS NULL OR payout_estado IN ('pendiente', 'fallido'))
          ORDER BY creado_en DESC`
     );
     return result.rows;
@@ -282,7 +295,8 @@ const RANKED_PAGO_CTE = `
     )
 `;
 
-async function getDashboard(q) {
+async function getDashboard(q, comisionTasa = 0.1) {
+    const sharePropietario = 1 - comisionTasa;
     const totals = await pool.query(
         `${RANKED_PAGO_CTE}
          SELECT
@@ -292,17 +306,22 @@ async function getDashboard(q) {
             COALESCE(SUM(monto) FILTER (WHERE estado = 'reembolsado'), 0) AS total_reembolsado
          FROM ranked_pagos WHERE rn = 1`
     );
-    // Los fallidos se cuentan como intentos (coherente con el listado de pagos fallidos).
+    // Los fallidos se cuentan como reservas distintas con al menos un intento fallido,
+    // no como intentos individuales (varios intentos de una misma reserva cuentan 1).
     const fallidos = await pool.query(
-        `SELECT COUNT(*) AS total FROM pago WHERE estado = 'fallido'`
+        `SELECT COUNT(DISTINCT reserva_id) AS total FROM pago WHERE estado = 'fallido'`
     );
     const comisiones = await pool.query(
-        `SELECT
-           COALESCE(SUM(comision), 0) as total_comisiones,
-           COUNT(CASE WHEN comision > 0 THEN 1 END) as total_pagos_con_comision,
+        `${RANKED_PAGO_CTE}
+         SELECT
+           COALESCE(SUM(CASE WHEN comision IS NULL OR comision = 0
+                        THEN monto - ROUND(monto * $1)
+                        ELSE comision END), 0) as total_comisiones,
+           COUNT(*) as total_pagos_con_comision,
            COUNT(CASE WHEN payout_estado = 'fallido' THEN 1 END) as total_payouts_fallidos,
            COUNT(CASE WHEN payout_estado = 'pendiente' OR payout_estado IS NULL THEN 1 END) as total_payouts_pendientes
-         FROM pago WHERE estado = 'liberado'`
+         FROM ranked_pagos WHERE rn = 1 AND estado = 'liberado'`,
+        [sharePropietario]
     );
     const earnings = await pool.query(
         `SELECT COALESCE(SUM(monto), 0) as ganancia_total
@@ -321,8 +340,13 @@ async function getDashboard(q) {
     const porMes = await pool.query(
         `${RANKED_PAGO_CTE},
          fallidos_mes AS (
-             SELECT to_char(creado_en, 'YYYY-MM') AS mes, COUNT(*) AS total_fallidos
+             SELECT to_char(creado_en, 'YYYY-MM') AS mes, COUNT(DISTINCT reserva_id) AS total_fallidos
              FROM pago WHERE estado = 'fallido'
+             GROUP BY to_char(creado_en, 'YYYY-MM')
+         ),
+         comisiones_mes AS (
+             SELECT to_char(creado_en, 'YYYY-MM') AS mes, COALESCE(SUM(monto), 0) AS total_comision
+             FROM movimiento WHERE tipo = 'comision_plataforma'
              GROUP BY to_char(creado_en, 'YYYY-MM')
          )
          SELECT
@@ -331,11 +355,13 @@ async function getDashboard(q) {
             COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'liberado'), 0) AS total_liberado,
             COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'retenido'), 0) AS total_retenido,
             COALESCE(SUM(rp.monto) FILTER (WHERE rp.estado = 'reembolsado'), 0) AS total_reembolsado,
+            COALESCE(cm.total_comision, 0) AS total_comision,
             COALESCE(fm.total_fallidos, 0) AS total_fallidos
          FROM ranked_pagos rp
          LEFT JOIN fallidos_mes fm ON fm.mes = to_char(rp.creado_en, 'YYYY-MM')
+         LEFT JOIN comisiones_mes cm ON cm.mes = to_char(rp.creado_en, 'YYYY-MM')
          WHERE rp.rn = 1
-         GROUP BY to_char(rp.creado_en, 'YYYY-MM'), fm.total_fallidos
+         GROUP BY to_char(rp.creado_en, 'YYYY-MM'), fm.total_fallidos, cm.total_comision
          ORDER BY mes DESC`
     );
     return {
@@ -373,7 +399,7 @@ async function findAllPaginated(page, size, q) {
 }
 
 module.exports = {
-    findReservaById, findActivePaymentByBooking, insert,
+    findReservaById, findActivePaymentByBooking, findApprovedPaymentByBooking, insert,
     findByReferenciaPasarela, findByWompiLinkId, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
     findByIdWithReserva, findByIdAdmin, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
