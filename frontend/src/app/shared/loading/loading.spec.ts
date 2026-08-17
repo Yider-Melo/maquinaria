@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { Loading } from './loading';
+﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { Loading } from './loading.component';
 
 describe('Loading', () => {
   let component: Loading;
@@ -9,6 +9,7 @@ describe('Loading', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [Loading],
+      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Loading);
