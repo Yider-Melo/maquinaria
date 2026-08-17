@@ -40,7 +40,7 @@
       <mat-icon>trending_up</mat-icon>
       <span class="summary-value">${{ gananciaNeta | number }}</span>
       <span class="summary-label">Ganancia Neta</span>
-      <span class="summary-desc">Lo que realmente queda de ganancia (facturado menos reembolsos).</span>
+      <span class="summary-desc">Comisiones de la plataforma registradas en el libro contable.</span>
     </mat-card>
   </div>
 
@@ -66,7 +66,7 @@
             <td>${{ (m.total_liberado || 0) | number }}</td>
             <td>${{ (m.total_retenido || 0) | number }}</td>
             <td>${{ (m.total_reembolsado || 0) | number }}</td>
-            <td>${{ ((m.total_liberado || 0) - (m.total_reembolsado || 0)) | number }}</td>
+            <td>${{ (m.total_comision || 0) | number }}</td>
             <td>{{ m.total_transacciones || 0 }}</td>
             <td>{{ m.total_fallidos || 0 }}</td>
           </tr>
@@ -105,50 +105,6 @@
         <span>Página {{ pagoPage }} de {{ pagoTotalPages }}</span>
         <button mat-stroked-button (click)="nextPagoPage()" [disabled]="pagoPage*pagoSize >= pagoTotal">Siguiente</button>
       </div>
-    </mat-card-content>
-  </mat-card>
-
-  <h2>Payouts a Propietarios</h2>
-  <p class="intro">Pagos liberados pendientes de transferir al propietario. Cuando completes la transferencia (Nequi, bancolombia, etc.), márcalos como completados.</p>
-  <mat-card>
-    <mat-card-content>
-      <table class="admin-table" *ngIf="payoutsPendientes?.length">
-        <thead><tr><th>ID Pago</th><th>Reserva</th><th>Monto</th><th>Al propietario</th><th>Comisión</th><th>Estado</th><th>Acción</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let p of payoutsPendientes">
-            <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
-            <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
-            <td>${{ p.monto | number }}</td>
-            <td>${{ (p.monto_propietario || 0) | number }}</td>
-            <td>${{ (p.comision || 0) | number }}</td>
-            <td><span class="status-badge">{{ estadoPayoutLabel(p.payout_estado) }}</span></td>
-            <td>
-              <button mat-stroked-button color="primary" (click)="marcarPayoutCompletado(p.id)" [disabled]="payoutAccion === p.id">
-                <mat-icon *ngIf="payoutAccion === p.id" style="animation:spin .8s linear infinite;">hourglass_top</mat-icon>
-                <mat-icon *ngIf="payoutAccion !== p.id">check_circle</mat-icon>
-                {{ payoutAccion === p.id ? 'Guardando...' : 'Marcar completado' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p *ngIf="!payoutsPendientes?.length" class="empty">No hay payouts pendientes.</p>
-    </mat-card-content>
-  </mat-card>
-  <mat-card *ngIf="payoutsFallidos?.length" style="margin-top:16px;">
-    <mat-card-content>
-      <h3 style="margin:0 0 12px;">Payouts fallidos</h3>
-      <table class="admin-table">
-        <thead><tr><th>ID Pago</th><th>Reserva</th><th>Monto</th><th>Error</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let p of payoutsFallidos">
-            <td><a class="id-link" (click)="verDetalleEntidad('pago', p.id)" title="Ver detalle del pago">{{ p.id }}</a></td>
-            <td><a class="id-link" (click)="verDetalleEntidad('reserva', p.reserva_id)" title="Ver detalle de la reserva">{{ p.reserva_id }}</a></td>
-            <td>${{ p.monto | number }}</td>
-            <td>{{ p.payout_error || 'Sin error registrado' }}</td>
-          </tr>
-        </tbody>
-      </table>
     </mat-card-content>
   </mat-card>
 
