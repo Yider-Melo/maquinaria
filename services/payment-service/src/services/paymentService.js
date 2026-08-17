@@ -410,17 +410,35 @@ async function releaseFunds(pagoId, userId) {
     return result || { message: 'Pago no encontrado o no está en estado retenido' };
 }
 
+// Reembolsa el dinero en la pasarela real según el proveedor activo.
+// Wompi usa el ID de transacción (string, p. ej. "1292-1602113476-10985") y
+// el monto en centavos; MercadoPago usa el payment_id numérico.
+async function reembolsarPasarela(pago) {
+    if (!pago?.referencia_pasarela_mp) return false;
+    const referencia = pago.referencia_pasarela_mp;
+    const montoCents = Math.round(parseFloat(pago.monto || 0) * 100);
+
+    if (PROVIDER === 'wompi') {
+        const result = await paymentProvider.refundPayment(referencia, montoCents);
+        if (!result) {
+            logger.warn('No se pudo reembolsar en Wompi:', { referencia, pagoId: pago.id });
+            return false;
+        }
+        return true;
+    }
+
+    const mpPaymentId = parseInt(referencia, 10);
+    if (isNaN(mpPaymentId)) return false;
+    await paymentProvider.refundPayment(mpPaymentId);
+    return true;
+}
+
 async function refund(pagoId, userId) {
     const pago = await pagoRepository.findByIdSimple(pagoId);
     if (!pago) throw new NotFoundError('Pago no encontrado');
     if (pago.usuario_id !== userId && pago.propietario_id !== userId) throw new ForbiddenError('No tienes permiso para reembolsar este pago');
 
-    if (pago.referencia_pasarela_mp) {
-        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
-        if (!isNaN(mpPaymentId)) {
-            await paymentProvider.refundPayment(mpPaymentId);
-        }
-    }
+    await reembolsarPasarela(pago);
 
     const result = await pagoRepository.updateEstadoWhere(pagoId, 'retenido', 'reembolsado');
     if (result) {
@@ -452,10 +470,7 @@ async function refundByBooking(bookingId) {
     }
 
     if (pago.referencia_pasarela_mp) {
-        const mpPaymentId = parseInt(pago.referencia_pasarela_mp, 10);
-        if (!isNaN(mpPaymentId)) {
-            await paymentProvider.refundPayment(mpPaymentId);
-        }
+        await reembolsarPasarela(pago);
     }
 
     const result = await pagoRepository.updateEstadoWhere(pago.id, 'retenido', 'reembolsado');

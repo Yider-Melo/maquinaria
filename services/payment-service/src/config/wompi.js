@@ -253,8 +253,46 @@ async function getBankList() {
     }
 }
 
+// Reembolsa (total o parcial) una transacción aprobada de Wompi.
+// amountInCents es opcional; si se omite, se reembolsa el total.
+async function refundPayment(transactionId, amountInCents) {
+    if (!isConfigured() || !transactionId) {
+        logger.warn('Wompi no configurado o sin transaccion, reembolso simulado:', { transactionId, amountInCents });
+        return { simulated: true, transactionId, amountInCents, message: 'Reembolso simulado' };
+    }
+
+    try {
+        const body = {};
+        if (amountInCents != null && !isNaN(Number(amountInCents))) {
+            body.amount_in_cents = Math.round(Number(amountInCents));
+        }
+
+        const response = await fetch(`${WOMPI_API}/transactions/${encodeURIComponent(transactionId)}/refund`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${PRIVATE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            logger.error('Error en reembolso Wompi:', { status: response.status, transactionId, error: result });
+            return null;
+        }
+
+        logger.info('Reembolso Wompi creado:', { id: result.data?.id, transactionId, amountInCents });
+        return { id: result.data?.id, status: result.data?.status, transactionId };
+    } catch (err) {
+        logger.error('Error creando reembolso Wompi:', { message: err.message, transactionId });
+        return null;
+    }
+}
+
 module.exports = {
     configure, isConfigured, isSandboxMode, createPreference, getTransaction,
     getTransactionsByLink,
-    createTransfer, getBankList
+    createTransfer, getBankList, refundPayment
 };
