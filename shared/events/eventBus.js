@@ -25,8 +25,13 @@ function log(level, message, meta) {
     }
 }
 
+const IS_TEST = process.env.NODE_ENV === 'test' || process.argv.some(a => a === '--test' || a.startsWith('--test-'));
+
 function scheduleReconnect() {
     if (reconnectTimer) return;
+    // En pruebas no se programa reconexión infinita: sin RabbitMQ el proceso
+    // quedaría con timers activos y un runner (node --test / CI) se colgaría.
+    if (IS_TEST) return;
     log('warn', 'RabbitMQ no disponible. Reintentando conexión...', { delayMs: RECONNECT_DELAY_MS });
     reconnectTimer = setTimeout(async () => {
         reconnectTimer = null;
