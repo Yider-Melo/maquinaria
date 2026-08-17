@@ -1,8 +1,8 @@
 const assert = require('node:assert/strict');
 const { describe, it, mock } = require('node:test');
 
-const pool = require('../db');
-const notificationService = require('../services/notificationService');
+const pool = require('../src/db');
+const notificationService = require('../src/services/notificationService');
 
 describe('createNotification', () => {
     it('debe crear notificacion usando plantilla', async () => {

@@ -7,8 +7,8 @@ process.env.DB_NAME = 'rentamaq_notification_test';
 process.env.DB_USER = 'postgres';
 process.env.DB_PASSWORD = '0000';
 
-const pool = require('../db');
-const notificationService = require('../services/notificationService');
+const pool = require('../src/db');
+const notificationService = require('../src/services/notificationService');
 
 const USUARIO_ID = 'a0000000-0000-0000-0000-000000000003';
 const REF_ID = 'a0000000-0000-0000-0000-000000000100';
