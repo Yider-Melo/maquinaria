@@ -30,6 +30,7 @@ export class AdminAccounting implements OnInit, OnDestroy {
   pagoPage = 1;
   pagoSize = 8;
   pagoTotal = 0;
+  pagoMesSearch = '';
 
   private realtimeSub: Subscription | undefined;
 
@@ -100,12 +101,26 @@ export class AdminAccounting implements OnInit, OnDestroy {
     }
     this.mesDetalle = mes;
     this.pagoPage = 1;
+    this.pagoMesSearch = '';
+    this.cargarPagosMes();
+  }
+
+  onPagoMesSearch(q: string): void {
+    this.pagoMesSearch = q;
+    this.pagoPage = 1;
+    this.cargarPagosMes();
+  }
+
+  clearPagoMesSearch(): void {
+    this.pagoMesSearch = '';
+    this.pagoPage = 1;
     this.cargarPagosMes();
   }
 
   private cargarPagosMes(): void {
     if (!this.mesDetalle) return;
-    this.api.get<any>('/admin/payments/by-month', { mes: this.mesDetalle, page: this.pagoPage, size: this.pagoSize }).pipe(
+    const q = this.pagoMesSearch.trim() ? `&q=${encodeURIComponent(this.pagoMesSearch.trim())}` : '';
+    this.api.get<any>(`/admin/payments/by-month?mes=${this.mesDetalle}&page=${this.pagoPage}&size=${this.pagoSize}${q}`).pipe(
       catchError(() => of({ success: true, data: [], pagination: { total: 0 } } as any))
     ).subscribe({
       next: (res) => {

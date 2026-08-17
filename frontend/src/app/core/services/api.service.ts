@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpEvent, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { timeout, retry, shareReplay, filter, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -24,6 +24,13 @@ export class Api {
 
   constructor(private http: HttpClient) {}
 
+  // Evita que el navegador cachee las respuestas de la API (304 sin body
+  // deja vacíos los GET con HttpClient). Siempre se pide la respuesta fresca.
+  private headers = new HttpHeaders({
+    'Cache-Control': 'no-cache, no-store',
+    'Pragma': 'no-cache'
+  });
+
   private request<T>(
     method: string,
     path: string,
@@ -42,22 +49,22 @@ export class Api {
 
     switch (method) {
       case 'GET':
-        obs = this.http.get<ApiResponse<T>>(url, { params: options?.params });
+        obs = this.http.get<ApiResponse<T>>(url, { params: options?.params, headers: this.headers });
         break;
       case 'POST':
-        obs = this.http.post<ApiResponse<T>>(url, options?.body);
+        obs = this.http.post<ApiResponse<T>>(url, options?.body, { headers: this.headers });
         break;
       case 'PUT':
-        obs = this.http.put<ApiResponse<T>>(url, options?.body);
+        obs = this.http.put<ApiResponse<T>>(url, options?.body, { headers: this.headers });
         break;
       case 'PATCH':
-        obs = this.http.patch<ApiResponse<T>>(url, options?.body);
+        obs = this.http.patch<ApiResponse<T>>(url, options?.body, { headers: this.headers });
         break;
       case 'DELETE':
-        obs = this.http.delete<ApiResponse<T>>(url);
+        obs = this.http.delete<ApiResponse<T>>(url, { headers: this.headers });
         break;
       default:
-        obs = this.http.get<ApiResponse<T>>(url);
+        obs = this.http.get<ApiResponse<T>>(url, { headers: this.headers });
     }
 
     obs = obs.pipe(
