@@ -299,7 +299,7 @@ export class Profile implements OnInit, OnDestroy {
       next: (res) => {
         this.profile = { ...this.profile, ...res.data };
         const current = this.auth.getUser();
-        localStorage.setItem('rentamaq_user', JSON.stringify({ ...current, ...res.data }));
+        sessionStorage.setItem('rentamaq_user', JSON.stringify({ ...current, ...res.data }));
         this.snackBar.open('Perfil actualizado.', 'Cerrar', { duration: 3000 });
         this.saving = false;
         this.cdr.detectChanges();

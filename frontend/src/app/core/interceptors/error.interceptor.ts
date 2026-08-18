@@ -11,8 +11,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !isLoginRequest) {
-        localStorage.removeItem('rentamaq_token');
-        localStorage.removeItem('rentamaq_user');
+        sessionStorage.removeItem('rentamaq_token');
+        sessionStorage.removeItem('rentamaq_refresh_token');
+        sessionStorage.removeItem('rentamaq_user');
         router.navigate(['/auth/login']);
       } else if (error.status === 404 && !req.url.includes('/api/')) {
         router.navigate(['/404']);

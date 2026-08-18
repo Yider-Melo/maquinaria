@@ -20,9 +20,9 @@ export class Auth {
     return this.api.post<LoginResponse>('/auth/login', { email, password, code }).pipe(
       tap((res: ApiResponse<LoginResponse>) => {
         if (res.success && res.data?.token) {
-          localStorage.setItem(this.tokenKey, res.data.token);
-          if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
-          localStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
+          sessionStorage.setItem(this.tokenKey, res.data.token);
+          if (res.data.refresh_token) sessionStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
+          sessionStorage.setItem(this.userKey, JSON.stringify(res.data.usuario));
           this.authState.next(true);
         }
       })
@@ -41,13 +41,13 @@ export class Auth {
 
   // Cierra la sesión eliminando las credenciales almacenadas.
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.refreshTokenKey);
-    localStorage.removeItem(this.userKey);
+    sessionStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.refreshTokenKey);
+    sessionStorage.removeItem(this.userKey);
     this.authState.next(false);
   }
 
-  getRefreshToken(): string | null { return localStorage.getItem(this.refreshTokenKey); }
+  getRefreshToken(): string | null { return sessionStorage.getItem(this.refreshTokenKey); }
 
   // Renueva el access token usando el refresh token (con rotación). Devuelve
   // true si se obtuvo un nuevo token, false si no hay sesión o falló.
@@ -57,8 +57,8 @@ export class Auth {
     return this.http.post<ApiResponse<LoginResponse>>(`${environment.apiUrl}/auth/refresh`, { refresh_token: refreshToken }).pipe(
       tap((res) => {
         if (res?.data?.token) {
-          localStorage.setItem(this.tokenKey, res.data.token);
-          if (res.data.refresh_token) localStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
+          sessionStorage.setItem(this.tokenKey, res.data.token);
+          if (res.data.refresh_token) sessionStorage.setItem(this.refreshTokenKey, res.data.refresh_token);
           this.authState.next(true);
         }
       }),
@@ -71,14 +71,14 @@ export class Auth {
   }
 
   // Devuelve el token JWT almacenado o null si no hay sesión activa.
-  getToken(): string | null { return localStorage.getItem(this.tokenKey); }
+  getToken(): string | null { return sessionStorage.getItem(this.tokenKey); }
   getUser(): Usuario | null {
-    const raw = localStorage.getItem(this.userKey);
+    const raw = sessionStorage.getItem(this.userKey);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as Usuario;
     } catch {
-      localStorage.removeItem(this.userKey);
+      sessionStorage.removeItem(this.userKey);
       return null;
     }
   }
