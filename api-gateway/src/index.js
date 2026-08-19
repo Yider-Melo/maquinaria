@@ -6,7 +6,7 @@ const compression = require('compression');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const routes = require('./routes');
-const { authLimiter, userLimiter } = require('./middleware/rateLimiter');
+const { authLimiter, userLimiter, accountLimiter } = require('./middleware/rateLimiter');
 const httpLogger = require('./middleware/httpLogger');
 const { cors, securityHeaders } = require('./config/security');
 const { errorHandler, getJwtSecret, correlationId } = require('shared');
@@ -101,6 +101,8 @@ app.post('/_ws/broadcast', internalAuth, express.json({ limit: '1mb' }), (req, r
 
 // Rate limiting aplicado a auth y otras rutas
 app.use('/api/v1/auth', authLimiter);
+// Límite por cuenta (email) sobre el login: solo fallos, 5 por cuenta cada 15 min.
+app.post('/api/v1/auth/login', accountLimiter);
 app.use('/', userLimiter);
 app.use('/', routes);
 
