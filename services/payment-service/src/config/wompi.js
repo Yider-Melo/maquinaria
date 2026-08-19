@@ -284,6 +284,17 @@ async function resolveBankId(bankIdentifier) {
     return match.id || null;
 }
 
+// Normaliza la referencia de una dispersión: Wompi exige máximo 40 caracteres.
+// Se conserva el inicio de la referencia, que contiene el id del pago.
+function buildPayoutReference(externalRef) {
+    const base = externalRef && String(externalRef).trim() ? String(externalRef) : `PAYOUT-${Date.now()}`;
+    return base.length <= 40 ? base : base.slice(0, 40);
+}
+
+function isValidEmail(email) {
+    return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // Dispersa un pago a un beneficiario usando el producto Pagos a Terceros.
 // Endpoint: POST /payouts (lote de pagos). El monto va en centavos.
 async function createTransfer({ amount, description, bankCode, accountNumber, accountType, holderName, holderDocType, holderDocNumber, holderEmail, externalRef }) {
@@ -305,24 +316,30 @@ async function createTransfer({ amount, description, bankCode, accountNumber, ac
             return null;
         }
 
-        const idempotencyKey = `${externalRef || 'PAYOUT'}-${Date.now()}`;
+        const reference = buildPayoutReference(externalRef);
+        const idempotencyKey = `${reference}-${Date.now()}`.slice(0, 64);
+
+        const payoutTransaction = {
+            legalIdType: holderDocType || 'CC',
+            legalId: holderDocNumber,
+            bankId,
+            accountType: accountType === 'CHECKING' || accountType === 'CORRIENTE' ? 'CORRIENTE' : 'AHORROS',
+            accountNumber,
+            name: holderName,
+            amount: Math.round(amount * 100),
+            reference
+        };
+        // Wompi rechaza email vacío. Solo se envía cuando el beneficiario tiene
+        // un email válido (el propietario registró uno en la plataforma).
+        if (isValidEmail(holderEmail)) {
+            payoutTransaction.email = holderEmail;
+        }
+
         const body = {
-            reference: externalRef || `PAYOUT-${Date.now()}`,
+            reference,
             accountId,
             paymentType: 'PROVIDERS',
-            transactions: [
-                {
-                    legalIdType: holderDocType || 'CC',
-                    legalId: holderDocNumber,
-                    bankId,
-                    accountType: accountType === 'CHECKING' || accountType === 'CORRIENTE' ? 'CORRIENTE' : 'AHORROS',
-                    accountNumber,
-                    name: holderName,
-                    email: holderEmail || '',
-                    amount: Math.round(amount * 100),
-                    reference: externalRef || `PAYOUT-${Date.now()}`
-                }
-            ]
+            transactions: [payoutTransaction]
         };
 
         const response = await fetch(`${PAYOUTS_API}/payouts`, {

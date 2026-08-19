@@ -645,6 +645,22 @@ async function getOwnerBankAccount(ownerId) {
     }
 }
 
+// Email del propietario para la dispersión (Wompi lo exige válido).
+async function getOwnerEmail(ownerId) {
+    try {
+        const url = `${AUTH_SERVICE_URL}/internal/users/${ownerId}`;
+        const response = await fetch(url, {
+            headers: { 'x-api-key': INTERNAL_API_KEY }
+        });
+        if (!response.ok) return '';
+        const body = await response.json();
+        return body.data?.email || '';
+    } catch (err) {
+        logger.warn('Error obteniendo email del propietario:', { message: err.message });
+        return '';
+    }
+}
+
 async function releaseByBooking(bookingId) {
     const pago = await pagoRepository.findPaymentByBooking(bookingId);
     if (!pago) {
@@ -672,6 +688,7 @@ async function releaseByBooking(bookingId) {
     let payoutResult = null;
     let payoutError = null;
     const bankAccount = await getOwnerBankAccount(pago.propietario_id);
+    const ownerEmail = await getOwnerEmail(pago.propietario_id);
 
     if (bankAccount) {
         payoutResult = await paymentProvider.createPayout({
@@ -682,7 +699,7 @@ async function releaseByBooking(bookingId) {
             holderName: bankAccount.titular,
             holderDocType: bankAccount.tipo_documento,
             holderDocNumber: bankAccount.numero_documento,
-            holderEmail: bankAccount.email || '',
+            holderEmail: ownerEmail,
             externalRef: `PAYOUT-${pago.id}`
         });
 
@@ -810,6 +827,7 @@ async function retryPayout(pagoId, adminUserId) {
     const bookingId = pago.reserva_id;
     const montoPropietario = parseFloat(pago.monto_propietario) || 0;
     const bankAccount = await getOwnerBankAccount(pago.propietario_id);
+    const ownerEmail = await getOwnerEmail(pago.propietario_id);
 
     if (!bankAccount) {
         await pagoRepository.updatePayoutInfo(pagoId, {
@@ -827,7 +845,7 @@ async function retryPayout(pagoId, adminUserId) {
         holderName: bankAccount.titular,
         holderDocType: bankAccount.tipo_documento,
         holderDocNumber: bankAccount.numero_documento,
-        holderEmail: bankAccount.email || '',
+        holderEmail: ownerEmail,
         externalRef: `PAYOUT-RETRY-${pagoId}-${Date.now()}`
     });
 
