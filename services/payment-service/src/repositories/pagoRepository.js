@@ -234,6 +234,26 @@ async function markPayoutCompleted(pagoId) {
     );
 }
 
+// Guarda el id del lote de dispersión que Wompi devolvió, para poder casar
+// después los eventos del webhook de Pagos a Terceros (payout.updated /
+// transaction.updated) con el pago correspondiente.
+async function updateWompiPayoutId(pagoId, wompiPayoutId) {
+    if (!wompiPayoutId) return null;
+    await pool.query(
+        'UPDATE pago SET payout_id = $1, actualizado_en = CURRENT_TIMESTAMP WHERE id = $2',
+        [String(wompiPayoutId), pagoId]
+    );
+}
+
+async function findByWompiPayoutId(wompiPayoutId) {
+    if (!wompiPayoutId) return null;
+    const result = await pool.query(
+        'SELECT id, propietario_id, reserva_id, payout_estado FROM pago WHERE payout_id = $1',
+        [String(wompiPayoutId)]
+    );
+    return result.rows[0] || null;
+}
+
 async function insertMovimiento({ pagoId, reservaId, tipo, monto, descripcion, referenciaTipo, referenciaId }) {
     const result = await pool.query(
         `INSERT INTO movimiento (id, pago_id, reserva_id, tipo, monto, descripcion, referencia_tipo, referencia_id)
@@ -409,7 +429,8 @@ module.exports = {
     findByReferenciaPasarela, findByWompiLinkId, updateEstado, updateEstadoTransicion, updateCheckoutUrl,
     findByIdWithReserva, findByIdAdmin, findByBooking, findByUser, findByIdSimple,
     updateEstadoWhere, updateReferenciaPasarela, findPaymentByBooking,
-    updatePayoutInfo, markPayoutCompleted, insertMovimiento,
+    updatePayoutInfo, markPayoutCompleted, updateWompiPayoutId, findByWompiPayoutId,
+    insertMovimiento,
     markLiberado, findFailedPayouts, findPendingPayouts, getDashboard,
     findAllPaginated, findByMonth, findByEstado
 };

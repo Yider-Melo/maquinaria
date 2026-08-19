@@ -75,6 +75,7 @@ async function ensurePaymentSchema() {
     await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_intentos INTEGER DEFAULT 0');
     await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_error TEXT');
     await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_completado_en TIMESTAMP');
+    await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS payout_id VARCHAR(255)');
     await pool.query('ALTER TABLE pago ADD COLUMN IF NOT EXISTS liberado_en TIMESTAMP');
     await pool.query(`
         CREATE TABLE IF NOT EXISTS movimiento (

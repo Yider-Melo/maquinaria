@@ -27,45 +27,60 @@ function getValueByPath(obj, path) {
 
 // Valida la firma de un evento de Wompi (checksum SHA256). Wompi firma cada
 // evento concatenando, en orden: los valores de las rutas listadas en
-// signature.properties (dentro de data), el timestamp y el event secret.
+// signature.properties (dentro de data), el timestamp y el secret.
 // El checksum esperado llega en el header X-Event-Checksum o en
-// signature.checksum. Si el secret no está configurado en producción se
-// rechaza el evento; en desarrollo se permite (modo simulado).
-function verifyWompiSignature(req) {
-    const secret = process.env.WOMPI_EVENT_SECRET;
-    if (!secret) {
-        if (process.env.NODE_ENV === 'production') {
-            return { ok: false, status: 500, message: 'WOMPI_EVENT_SECRET no configurado' };
-        }
-        return { ok: true };
-    }
-
-    const payload = req.body || {};
-    const signature = payload.data?.signature || payload.signature || {};
-    const properties = Array.isArray(signature.properties) ? signature.properties : [];
-    const timestamp = signature.timestamp;
-    const provided = String(req.headers['x-event-checksum'] || signature.checksum || '').toLowerCase();
-
-    if (!provided || properties.length === 0 || timestamp == null) {
-        return { ok: false, status: 403, message: 'Checksum, propiedades o timestamp de firma ausentes' };
-    }
-
+// signature.checksum. Los eventos del producto 'Pagos a terceros' (payout.updated,
+// transaction.updated) se firman con su propio secret (WOMPI_PAYOUTS_EVENT_SECRET),
+// distinto al de 'Recibir pagos' (WOMPI_EVENT_SECRET), así que se intenta con ambos.
+// Si ningún secret está configurado en producción se rechaza el evento;
+// en desarrollo se permite (modo simulado).
+function computeWompiChecksum(payload, secret) {
     const data = payload.data || {};
+    const signature = data.signature || payload.signature || {};
+    const properties = Array.isArray(signature.properties) ? signature.properties : [];
+    const timestamp = signature.timestamp != null ? signature.timestamp : payload.timestamp;
+
+    if (!properties.length || timestamp == null) return null;
+
     let manifest = '';
     for (const prop of properties) {
         const value = getValueByPath(data, prop);
-        if (value == null) {
-            return { ok: false, status: 400, message: `Propiedad de firma no encontrada: ${prop}` };
-        }
+        if (value == null) return null;
         manifest += String(value);
     }
     manifest += String(timestamp) + secret;
 
-    const expected = crypto.createHash('sha256').update(manifest).digest('hex');
-    if (expected !== provided) {
-        return { ok: false, status: 403, message: 'Firma inválida' };
+    return crypto.createHash('sha256').update(manifest).digest('hex');
+}
+
+function verifyWompiSignature(req) {
+    const payload = req.body || {};
+    const provided = String(
+        req.headers['x-event-checksum']
+        || payload.data?.signature?.checksum
+        || payload.signature?.checksum
+        || ''
+    ).toLowerCase();
+
+    if (!provided) {
+        return { ok: false, status: 403, message: 'Checksum ausente en la petición' };
     }
-    return { ok: true };
+
+    const secrets = [process.env.WOMPI_EVENT_SECRET, process.env.WOMPI_PAYOUTS_EVENT_SECRET].filter(Boolean);
+    if (secrets.length === 0) {
+        if (process.env.NODE_ENV === 'production') {
+            return { ok: false, status: 500, message: 'Secreto(s) de eventos no configurado(s)' };
+        }
+        return { ok: true };
+    }
+
+    for (const secret of secrets) {
+        const expected = computeWompiChecksum(payload, secret);
+        if (expected && expected === provided) {
+            return { ok: true };
+        }
+    }
+    return { ok: false, status: 403, message: 'Firma inválida' };
 }
 
 function webhookAuth(req, res, next) {

@@ -217,8 +217,19 @@ function transicionesValidas(nuevoEstado) {
 }
 
 async function handleWompiWebhook(payload) {
+    const data = payload.data || {};
+
+    // Eventos del producto 'Pagos a Terceros' (dispersión a propietarios).
+    if (data.payout) {
+        return handleWompiPayoutWebhook(payload);
+    }
+    if (data.transaction && data.transaction.payoutId) {
+        return handleWompiPayoutTransactionWebhook(payload);
+    }
+
+    // Eventos de 'Recibir pagos' (transacciones de cobro).
     const event = payload.event;
-    const transaction = payload.data?.transaction;
+    const transaction = data.transaction;
     if (!transaction) return { message: 'Payload invalido' };
 
     const externalReference = transaction.reference;
@@ -238,6 +249,121 @@ async function handleWompiWebhook(payload) {
     const result = await aplicarEstadoWompi(pago, status, transactionId);
     if (!result) return { message: 'Transición de estado no aplicable (webhook duplicado o estado final)' };
     return { message: 'Webhook procesado', estado: result.estado };
+}
+
+// ============================================================================
+// Eventos del producto 'Pagos a Terceros' (Payouts)
+// https://docs.wompi.co/colombia/api/pagos-a-terceros/eventos
+// ============================================================================
+
+// Traduce el estado de un lote/transacción de Pagos a Terceros al payout_estado
+// que maneja la app. Estados según documentación: PENDING_APPROVAL, NOT_APPROVED,
+// REJECTED, PENDING, PARTIAL_PAYMENT, TOTAL_PAYMENT, CANCELLED, APPROVED, FAILED.
+function payoutEstadoDesdeStatus(status) {
+    const final = {
+        TOTAL_PAYMENT: 'completado',
+        APPROVED: 'completado'
+    };
+    const fallido = {
+        PARTIAL_PAYMENT: 'fallido',
+        NOT_APPROVED: 'fallido',
+        REJECTED: 'fallido',
+        CANCELLED: 'fallido',
+        FAILED: 'fallido'
+    };
+    if (final[status]) return final[status];
+    if (fallido[status]) return fallido[status];
+    return 'procesando';
+}
+
+// Extrae el id del pago desde la referencia del lote de dispersión. La app crea
+// los lotes con referencia "PAYOUT-<pagoId>" (y "PAYOUT-RETRY-<pagoId>-<ts>").
+function extraerPagoIdDeReferencia(reference) {
+    if (!reference) return null;
+    let id = String(reference);
+    if (id.startsWith('PAYOUT-RETRY-')) {
+        id = id.slice('PAYOUT-RETRY-'.length).replace(/-\d+$/, '');
+    } else if (id.startsWith('PAYOUT-')) {
+        id = id.slice('PAYOUT-'.length);
+    } else {
+        return null;
+    }
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
+}
+
+async function findPagoPorPayout(reference, wompiPayoutId) {
+    const pagoId = extraerPagoIdDeReferencia(reference);
+    if (pagoId) {
+        const pago = await pagoRepository.findByIdSimple(pagoId);
+        if (pago) return pago;
+    }
+    if (wompiPayoutId) {
+        const pago = await pagoRepository.findByWompiPayoutId(wompiPayoutId);
+        if (pago) return pago;
+    }
+    return null;
+}
+
+// Evento payout.updated: cambió el estado del lote de dispersión completo.
+async function handleWompiPayoutWebhook(payload) {
+    const payout = payload.data?.payout;
+    if (!payout) return { message: 'Payload invalido' };
+
+    const estado = payoutEstadoDesdeStatus(payout.status);
+    const pago = await findPagoPorPayout(payout.reference, payout.id);
+    if (!pago) {
+        logger.warn('Evento payout.updated sin pago asociado:', { reference: payout.reference, payoutId: payout.id, status: payout.status });
+        return { message: 'Pago no encontrado para el lote de dispersión' };
+    }
+
+    if (payout.id) await pagoRepository.updateWompiPayoutId(pago.id, payout.id);
+
+    if (estado === 'fallido') {
+        await pagoRepository.updatePayoutInfo(pago.id, {
+            payoutEstado: 'fallido',
+            payoutError: `Lote de pago ${payout.status}: los fondos no fueron acreditados al propietario.`
+        });
+    } else if (estado === 'completado') {
+        await pagoRepository.markPayoutCompleted(pago.id);
+        await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'completado', payoutError: null });
+    } else {
+        await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: estado });
+    }
+
+    logger.info('Evento payout.updated procesado:', { payoutId: payout.id, reference: payout.reference, status: payout.status, pagoId: pago.id });
+    return { message: 'Evento payout procesado', estado };
+}
+
+// Evento transaction.updated: cambió el estado de una transacción individual
+// de la dispersión. Trae el motivo de rechazo real en failureReason.
+async function handleWompiPayoutTransactionWebhook(payload) {
+    const tx = payload.data?.transaction;
+    if (!tx) return { message: 'Payload invalido' };
+
+    const estado = payoutEstadoDesdeStatus(tx.status);
+    const pago = await findPagoPorPayout(tx.reference, tx.payoutId);
+    if (!pago) {
+        logger.warn('Evento transaction.updated sin pago asociado:', { reference: tx.reference, payoutId: tx.payoutId, status: tx.status });
+        return { message: 'Pago no encontrado para la transacción de dispersión' };
+    }
+
+    if (tx.payoutId) await pagoRepository.updateWompiPayoutId(pago.id, tx.payoutId);
+
+    const motivo = tx.failureReason
+        ? `Causal ${tx.failureReason.code}: ${tx.failureReason.message}`
+        : `Transacción de dispersión ${tx.status}`;
+
+    if (estado === 'fallido') {
+        await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'fallido', payoutError: motivo });
+    } else if (estado === 'completado') {
+        await pagoRepository.markPayoutCompleted(pago.id);
+        await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'completado', payoutError: null });
+    } else {
+        await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: estado });
+    }
+
+    logger.info('Evento transaction.updated de dispersión procesado:', { txId: tx.id, payoutId: tx.payoutId, status: tx.status, pagoId: pago.id });
+    return { message: 'Evento de transacción procesado', estado };
 }
 
 function estadoDesdeStatusWompi(status) {
@@ -561,6 +687,7 @@ async function releaseByBooking(bookingId) {
         });
 
         if (payoutResult) {
+            await pagoRepository.updateWompiPayoutId(pago.id, payoutResult.id);
             if (payoutResult.simulated) {
                 await pagoRepository.updatePayoutInfo(pago.id, { payoutEstado: 'simulado' });
                 await pagoRepository.markPayoutCompleted(pago.id);
@@ -705,6 +832,7 @@ async function retryPayout(pagoId, adminUserId) {
     });
 
     if (payoutResult) {
+        await pagoRepository.updateWompiPayoutId(pagoId, payoutResult.id);
         if (payoutResult.simulated) {
             await pagoRepository.updatePayoutInfo(pagoId, { payoutEstado: 'simulado', payoutError: null });
         } else {

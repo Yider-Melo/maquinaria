@@ -253,18 +253,29 @@ async function resolveAccountId() {
     return (active || accounts[0]).id || null;
 }
 
+// Normaliza identificadores de banco para comparar sin depender de acentos,
+// guiones bajos o espacios (p. ej. 'av_villas', 'Banco de Bogotá', 'CAJA_SOCIAL').
+function normalizeBank(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+}
+
 // Convierte el identificador de banco que guarda la app (p. ej. 'nequi',
 // 'bancolombia' o el código de banco) en el bankId (UUID) del API de Payouts.
 async function resolveBankId(bankIdentifier) {
     if (!bankIdentifier) return null;
-    const normalized = String(bankIdentifier).toLowerCase().trim();
+    const normalized = normalizeBank(bankIdentifier);
     const banks = await getPayoutBanks();
     if (banks.length === 0) return null;
 
     const match = banks.find((b) => {
-        const name = String(b.name || '').toLowerCase();
-        const code = String(b.code || '').toLowerCase();
-        return name === normalized || code === normalized || name.includes(normalized) || normalized.includes(name);
+        const name = normalizeBank(b.name);
+        const code = normalizeBank(b.code);
+        return name === normalized || code === normalized
+            || name.includes(normalized) || code.includes(normalized);
     });
     if (!match) {
         logger.warn('Banco no encontrado en Pagos a Terceros:', { bankIdentifier, disponibles: banks.map((b) => b.name).slice(0, 20) });
