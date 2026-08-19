@@ -144,13 +144,17 @@ app.use(errorHandler);
 const CERT_PATH = process.env.SSL_CERT_PATH;
 const KEY_PATH = process.env.SSL_KEY_PATH;
 const isProduction = process.env.NODE_ENV === 'production';
+const certsAvailable = CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH);
 
-if (isProduction && (!CERT_PATH || !KEY_PATH || !fs.existsSync(CERT_PATH) || !fs.existsSync(KEY_PATH))) {
-    logger.error('HTTPS requerido en producción. Configure SSL_CERT_PATH y SSL_KEY_PATH');
+// Si se configuran certificados pero no existen, es un error de configuración.
+// En producción el TLS normalmente lo termina un proxy inverso (Caddy/Nginx),
+// así que el gateway puede operar en HTTP internamente sin certificados propios.
+if ((CERT_PATH || KEY_PATH) && !certsAvailable) {
+    logger.error('SSL_CERT_PATH/SSL_KEY_PATH configurados pero los archivos no existen');
     process.exit(1);
 }
 
-if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)) {
+if (certsAvailable) {
     httpsServer = https.createServer({
         cert: fs.readFileSync(CERT_PATH),
         key: fs.readFileSync(KEY_PATH)
@@ -162,6 +166,9 @@ if (CERT_PATH && KEY_PATH && fs.existsSync(CERT_PATH) && fs.existsSync(KEY_PATH)
         });
     });
 } else {
+    if (isProduction) {
+        logger.warn('API Gateway en HTTP (el TLS lo termina Caddy/Nginx en el proxy)');
+    }
     server.listen(PORT, () => {
         logger.info(`API Gateway iniciado con HTTP`, {
             port: PORT,
