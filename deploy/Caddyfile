@@ -4,11 +4,7 @@
 {$DOMAIN} {
     encode gzip
 
-    # SPA: sirve index.html para rutas no encontradas (routing de Angular)
-    root * /srv
-    try_files {path} /index.html
-
-    # API -> API Gateway
+    # API -> API Gateway (SIEMPRE primero, antes del SPA)
     handle /api/* {
         reverse_proxy api-gateway:3000
     }
@@ -18,5 +14,10 @@
         reverse_proxy api-gateway:3000
     }
 
-    file_server
+    # SPA: sirve index.html para rutas no encontradas (routing de Angular)
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
 }
