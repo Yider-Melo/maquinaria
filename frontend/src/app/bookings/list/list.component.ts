@@ -9,9 +9,9 @@ import { FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { forkJoin, of, timeout, Observable } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
@@ -57,6 +57,7 @@ export class BookingsList implements OnInit, OnDestroy {
   error = '';
   tabIndex = 0;
   private realtimeSub: Subscription | undefined;
+  private searchSubject = new Subject<string>();
   payingBookingId: string | null = null;
   searchQuery = ''; estadoFilter = '';
 
@@ -95,6 +96,11 @@ export class BookingsList implements OnInit, OnDestroy {
     const estado = this.route.snapshot.queryParamMap.get('estado');
     if (estado) this.estadoFilter = estado;
     this.loadBookings(true);
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.page = 1;
+      this.propPage = 1;
+      this.loadBookings();
+    });
     this.realtimeSub = watchRealtime(
       this.socket,
       (ev) => {
@@ -107,6 +113,19 @@ export class BookingsList implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.realtimeSub?.unsubscribe();
+    this.searchSubject.complete();
+  }
+
+  onSearch(q: string): void {
+    this.searchQuery = q;
+    this.searchSubject.next(q);
+  }
+
+  onEstadoChange(estado: string): void {
+    this.estadoFilter = estado;
+    this.page = 1;
+    this.propPage = 1;
+    this.loadBookings();
   }
 
   prevPage(): void { if (this.page > 1) { this.page--; this.loadBookings(); } }
@@ -118,15 +137,30 @@ export class BookingsList implements OnInit, OnDestroy {
     if (showLoading) this.loading = true;
     this.error = '';
 
+    const searchTerm = this.searchQuery.trim();
+    const filterActive = !!searchTerm || !!this.estadoFilter;
+    const size = filterActive ? 100 : this.size;
+    this.size = size;
+    const q = searchTerm ? `&q=${encodeURIComponent(searchTerm)}` : '';
+    const e = this.estadoFilter ? `&estado=${encodeURIComponent(this.estadoFilter)}` : '';
+
+    this.requestBookings(this.page, this.propPage, size, q, e, () => {
+      if (searchTerm) {
+        this.requestBookings(1, 1, 100, '', e, null);
+      }
+    });
+  }
+
+  private requestBookings(arrendPage: number, propPage: number, size: number, q: string, e: string, onEmpty: (() => void) | null): void {
     const calls: Observable<ApiResponse<PaginatedResponse<Booking>>>[] = [
-      this.api.get<PaginatedResponse<Booking>>(`/bookings/my-bookings?page=${this.page}&size=${this.size}`).pipe(
+      this.api.get<PaginatedResponse<Booking>>(`/bookings/my-bookings?page=${arrendPage}&size=${size}${q}${e}`).pipe(
         catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
       )
     ];
 
     if (this.auth.esTipo('propietario') || this.auth.esTipo('admin')) {
       calls.push(
-        this.api.get<PaginatedResponse<Booking>>(`/bookings/my-listings?page=${this.propPage}&size=${this.size}`).pipe(
+        this.api.get<PaginatedResponse<Booking>>(`/bookings/my-listings?page=${propPage}&size=${size}${q}${e}`).pipe(
           catchError(() => of({ success: true, data: { data: [], total: 0, page: 1, size: 20 } }))
         )
       );
@@ -150,6 +184,9 @@ export class BookingsList implements OnInit, OnDestroy {
         this.asPropietario = asPropietario.map((b) => this.attachMachineDetails(b, null));
         this.cdr.markForCheck();
         this.enrichBookingsWithMachinery(asArrendatario, asPropietario);
+        if (onEmpty && asArrendatario.length === 0 && asPropietario.length === 0) {
+          onEmpty();
+        }
       },
       error: () => {
         this.error = 'No se pudieron cargar las reservas.';

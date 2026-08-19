@@ -19,7 +19,9 @@ async function getMyBookings(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const { data, total } = await bookingService.getByUser(req.user.id, page, size);
+        const q = (req.query.q || '').trim();
+        const estado = (req.query.estado || '').trim();
+        const { data, total } = await bookingService.getByUser(req.user.id, page, size, q || undefined, estado || undefined);
         paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }
@@ -69,7 +71,9 @@ async function getMyListings(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const { data, total } = await bookingService.getByOwner(req.user.id, page, size);
+        const q = (req.query.q || '').trim();
+        const estado = (req.query.estado || '').trim();
+        const { data, total } = await bookingService.getByOwner(req.user.id, page, size, q || undefined, estado || undefined);
         paginated(res, data, total, page, size);
     } catch (err) { next(err); }
 }

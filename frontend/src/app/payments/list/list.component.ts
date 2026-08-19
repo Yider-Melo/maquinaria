@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Api } from '../../core/services/api.service';
 import { Auth } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
@@ -18,6 +18,7 @@ export class PaymentsList implements OnInit, OnDestroy {
   searchQuery = ''; estadoFilter = '';
   page = 1; size = 10; total = 0;
   private realtimeSub: Subscription | undefined;
+  private searchSubject = new Subject<string>();
 
   get totalPages(): number { return Math.ceil(this.total / this.size) || 1; }
 
@@ -40,6 +41,10 @@ export class PaymentsList implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPayments();
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.page = 1;
+      this.loadPayments();
+    });
     this.realtimeSub = watchRealtime(
       this.socket,
       (ev) => String(ev?.tipo || '').startsWith('payment.'),
@@ -49,6 +54,18 @@ export class PaymentsList implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.realtimeSub?.unsubscribe();
+    this.searchSubject.complete();
+  }
+
+  onSearch(q: string): void {
+    this.searchQuery = q;
+    this.searchSubject.next(q);
+  }
+
+  onEstadoChange(estado: string): void {
+    this.estadoFilter = estado;
+    this.page = 1;
+    this.loadPayments();
   }
 
   prevPage(): void { if (this.page > 1) { this.page--; this.loadPayments(); } }
@@ -56,7 +73,19 @@ export class PaymentsList implements OnInit, OnDestroy {
 
   private loadPayments(): void {
     this.loading = true; this.error = '';
-    this.api.get<Payment[]>(`/payments/my-payments?page=${this.page}&size=${this.size}`).subscribe({
+    const searchTerm = this.searchQuery.trim();
+    const filterActive = !!searchTerm || !!this.estadoFilter;
+    const size = filterActive ? 100 : this.size;
+    this.size = size;
+    const q = searchTerm ? `&q=${encodeURIComponent(searchTerm)}` : '';
+    const e = this.estadoFilter ? `&estado=${encodeURIComponent(this.estadoFilter)}` : '';
+    this.requestPayments(this.page, size, q, e, () => {
+      if (searchTerm) this.requestPayments(1, 100, '', e, null);
+    });
+  }
+
+  private requestPayments(page: number, size: number, q: string, e: string, onEmpty: (() => void) | null): void {
+    this.api.get<Payment[]>(`/payments/my-payments?page=${page}&size=${size}${q}${e}`).subscribe({
       next: (res) => {
         const r = res as any;
         const pagos: Payment[] = r?.data || [];
@@ -65,6 +94,7 @@ export class PaymentsList implements OnInit, OnDestroy {
           this.payments = [];
           this.loading = false;
           this.cdr.markForCheck();
+          if (onEmpty) onEmpty();
           return;
         }
         this.enrichPayments(pagos);

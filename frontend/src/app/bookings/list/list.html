@@ -5,12 +5,12 @@
   <div class="search-bar">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>Buscar reserva</mat-label>
-      <input matInput [(ngModel)]="searchQuery" placeholder="ID o nombre del equipo">
+      <input matInput [value]="searchQuery" (input)="onSearch($event.target.value)" placeholder="ID o nombre del equipo">
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>Estado</mat-label>
-      <mat-select [(ngModel)]="estadoFilter">
+      <mat-select [ngModel]="estadoFilter" (ngModelChange)="onEstadoChange($event)">
         <mat-option value="">Todos</mat-option>
         <mat-option value="pendiente">Pendiente</mat-option>
         <mat-option value="confirmada">Confirmada</mat-option>

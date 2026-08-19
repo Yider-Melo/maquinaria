@@ -50,23 +50,45 @@ async function findById(id) {
     return result.rows[0] || null;
 }
 
-async function findByUser(userId, page, size) {
+async function findByUser(userId, page, size, q, estado) {
     const offset = (page - 1) * size;
-    const countResult = await pool.query('SELECT COUNT(*) FROM reserva WHERE arrendatario_id = $1', [userId]);
+    const conditions = ['arrendatario_id = $1'];
+    const params = [userId];
+    if (q) {
+        params.push(`%${q}%`);
+        conditions.push(`(CAST(id AS TEXT) ILIKE $${params.length} OR CAST(maquinaria_id AS TEXT) ILIKE $${params.length} OR CAST(precio_total AS TEXT) ILIKE $${params.length})`);
+    }
+    if (estado) {
+        params.push(estado);
+        conditions.push(`estado = $${params.length}`);
+    }
+    const where = `WHERE ${conditions.join(' AND ')}`;
+    const countResult = await pool.query(`SELECT COUNT(*) FROM reserva ${where}`, params);
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE arrendatario_id = $1 ORDER BY creado_en DESC LIMIT $2 OFFSET $3`,
-        [userId, size, offset]
+        `SELECT ${RESERVA_COLUMNS} FROM reserva ${where} ORDER BY creado_en DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
     );
     return { data: result.rows, total };
 }
 
-async function findByOwner(ownerId, page, size) {
+async function findByOwner(ownerId, page, size, q, estado) {
     const offset = (page - 1) * size;
-    const countResult = await pool.query('SELECT COUNT(*) FROM reserva WHERE propietario_id = $1', [ownerId]);
+    const conditions = ['propietario_id = $1'];
+    const params = [ownerId];
+    if (q) {
+        params.push(`%${q}%`);
+        conditions.push(`(CAST(id AS TEXT) ILIKE $${params.length} OR CAST(maquinaria_id AS TEXT) ILIKE $${params.length} OR CAST(precio_total AS TEXT) ILIKE $${params.length})`);
+    }
+    if (estado) {
+        params.push(estado);
+        conditions.push(`estado = $${params.length}`);
+    }
+    const where = `WHERE ${conditions.join(' AND ')}`;
+    const countResult = await pool.query(`SELECT COUNT(*) FROM reserva ${where}`, params);
     const total = parseInt(countResult.rows[0].count);
     const result = await pool.query(
-        `SELECT ${RESERVA_COLUMNS} FROM reserva WHERE propietario_id = $1
+        `SELECT ${RESERVA_COLUMNS} FROM reserva ${where}
          ORDER BY
            CASE estado
              WHEN 'pendiente' THEN 0
@@ -77,8 +99,8 @@ async function findByOwner(ownerId, page, size) {
            END ASC,
            CASE WHEN estado IN ('pendiente', 'en_curso', 'confirmada', 'pagada') THEN fecha_inicio END ASC NULLS LAST,
            creado_en DESC
-         LIMIT $2 OFFSET $3`,
-        [ownerId, size, offset]
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
     );
     return { data: result.rows, total };
 }

@@ -73,7 +73,9 @@ async function getMyPayments(req, res, next) {
     try {
         const page = parseInt(req.query.page) || 1;
         const size = parseInt(req.query.size) || 20;
-        const result = await paymentService.getMyPayments(req.user.id, page, size);
+        const q = (req.query.q || '').trim();
+        const estado = (req.query.estado || '').trim();
+        const result = await paymentService.getMyPayments(req.user.id, page, size, q || undefined, estado || undefined);
         const { paginated } = require('shared');
         paginated(res, result.data, result.total, page, size);
     } catch (err) { next(err); }

@@ -251,16 +251,16 @@ async function getInternalById(id) {
     return reserva;
 }
 
-async function getByUser(userId, page = 1, size = 20) {
+async function getByUser(userId, page = 1, size = 20, q, estado) {
     size = Math.min(size, 100);
-    const { data, total } = await reservaRepository.findByUser(userId, page, size);
+    const { data, total } = await reservaRepository.findByUser(userId, page, size, q, estado);
     const enriched = await Promise.all(data.map(b => enrichBookingWithUsers(b)));
     return { data: enriched, total, page, size };
 }
 
-async function getByOwner(ownerId, page = 1, size = 20) {
+async function getByOwner(ownerId, page = 1, size = 20, q, estado) {
     size = Math.min(size, 100);
-    const { data, total } = await reservaRepository.findByOwner(ownerId, page, size);
+    const { data, total } = await reservaRepository.findByOwner(ownerId, page, size, q, estado);
     const enriched = await Promise.all(data.map(b => enrichBookingWithUsers(b)));
     return { data: enriched, total, page, size };
 }

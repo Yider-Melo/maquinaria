@@ -109,19 +109,26 @@ async function findByBooking(bookingId, userId) {
     return result.rows;
 }
 
-async function findByUser(userId, page = 1, size = 20) {
+async function findByUser(userId, page = 1, size = 20, q, estado) {
     const offset = (page - 1) * size;
-    const countResult = await pool.query(
-        `SELECT COUNT(*) FROM pago WHERE usuario_id = $1 OR propietario_id = $1`,
-        [userId]
-    );
+    const conditions = ['(usuario_id = $1 OR propietario_id = $1)'];
+    const params = [userId];
+    if (estado) {
+        params.push(estado);
+        conditions.push(`estado = $${params.length}`);
+    }
+    if (q) {
+        params.push(`%${q}%`);
+        conditions.push(`(CAST(id AS TEXT) ILIKE $${params.length} OR CAST(reserva_id AS TEXT) ILIKE $${params.length} OR referencia_pasarela ILIKE $${params.length} OR CAST(monto AS TEXT) ILIKE $${params.length})`);
+    }
+    const where = `WHERE ${conditions.join(' AND ')}`;
+    const countResult = await pool.query(`SELECT COUNT(*) FROM pago ${where}`, params);
     const total = parseInt(countResult.rows[0].count, 10);
     const result = await pool.query(
-        `SELECT ${PAGO_COLUMNS} FROM pago
-         WHERE usuario_id = $1 OR propietario_id = $1
+        `SELECT ${PAGO_COLUMNS} FROM pago ${where}
          ORDER BY creado_en DESC
-         LIMIT $2 OFFSET $3`,
-        [userId, size, offset]
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, size, offset]
     );
     return { data: result.rows, total };
 }

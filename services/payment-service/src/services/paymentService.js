@@ -496,8 +496,8 @@ async function getPaymentsByBooking(bookingId, userId) {
     return pagos;
 }
 
-async function getMyPayments(userId, page = 1, size = 20) {
-    return await pagoRepository.findByUser(userId, page, size);
+async function getMyPayments(userId, page = 1, size = 20, q, estado) {
+    return await pagoRepository.findByUser(userId, page, size, q, estado);
 }
 
 async function releaseFunds(pagoId, userId) {
