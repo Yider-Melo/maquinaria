@@ -1,0 +1,22 @@
+# Servidor de producción de RentaMaq
+# Caddy obtiene y renueva HTTPS automáticamente (Let's Encrypt) para el dominio.
+# Las variables {$DOMAIN} se inyectan desde docker-compose.prod.yml.
+{$DOMAIN} {
+    encode gzip
+
+    # SPA: sirve index.html para rutas no encontradas (routing de Angular)
+    root * /srv
+    try_files {path} /index.html
+
+    # API -> API Gateway
+    handle /api/* {
+        reverse_proxy api-gateway:3000
+    }
+
+    # WebSocket/Socket.IO -> API Gateway
+    handle /socket.io/* {
+        reverse_proxy api-gateway:3000
+    }
+
+    file_server
+}

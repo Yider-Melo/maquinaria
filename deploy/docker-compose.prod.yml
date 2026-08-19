@@ -1,0 +1,60 @@
+# ============================================================
+# Overrides de producción para docker-compose.yml
+# Uso:  docker compose -f docker-compose.yml -f deploy/docker-compose.prod.yml up -d --build
+# ============================================================
+services:
+  api-gateway:
+    environment:
+      - NODE_ENV=production
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - PUBLIC_URL=${PUBLIC_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+
+  auth-service:
+    environment:
+      - NODE_ENV=production
+
+  machinery-service:
+    environment:
+      - NODE_ENV=production
+
+  search-service:
+    environment:
+      - NODE_ENV=production
+
+  booking-service:
+    environment:
+      - NODE_ENV=production
+
+  payment-service:
+    environment:
+      - NODE_ENV=production
+
+  rating-service:
+    environment:
+      - NODE_ENV=production
+
+  notification-service:
+    environment:
+      - NODE_ENV=production
+
+  # Frontend estático + proxy + HTTPS automático
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - rentamaq-network

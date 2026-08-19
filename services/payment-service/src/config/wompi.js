@@ -3,9 +3,18 @@ const logger = createServiceLogger('wompi');
 
 const PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY;
+// Credenciales del producto 'Pagos a terceros' (Payouts). Son distintas a las
+// llaves de cobro y se obtienen en: dashboard -> Desarrollo -> Programadores ->
+// Pagos a Terceros. Se envían en los headers x-api-key y user-principal-id.
+const PAYOUTS_API_KEY = process.env.WOMPI_PAYOUTS_API_KEY || null;
+const PAYOUTS_USER_PRINCIPAL_ID = process.env.WOMPI_PAYOUTS_USER_PRINCIPAL_ID || null;
+// Cuenta origen (Wompi Cuenta o bancaria vinculada) para las dispersiones.
+// Si no se configura, se descubre con GET /accounts.
+const PAYOUTS_ACCOUNT_ID = process.env.WOMPI_PAYOUTS_ACCOUNT_ID || null;
 
 const IS_SANDBOX = (PUBLIC_KEY || '').startsWith('pub_test_');
 const WOMPI_API = IS_SANDBOX ? 'https://sandbox.wompi.co/v1' : 'https://api.wompi.co/v1';
+const PAYOUTS_API = IS_SANDBOX ? 'https://api.sandbox.payouts.wompi.co/v1' : 'https://api.payouts.wompi.co/v1';
 
 function isConfigured() {
     return !!PUBLIC_KEY && !!PRIVATE_KEY;
@@ -187,54 +196,149 @@ async function getTransactionsByLink(linkId) {
         .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0];
 }
 
-async function createTransfer({ amount, description, bankCode, accountNumber, accountType, holderName, holderDocType, holderDocNumber, externalRef }) {
-    if (!isConfigured()) {
-        logger.warn('Wompi no configurado, transferencia simulada:', { amount, bankCode });
-        return { simulated: true, amount, message: 'Transferencia simulada' };
+// ============================================================================
+// Producto 'Pagos a terceros' (Payouts) - https://api.payouts.wompi.co/v1
+// ============================================================================
+
+function payoutsConfigured() {
+    return !!PAYOUTS_API_KEY && !!PAYOUTS_USER_PRINCIPAL_ID;
+}
+
+function payoutsHeaders(extra = {}) {
+    return {
+        'x-api-key': PAYOUTS_API_KEY,
+        'user-principal-id': PAYOUTS_USER_PRINCIPAL_ID,
+        'Content-Type': 'application/json',
+        ...extra
+    };
+}
+
+// Lista de bancos destino disponibles para dispersar. El campo `id` (UUID) de
+// cada banco es el bankId que exige POST /payouts.
+async function getPayoutBanks() {
+    if (!payoutsConfigured()) return [];
+    try {
+        const response = await fetch(`${PAYOUTS_API}/banks`, { headers: payoutsHeaders() });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data.data) ? data.data : [];
+    } catch (err) {
+        logger.error('Error consultando bancos de Pagos a Terceros:', { message: err.message });
+        return [];
+    }
+}
+
+// Cuentas origen (Wompi Cuenta y cuentas bancarias vinculadas). El campo `id`
+// es el accountId que exige POST /payouts y `balanceInCents` el saldo.
+async function getPayoutAccounts() {
+    if (!payoutsConfigured()) return [];
+    try {
+        const response = await fetch(`${PAYOUTS_API}/accounts`, { headers: payoutsHeaders() });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data.data) ? data.data : [];
+    } catch (err) {
+        logger.error('Error consultando cuentas de Pagos a Terceros:', { message: err.message });
+        return [];
+    }
+}
+
+// Resuelve la cuenta origen de la dispersión: prioriza WOMPI_PAYOUTS_ACCOUNT_ID
+// y, si no está, elige la primera cuenta activa devuelta por GET /accounts.
+async function resolveAccountId() {
+    if (PAYOUTS_ACCOUNT_ID) return PAYOUTS_ACCOUNT_ID;
+    const accounts = await getPayoutAccounts();
+    if (accounts.length === 0) return null;
+    const active = accounts.find((a) => (a.status || '').toUpperCase() === 'ACTIVE');
+    return (active || accounts[0]).id || null;
+}
+
+// Convierte el identificador de banco que guarda la app (p. ej. 'nequi',
+// 'bancolombia' o el código de banco) en el bankId (UUID) del API de Payouts.
+async function resolveBankId(bankIdentifier) {
+    if (!bankIdentifier) return null;
+    const normalized = String(bankIdentifier).toLowerCase().trim();
+    const banks = await getPayoutBanks();
+    if (banks.length === 0) return null;
+
+    const match = banks.find((b) => {
+        const name = String(b.name || '').toLowerCase();
+        const code = String(b.code || '').toLowerCase();
+        return name === normalized || code === normalized || name.includes(normalized) || normalized.includes(name);
+    });
+    if (!match) {
+        logger.warn('Banco no encontrado en Pagos a Terceros:', { bankIdentifier, disponibles: banks.map((b) => b.name).slice(0, 20) });
+        return null;
+    }
+    return match.id || null;
+}
+
+// Dispersa un pago a un beneficiario usando el producto Pagos a Terceros.
+// Endpoint: POST /payouts (lote de pagos). El monto va en centavos.
+async function createTransfer({ amount, description, bankCode, accountNumber, accountType, holderName, holderDocType, holderDocNumber, holderEmail, externalRef }) {
+    if (!payoutsConfigured()) {
+        logger.warn('Llaves de Pagos a Terceros no configuradas, transferencia simulada:', { amount, bankCode });
+        return { simulated: true, amount, message: 'Transferencia simulada (falta WOMPI_PAYOUTS_API_KEY / WOMPI_PAYOUTS_USER_PRINCIPAL_ID)' };
     }
 
     try {
-        const mappedBankCode = BANK_CODES_COLOMBIA[bankCode] || bankCode;
+        const accountId = await resolveAccountId();
+        const bankId = await resolveBankId(bankCode);
 
+        if (!accountId) {
+            logger.error('No se pudo resolver la cuenta origen (accountId). Revisa WOMPI_PAYOUTS_ACCOUNT_ID o GET /accounts.');
+            return null;
+        }
+        if (!bankId) {
+            logger.error('No se pudo resolver el banco destino (bankId):', { bankCode });
+            return null;
+        }
+
+        const idempotencyKey = `${externalRef || 'PAYOUT'}-${Date.now()}`;
         const body = {
-            amount_in_cents: Math.round(amount * 100),
-            currency: 'COP',
-            source_wallet_id: null,
-            destination: {
-                type: 'BANK_ACCOUNT',
-                bank_code: mappedBankCode,
-                bank_account_number: accountNumber,
-                bank_account_type: accountType || 'SAVINGS',
-                customer: {
+            reference: externalRef || `PAYOUT-${Date.now()}`,
+            accountId,
+            paymentType: 'PROVIDERS',
+            transactions: [
+                {
+                    legalIdType: holderDocType || 'CC',
+                    legalId: holderDocNumber,
+                    bankId,
+                    accountType: accountType === 'CHECKING' || accountType === 'CORRIENTE' ? 'CORRIENTE' : 'AHORROS',
+                    accountNumber,
                     name: holderName,
-                    identification_type: holderDocType || 'CC',
-                    identification_number: holderDocNumber
+                    email: holderEmail || '',
+                    amount: Math.round(amount * 100),
+                    reference: externalRef || `PAYOUT-${Date.now()}`
                 }
-            },
-            reference: externalRef,
-            description: description || 'Pago al propietario RentaMaq'
+            ]
         };
 
-        const response = await fetch(`${WOMPI_API}/transfers`, {
+        const response = await fetch(`${PAYOUTS_API}/payouts`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${PRIVATE_KEY}`,
-                'Content-Type': 'application/json'
-            },
+            headers: payoutsHeaders({ 'idempotency-key': idempotencyKey }),
             body: JSON.stringify(body)
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-            logger.error('Error en transferencia Wompi:', { status: response.status, error: result });
+            logger.error('Error en dispersión Pagos a Terceros:', { status: response.status, error: result });
             return null;
         }
 
-        logger.info('Transferencia Wompi creada:', { id: result.data?.id, amount, bankCode });
-        return { id: result.data?.id, status: result.data?.status, amount };
+        const payoutId = result.data?.id || result.data?.payoutId || result.id;
+        const transaction = (result.data?.transactions || [])[0] || {};
+
+        logger.info('Dispersión Pagos a Terceros creada:', { id: payoutId, transactionId: transaction.id, amount, bankCode });
+        return {
+            id: payoutId,
+            status: result.data?.status,
+            transactionId: transaction.id || null,
+            amount
+        };
     } catch (err) {
-        logger.error('Error creando transferencia Wompi:', { message: err.message });
+        logger.error('Error creando dispersión Pagos a Terceros:', { message: err.message });
         return null;
     }
 }
@@ -294,5 +398,7 @@ async function refundPayment(transactionId, amountInCents) {
 module.exports = {
     configure, isConfigured, isSandboxMode, createPreference, getTransaction,
     getTransactionsByLink,
-    createTransfer, getBankList, refundPayment
+    createTransfer, getBankList, payoutsConfigured,
+    getPayoutBanks, getPayoutAccounts, resolveAccountId, resolveBankId,
+    refundPayment
 };

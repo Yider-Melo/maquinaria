@@ -81,10 +81,11 @@ async function createPayout(options) {
             description: options.description,
             bankCode: options.bankId,
             accountNumber: options.accountNumber,
-            accountType: 'SAVINGS',
+            accountType: 'AHORROS',
             holderName: options.holderName,
             holderDocType: options.holderDocType,
             holderDocNumber: options.holderDocNumber,
+            holderEmail: options.holderEmail,
             externalRef: options.externalRef
         });
     }
