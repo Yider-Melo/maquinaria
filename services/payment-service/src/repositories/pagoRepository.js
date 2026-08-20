@@ -177,7 +177,7 @@ async function findByEstado(estado, page = 1, size = 10) {
 
 async function findByIdSimple(pagoId) {
     const result = await pool.query(
-        `SELECT id, usuario_id, propietario_id, reserva_id, monto,
+        `SELECT id, usuario_id, propietario_id, reserva_id, monto, estado,
                 comision, monto_propietario, referencia_pasarela_mp,
                 payout_estado, payout_intentos
          FROM pago WHERE id = $1`,
